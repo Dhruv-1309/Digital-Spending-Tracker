@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💸 Teen Spending Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+
+<body class="min-h-screen gradient-bg">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12 animate-slide-in">
+            <div class="glassmorphism rounded-3xl p-8 mb-8 relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-pink-400/20 animate-pulse-slow">
+                </div>
+                <div class="relative z-10">
+                    <h1 class="text-5xl font-bold text-white mb-4 animate-float">Your Spending Tracker</h1>
+                    <p class="text-xl text-white/90 animate-fade-in">Take control of your money, one expense at a time!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Balance Section -->
+        <div class="flex justify-center mb-8 animate-fade-in">
+            <div class="glassmorphism rounded-2xl p-6 max-w-md w-full">
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-white mb-2">💳 Account Balance</h3>
+                    <div id="account-balance" class="text-3xl font-bold text-white mb-4">₹0.00</div>
+                    <div class="flex space-x-2">
+                        <input type="number" id="balance-input" placeholder="Add money" step="0.01" min="0"
+                            class="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all duration-300">
+                        <button onclick="addToBalance()"
+                            class="bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold py-2 px-4 rounded-lg hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 transition-all duration-300">
+                            ➕
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex justify-center mb-8 animate-fade-in">
+            <div class="glassmorphism rounded-2xl p-2 flex space-x-2">
+                <button onclick="showTab('quick-add')" id="tab-quick-add"
+                    class="tab-btn active px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-white">📱
+                    Quick Add</button>
+                <button onclick="showTab('dashboard')" id="tab-dashboard"
+                    class="tab-btn px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-white/70 hover:text-white">📊
+                    Dashboard</button>
+                <button onclick="showTab('budget')" id="tab-budget"
+                    class="tab-btn px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-white/70 hover:text-white">💰
+                    Budget</button>
+                <button onclick="showTab('goals')" id="tab-goals"
+                    class="tab-btn px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-white/70 hover:text-white">🎯
+                    Goals</button>
+                <button onclick="showTab('categories')" id="tab-categories"
+                    class="tab-btn px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-white/70 hover:text-white">🏷️
+                    Categories</button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-content">
+            <!-- Quick Add Tab -->
+            <div id="quick-add" class="tab-content">
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <!-- Expense Form -->
+                    <div class="lg:col-span-2">
+                        <div class="glassmorphism rounded-2xl p-8 card-hover animate-bounce-in">
+                            <h2 class="text-2xl font-bold text-white mb-6">Add New Expense</h2>
+                            <form id="expense-form" class="space-y-6">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-white font-semibold">💵 Amount (₹)</label>
+                                        <div class="relative">
+                                            <input type="text" id="amount"
+                                                class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                                                placeholder="e.g., 250+300+50 or 600" oninput="calculateAmount(this)">
+                                            <div id="calculation-result"
+                                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-400 font-semibold text-sm hidden">
+                                            </div>
+                                        </div>
+                                        <div id="calculation-preview" class="text-white/70 text-sm hidden"></div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-white font-semibold">📂 Category</label>
+                                        <div class="relative">
+                                            <select id="category"
+                                                class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300">
+                                                <!-- Categories will be populated by JavaScript -->
+                                            </select>
+                                            <button type="button" onclick="openCategoryModal()"
+                                                class="absolute right-12 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+                                                title="Add new category">
+                                                ➕
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-white font-semibold">📝 Description</label>
+                                    <input type="text" id="description"
+                                        class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                                        placeholder="e.g., Lunch at McDonald's">
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-white font-semibold">📅 Date</label>
+                                        <input type="date" id="expense-date"
+                                            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300">
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button type="submit"
+                                            class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">Add
+                                            Expense ✨</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="space-y-6">
+                        <!-- Account Balance Widget -->
+                        <div class="glassmorphism rounded-2xl p-6 card-hover animate-fade-in shimmer-effect">
+                            <h3 class="text-xl font-bold text-white mb-4">💳 Current Balance</h3>
+                            <div class="text-center">
+                                <div id="balance-display" class="text-3xl font-bold text-white mb-4">₹0.00</div>
+                                <div class="flex space-x-2">
+                                    <input type="number" id="quick-balance-input" placeholder="Add money" step="0.01"
+                                        min="0"
+                                        class="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all duration-300 text-sm">
+                                    <button onclick="addToBalance()"
+                                        class="bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold py-2 px-3 rounded-lg hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 transition-all duration-300 text-sm">
+                                        ➕
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glassmorphism rounded-2xl p-6 card-hover animate-fade-in shimmer-effect">
+                            <h3 class="text-xl font-bold text-white mb-4">Quick Stats</h3>
+                            <div class="space-y-4">
+                                <div class="bg-white/10 rounded-xl p-4">
+                                    <div class="text-white/70 text-sm">Today</div>
+                                    <div id="today-total" class="text-2xl font-bold text-white">₹0.00</div>
+                                </div>
+                                <div class="bg-white/10 rounded-xl p-4">
+                                    <div class="text-white/70 text-sm">This Week</div>
+                                    <div id="week-total" class="text-2xl font-bold text-white">₹0.00</div>
+                                </div>
+                                <div class="bg-white/10 rounded-xl p-4">
+                                    <div class="text-white/70 text-sm">This Month</div>
+                                    <div id="month-total" class="text-2xl font-bold text-white">₹0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content hidden">
+                <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-slide-in">
+                        <h3 class="text-xl font-bold text-white mb-4">Spending by Category</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-slide-in">
+                        <h3 class="text-xl font-bold text-white mb-4">Daily Spending Trend</h3>
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Expenses -->
+                <div class="glassmorphism rounded-2xl p-6 card-hover animate-fade-in">
+                    <h3 class="text-xl font-bold text-white mb-6">Recent Expenses</h3>
+                    <div id="recent-expenses" class="space-y-3">
+                        <div class="text-center text-white/70 py-8">
+                            <div class="text-4xl mb-4">📱</div>
+                            <p>Add some expenses to see your dashboard come to life!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Tab -->
+            <div id="budget" class="tab-content hidden">
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-slide-in">
+                        <h3 class="text-xl font-bold text-white mb-6">Set Your Monthly Budgets</h3>
+                        <div id="budget-controls" class="space-y-4"></div>
+                    </div>
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-fade-in">
+                        <h3 class="text-xl font-bold text-white mb-6">Budget Progress This Month</h3>
+                        <div id="budget-progress" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Tab -->
+            <div id="goals" class="tab-content hidden">
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-slide-in">
+                        <h3 class="text-xl font-bold text-white mb-6">Current Goal</h3>
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-white font-semibold">Goal Name</label>
+                                <input type="text" id="goal-name" value="New Phone"
+                                    class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-white font-semibold">Target Amount (₹)</label>
+                                <input type="number" id="goal-target" value="50000" min="1"
+                                    class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-white font-semibold">Add to Savings (₹)</label>
+                                    <input type="number" id="add-savings" min="0" step="1"
+                                        class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300">
+                                </div>
+                                <div class="flex items-end">
+                                    <button onclick="addToGoal()"
+                                        class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 transition-all duration-300">Add
+                                        to Goal 🎯</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-bounce-in">
+                        <h3 class="text-xl font-bold text-white mb-6">Progress</h3>
+                        <div class="text-center">
+                            <div class="relative w-48 h-48 mx-auto mb-6">
+                                <svg class="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.2)" stroke-width="8"
+                                        fill="none" />
+                                    <circle id="progress-circle" cx="50" cy="50" r="40" stroke="url(#gradient)"
+                                        stroke-width="8" fill="none" stroke-dasharray="251.2" stroke-dashoffset="251.2"
+                                        stroke-linecap="round" class="transition-all duration-1000 ease-out" />
+                                    <defs>
+                                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#667eea" />
+                                            <stop offset="100%" style="stop-color:#764ba2" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <div id="progress-percentage" class="text-3xl font-bold text-white">0%</div>
+                                        <div class="text-white/70 text-sm">Complete</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white/10 rounded-xl p-4">
+                                <div class="text-white/70 text-sm">Savings Progress</div>
+                                <div id="savings-amount" class="text-2xl font-bold text-white">₹0.00</div>
+                                <div id="remaining-amount" class="text-white/70">₹50,000.00 to go</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Tab -->
+            <div id="categories" class="tab-content hidden">
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-slide-in">
+                        <h3 class="text-xl font-bold text-white mb-6">Manage Categories</h3>
+                        <div class="space-y-4">
+                            <button onclick="openCategoryModal()"
+                                class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-600 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                ➕ Add New Category
+                            </button>
+                            <div id="categories-list" class="space-y-3 max-h-96 overflow-y-auto">
+                                <!-- Categories will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glassmorphism rounded-2xl p-6 card-hover animate-fade-in">
+                        <h3 class="text-xl font-bold text-white mb-6">Category Usage</h3>
+                        <div id="category-usage" class="space-y-3">
+                            <!-- Category usage stats will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Modal -->
+        <div id="category-modal"
+            class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+            <div class="glassmorphism rounded-2xl p-8 max-w-md w-full mx-4 animate-bounce-in">
+                <h3 class="text-2xl font-bold text-white mb-6">Add New Category</h3>
+                <form id="category-form" class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-white font-semibold">Category Name</label>
+                        <input type="text" id="new-category-name" required
+                            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                            placeholder="e.g., Travel, Gifts, etc.">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-white font-semibold">Category Emoji</label>
+                        <input type="text" id="new-category-emoji" maxlength="2"
+                            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                            placeholder="🎁">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-white font-semibold">Default Budget (₹)</label>
+                        <input type="number" id="new-category-budget" min="0" step="100" value="2000"
+                            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-300">
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit"
+                            class="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 transition-all duration-300">
+                            Create Category
+                        </button>
+                        <button type="button" onclick="closeCategoryModal()"
+                            class="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold py-3 px-6 rounded-xl hover:from-gray-600 hover:to-gray-700 transform hover:scale-105 transition-all duration-300">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Success Toast -->
+        <div id="toast"
+            class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg transform translate-x-full transition-transform duration-300">
+            <div class="flex items-center space-x-2">
+                <span>✅</span>
+                <span id="toast-message">Success!</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-16 animate-fade-in">
+            <div class="glassmorphism rounded-2xl p-6">
+                <p class="text-white/90 mb-2">💡 <strong>Pro Tips:</strong> Track expenses daily • Set realistic budgets
+                    • Save a little each week</p>
+                <p class="text-white/70">Built with ❤️ for smart spenders</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

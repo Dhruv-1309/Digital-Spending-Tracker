@@ -1,0 +1,577 @@
+/* Custom Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom Animations */
+@keyframes slideIn {
+    0% {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes gradient {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes balancePulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    }
+
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+    }
+}
+
+@keyframes calculationGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    }
+}
+
+/* Animation Classes */
+.animate-slide-in {
+    animation: slideIn 0.5s ease-out forwards;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-bounce-in {
+    animation: bounceIn 0.7s ease-out forwards;
+}
+
+.animate-pulse-slow {
+    animation: pulse 3s infinite;
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient {
+    animation: gradient 8s ease infinite;
+}
+
+.animate-shimmer {
+    animation: shimmer 2s linear infinite;
+}
+
+.animate-balance-pulse {
+    animation: balancePulse 2s ease-in-out infinite;
+}
+
+.animate-calculation-glow {
+    animation: calculationGlow 1.5s ease-in-out infinite;
+}
+
+/* Custom Components */
+.glassmorphism {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gradient-bg {
+    background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+}
+
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shimmer-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.shimmer-effect::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+}
+
+/* Amount Input with Calculation */
+.amount-input-container {
+    position: relative;
+}
+
+.calculation-active {
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.calculation-result {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #10b981;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.calculation-preview {
+    font-size: 0.875rem;
+    margin-top: 4px;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Account Balance Styles */
+.balance-container {
+    position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.balance-low {
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.balance-medium {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+
+.balance-high {
+    border-color: rgba(34, 197, 94, 0.5) !important;
+    background: rgba(34, 197, 94, 0.1) !important;
+}
+
+.balance-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    transition: all 0.3s ease;
+}
+
+.balance-pulse {
+    animation: balancePulse 2s ease-in-out infinite;
+}
+
+/* Tab Styles */
+.tab-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.tab-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.tab-btn:not(.active) {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tab-btn:hover:not(.active) {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Form Styles */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: none;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+/* Enhanced Input Focus States */
+input:focus {
+    outline: none;
+    border-color: rgba(147, 51, 234, 0.5);
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+input.calculation-input:focus {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Button Styles */
+button {
+    cursor: pointer;
+    outline: none;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Chart Container */
+canvas {
+    max-height: 300px;
+}
+
+/* Progress Circle */
+.progress-circle {
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+/* Toast Notification */
+.toast-show {
+    transform: translateX(0) !important;
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-show {
+    display: flex !important;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-hide {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+/* Category Management Styles */
+.category-item {
+    transition: all 0.3s ease;
+}
+
+.category-item:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.category-delete-btn {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.category-item:hover .category-delete-btn {
+    opacity: 1;
+}
+
+/* Enhanced Tab Styles for 5 tabs */
+@media (max-width: 768px) {
+    .flex.space-x-2 {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .tab-btn {
+        min-width: 100px;
+        text-align: center;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .tab-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        min-width: 80px;
+    }
+
+    .flex.space-x-2 {
+        gap: 0.25rem;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .text-5xl {
+        font-size: 2.5rem;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lg\:grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .lg\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .md\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    /* Account Balance Mobile Styles */
+    .balance-amount {
+        font-size: 1.5rem;
+    }
+
+    .balance-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .flex.space-x-2 {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .flex.space-x-2>* {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .px-6 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Calculation Preview Mobile */
+    .calculation-preview {
+        font-size: 0.75rem;
+        padding: 6px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .glassmorphism {
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Print Styles */
+@media print {
+    .gradient-bg {
+        background: white !important;
+    }
+
+    .glassmorphism {
+        background: white !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .text-white {
+        color: black !important;
+    }
+
+    button {
+        display: none !important;
+    }
+
+    #category-modal {
+        display: none !important;
+    }
+
+    .calculation-result,
+    .calculation-preview {
+        display: none !important;
+    }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+
+    .animate-slide-in,
+    .animate-fade-in,
+    .animate-bounce-in,
+    .animate-pulse-slow,
+    .animate-float,
+    .animate-gradient,
+    .animate-shimmer,
+    .animate-balance-pulse,
+    .animate-calculation-glow {
+        animation: none;
+    }
+
+    .card-hover:hover {
+        transform: none;
+    }
+}
+
+/* Focus Indicators for Accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .glassmorphism {
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    .text-white\/70,
+    .text-white\/50 {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+}
