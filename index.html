@@ -1121,53 +1121,100 @@
                     ctx.fillStyle = '#64748b';
                     ctx.textAlign = 'center';
                     ctx.fillText('No expense data available for time series analysis', ctx.canvas.width / 2, ctx.canvas.height / 2);
-
+                    
                     document.getElementById('timeSeriesStats').innerHTML = '<p style="text-align: center; color: #64748b;">Add some expense transactions to see time series analysis</p>';
                     return;
+                }
+
+                // Calculate SMA forecast
+                const forecast = this.calculateSMAForecast(analysis.rawDates, analysis.amounts, 7, 7);
+
+                // Prepare datasets
+                const datasets = [{
+                    label: 'Actual Daily Spending (₹)',
+                    data: analysis.amounts,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#ef4444',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }];
+
+                // Combine dates for x-axis (actual + forecast)
+                let allLabels = [...analysis.dates];
+                
+                // Add forecast dataset if available
+                if (forecast.forecastDates.length > 0) {
+                    allLabels = [...analysis.dates, ...forecast.forecastDates];
+                    
+                    // Create forecast data array with nulls for actual data points
+                    const forecastData = new Array(analysis.amounts.length).fill(null).concat(forecast.forecastAmounts);
+                    
+                    datasets.push({
+                        label: 'Predicted Spending (7-day SMA)',
+                        data: forecastData,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.05)',
+                        borderWidth: 2,
+                        borderDash: [8, 4],
+                        fill: false,
+                        tension: 0,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointStyle: 'rectRot'
+                    });
                 }
 
                 // Create the line chart
                 window.timeSeriesChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: analysis.dates,
-                        datasets: [{
-                            label: 'Daily Spending (₹)',
-                            data: analysis.amounts,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.3,
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            pointBackgroundColor: '#ef4444',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2
-                        }]
+                        labels: allLabels,
+                        datasets: datasets
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                display: true,
+                            legend: { 
+                                display: true, 
                                 position: 'top',
                                 labels: {
-                                    font: { weight: 'bold' }
+                                    font: { weight: 'bold' },
+                                    usePointStyle: true,
+                                    padding: 15
                                 }
                             },
                             tooltip: {
                                 callbacks: {
-                                    title: function (context) {
-                                        return analysis.rawDates[context[0].dataIndex];
+                                    title: function(context) {
+                                        const index = context[0].dataIndex;
+                                        if (index < analysis.rawDates.length) {
+                                            return analysis.rawDates[index];
+                                        } else {
+                                            // For forecast dates, calculate the actual date
+                                            const lastDate = new Date(analysis.rawDates[analysis.rawDates.length - 1]);
+                                            const daysAhead = index - analysis.rawDates.length + 1;
+                                            lastDate.setDate(lastDate.getDate() + daysAhead);
+                                            return lastDate.toISOString().split('T')[0] + ' (Predicted)';
+                                        }
                                     },
                                     label: function (context) {
                                         const value = context.parsed.y;
+                                        if (value === null) return null;
                                         if (value === 0) {
                                             return 'No spending';
                                         }
-                                        return `Spent: ₹${value.toLocaleString()}`;
+                                        const prefix = context.datasetIndex === 0 ? 'Spent: ' : 'Predicted: ';
+                                        return `${prefix}₹${value.toLocaleString()}`;
                                     }
                                 }
                             }
@@ -1201,9 +1248,9 @@
                     }
                 });
 
-                // Display statistics
+                // Display statistics with forecast information
                 const stats = analysis.stats;
-                const statsHtml = `
+                let statsHtml = `
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
                         <div>
                             <strong style="color: #0f172a;">Total Period:</strong><br>
@@ -1236,18 +1283,118 @@
                         <div>
                             <strong style="color: #0f172a;">Spending Frequency:</strong><br>
                             <span style="color: #64748b;">${((stats.daysWithSpending / stats.totalDays) * 100).toFixed(1)}%</span>
+                        </div>`;
+                
+                // Add forecast statistics if available
+                if (forecast.forecastDates.length > 0) {
+                    const confidenceColor = forecast.confidence === 'high' ? '#10b981' : 
+                                           forecast.confidence === 'medium' ? '#f59e0b' : '#ef4444';
+                    const confidenceIcon = forecast.confidence === 'high' ? '✓' : 
+                                          forecast.confidence === 'medium' ? '⚠' : '!';
+                    
+                    statsHtml += `
+                        <div style="grid-column: 1 / -1; margin-top: 12px; padding-top: 16px; border-top: 2px solid #e2e8f0;">
+                            <strong style="color: #8b5cf6; font-size: 1.05rem;">
+                                <i class="fas fa-crystal-ball"></i> 7-Day Forecast (SMA Prediction)
+                            </strong>
                         </div>
-                    </div>
-                `;
+                        <div>
+                            <strong style="color: #0f172a;">Predicted Daily Average:</strong><br>
+                            <span style="color: #8b5cf6; font-weight: 700; font-size: 1.1rem;">₹${forecast.smaValue.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Total Forecast (7 days):</strong><br>
+                            <span style="color: #8b5cf6; font-weight: 700; font-size: 1.1rem;">₹${forecast.totalForecast.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Forecast Confidence:</strong><br>
+                            <span style="color: ${confidenceColor}; font-weight: 600; text-transform: capitalize;">
+                                ${confidenceIcon} ${forecast.confidence}
+                            </span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Data Variance:</strong><br>
+                            <span style="color: #64748b;">${forecast.coefficientOfVariation.toFixed(1)}% CV</span>
+                        </div>`;
+                }
+                
+                statsHtml += `</div>`;
                 document.getElementById('timeSeriesStats').innerHTML = statsHtml;
-            },
-
-            // Refresh all displays
+            },            // Refresh all displays
             refreshAll() {
                 this.updateDashboard();
                 if (this.currentTab === 'transactions') {
                     this.displayTransactions();
                 }
+            },
+
+            // Simple Moving Average (SMA) Prediction Function
+            calculateSMAForecast(dates, amounts, window = 7, forecastDays = 7) {
+                /**
+                 * Calculates Simple Moving Average and forecasts future spending
+                 * @param {Array} dates - Array of date strings
+                 * @param {Array} amounts - Array of spending amounts
+                 * @param {Number} window - Number of days to use for moving average (default: 7)
+                 * @param {Number} forecastDays - Number of days to forecast (default: 7)
+                 * @returns {Object} Object containing forecast dates, amounts, and SMA value
+                 */
+                
+                if (amounts.length < window) {
+                    return {
+                        forecastDates: [],
+                        forecastAmounts: [],
+                        smaValue: 0,
+                        confidence: 'low'
+                    };
+                }
+
+                // Calculate SMA using the last 'window' days of actual data
+                const lastWindowAmounts = amounts.slice(-window);
+                const smaValue = lastWindowAmounts.reduce((sum, val) => sum + val, 0) / window;
+
+                // Generate forecast dates (next 7 days from the last date)
+                const lastDate = new Date(dates[dates.length - 1]);
+                const forecastDates = [];
+                const forecastAmounts = [];
+
+                for (let i = 1; i <= forecastDays; i++) {
+                    const nextDate = new Date(lastDate);
+                    nextDate.setDate(lastDate.getDate() + i);
+                    
+                    const dateStr = nextDate.toISOString().split('T')[0];
+                    const formattedDate = nextDate.toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short'
+                    });
+                    
+                    forecastDates.push(formattedDate);
+                    forecastAmounts.push(smaValue); // Each forecasted day uses the SMA value
+                }
+
+                // Calculate total forecasted spending
+                const totalForecast = smaValue * forecastDays;
+
+                // Determine confidence level based on data variance
+                const variance = lastWindowAmounts.reduce((sum, val) => {
+                    return sum + Math.pow(val - smaValue, 2);
+                }, 0) / window;
+                const stdDev = Math.sqrt(variance);
+                const coefficientOfVariation = (stdDev / smaValue) * 100;
+
+                let confidence = 'high';
+                if (coefficientOfVariation > 50) confidence = 'low';
+                else if (coefficientOfVariation > 30) confidence = 'medium';
+
+                return {
+                    forecastDates,
+                    forecastAmounts,
+                    smaValue: parseFloat(smaValue.toFixed(2)),
+                    totalForecast: parseFloat(totalForecast.toFixed(2)),
+                    confidence,
+                    window,
+                    forecastDays,
+                    coefficientOfVariation: parseFloat(coefficientOfVariation.toFixed(2))
+                };
             },
 
             // Time Series Analysis for Expenses
