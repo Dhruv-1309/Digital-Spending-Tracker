@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Spending Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            gap: 4px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 14px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-tab.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            padding: 32px 24px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .stat-card.income::before {
+            background: #10b981;
+        }
+
+        .stat-card.expense::before {
+            background: #ef4444;
+        }
+
+        .stat-card.balance::before {
+            background: #3b82f6;
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-card .amount {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .stat-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .stat-card.income .icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .stat-card.expense .icon {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .stat-card.balance .icon {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .form-section {
+            background: #f8fafc;
+            padding: 32px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-section h3 {
+            margin-bottom: 24px;
+            color: #0f172a;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: all 0.2s ease;
+            color: #111827;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-export {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: #7c3aed;
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .transactions-table th {
+            background: #f8fafc;
+            color: #374151;
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .transactions-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .transactions-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .transactions-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .amount-positive {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .amount-negative {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .chart-container h3 {
+            color: #0f172a;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .chart-container canvas {
+            max-height: 300px !important;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .custom-category {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            align-items: end;
+        }
+
+        .custom-category input {
+            flex: 1;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-header h3 {
+            color: #0f172a;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            /* Analytics responsive layout */
+            #analytics>div:first-child {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-wallet"></i> Digital Spending Tracker</h1>
+            <p>Track your income and expenses with ease</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </button>
+            <button class="nav-tab" data-tab="add-transaction">
+                <i class="fas fa-plus-circle"></i> Add Transaction
+            </button>
+            <button class="nav-tab" data-tab="transactions">
+                <i class="fas fa-list"></i> Transactions
+            </button>
+            <button class="nav-tab" data-tab="analytics">
+                <i class="fas fa-chart-pie"></i> Analytics
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card income">
+                    <div class="icon">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <h3>Total Income</h3>
+                    <div class="amount" id="totalIncome">₹0</div>
+                </div>
+                <div class="stat-card expense">
+                    <div class="icon">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <h3>Total Expenses</h3>
+                    <div class="amount" id="totalExpenses">₹0</div>
+                </div>
+                <div class="stat-card balance">
+                    <div class="icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h3>Current Balance</h3>
+                    <div class="amount" id="balance">₹0</div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-clock"></i> Recent Transactions</h3>
+                <div id="recentTransactions"></div>
+            </div>
+        </div>
+
+        <!-- Add Transaction Tab -->
+        <div id="add-transaction" class="tab-content">
+            <div class="form-section">
+                <h3><i class="fas fa-plus"></i> Add New Transaction</h3>
+                <form id="transactionForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="type">Type</label>
+                            <select id="type" required>
+                                <option value="">Select Type</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="amount">Amount (₹)</label>
+                            <input type="number" id="amount" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select id="category" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentMethod">Payment Method</label>
+                            <select id="paymentMethod" required>
+                                <option value="">Select Method</option>
+                                <option value="cash">Cash</option>
+                                <option value="card">Credit/Debit Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="upi">UPI</option>
+                                <option value="wallet">Digital Wallet</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <input type="text" id="description" placeholder="Transaction description">
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Date</label>
+                            <input type="date" id="date" required>
+                        </div>
+                    </div>
+
+                    <div class="custom-category">
+                        <div class="form-group" style="flex: 1; margin: 0;">
+                            <label for="customCategory">Add Custom Category (Optional)</label>
+                            <input type="text" id="customCategory" placeholder="Enter new category name">
+                        </div>
+                        <button type="button" class="btn btn-success" onclick="addCustomCategory()"
+                            style="margin-top: 25px;">
+                            <i class="fas fa-plus"></i> Add Category
+                        </button>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="margin-top: 20px;">
+                        <i class="fas fa-save"></i> Add Transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="transactions" class="tab-content">
+            <div class="section-header">
+                <h3>All Transactions</h3>
+                <button class="btn btn-export" onclick="exportToExcel()">
+                    <i class="fas fa-download"></i> Export to Excel
+                </button>
+            </div>
+            <div id="transactionsList">
+                <table class="transactions-table" id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Payment Method</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-bar"></i> Daily Expenses</h3>
+                    <canvas id="dailyExpenseChart" width="400" height="250"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-pie"></i> Expense by Category</h3>
+                    <canvas id="expensePieChart" width="400" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3><i class="fas fa-chart-line"></i> Monthly Income vs Expenses</h3>
+                <canvas id="incomeExpenseChart" width="400" height="300"></canvas>
+            </div>
+
+            <!-- Time Series Analysis Section -->
+            <div class="chart-container" style="margin-top: 24px;">
+                <h3><i class="fas fa-chart-area"></i> Time Series Analysis - Expense Trends</h3>
+                <canvas id="timeSeriesChart" width="400" height="300"></canvas>
+                <div id="timeSeriesStats"
+                    style="margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 0.875rem;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // Global app state
+        const MoneyTracker = {
+            transactions: [],
+            currentTab: 'dashboard',
+
+            // Default categories
+            defaultCategories: {
+                income: [
+                    'Salary', 'Freelance Work', 'Business Income', 'Investment Returns',
+                    'Rental Income', 'Side Hustle', 'Bonus', 'Gift/Cash Received',
+                    'Refund', 'Other Income'
+                ],
+                expense: [
+                    'Food & Dining', 'Groceries', 'Transportation', 'Fuel/Gas',
+                    'Entertainment', 'Shopping', 'Clothing', 'Utilities',
+                    'Rent/Mortgage', 'Healthcare', 'Insurance', 'Education',
+                    'Travel', 'Subscriptions', 'Personal Care', 'Home & Garden',
+                    'Electronics', 'Gifts & Donations', 'Bank Fees', 'Other Expenses'
+                ]
+            },
+
+            customCategories: { income: [], expense: [] },
+
+            // Initialize the app
+            init() {
+                this.loadTransactions();
+                this.loadCustomCategories();
+                this.setupEventListeners();
+                this.loadCategories();
+                this.setDefaultDate();
+                this.refreshAll();
+            },
+
+            // Load transactions from storage
+            loadTransactions() {
+                try {
+                    const stored = localStorage.getItem('moneyTracker_transactions');
+                    if (stored) {
+                        this.transactions = JSON.parse(stored);
+                    } else {
+                        this.transactions = [];
+                    }
+                } catch (error) {
+                    this.transactions = [];
+                }
+            },
+
+            // Save transactions to storage
+            saveTransactions() {
+                try {
+                    localStorage.setItem('moneyTracker_transactions', JSON.stringify(this.transactions));
+                } catch (error) { }
+            },
+
+            // Load custom categories
+            loadCustomCategories() {
+                try {
+                    const stored = localStorage.getItem('moneyTracker_customCategories');
+                    if (stored) {
+                        this.customCategories = JSON.parse(stored);
+                    }
+                } catch (error) {
+                    this.customCategories = { income: [], expense: [] };
+                }
+            },
+
+            // Save custom categories
+            saveCustomCategories() {
+                try {
+                    localStorage.setItem('moneyTracker_customCategories', JSON.stringify(this.customCategories));
+                } catch (error) { }
+            },
+
+            // Get all categories for a type
+            getAllCategories(type) {
+                return [...this.defaultCategories[type], ...this.customCategories[type]];
+            },
+
+            // Setup event listeners
+            setupEventListeners() {
+                // Tab navigation
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const tabName = e.target.closest('.nav-tab').dataset.tab;
+                        this.showTab(tabName);
+                    });
+                });
+
+                // Form submission
+                document.getElementById('transactionForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addTransaction();
+                });
+
+                // Type change for category loading
+                document.getElementById('type').addEventListener('change', (e) => {
+                    this.loadCategoriesForType(e.target.value);
+                });
+            },
+
+            // Show specific tab
+            showTab(tabName) {
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                    if (tab.dataset.tab === tabName) {
+                        tab.classList.add('active');
+                    }
+                });
+
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName).classList.add('active');
+
+                this.currentTab = tabName;
+
+                if (tabName === 'transactions') {
+                    this.displayTransactions();
+                } else if (tabName === 'analytics') {
+                    setTimeout(() => this.createCharts(), 100);
+                } else if (tabName === 'dashboard') {
+                    this.updateDashboard();
+                }
+            },
+
+            // Load categories into form
+            loadCategories() {
+                this.loadCategoriesForType('');
+            },
+
+            // Load categories for specific type
+            loadCategoriesForType(type) {
+                const categorySelect = document.getElementById('category');
+                categorySelect.innerHTML = '<option value="">Select Category</option>';
+
+                if (type) {
+                    const categories = this.getAllCategories(type);
+                    categories.forEach(cat => {
+                        const isCustom = this.customCategories[type].includes(cat);
+                        categorySelect.innerHTML += `<option value="${cat}">${cat}${isCustom ? ' (Custom)' : ''}</option>`;
+                    });
+                }
+            },
+
+            // Set default date
+            setDefaultDate() {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('date').value = today;
+            },
+
+            // Add new transaction
+            addTransaction() {
+                const transaction = {
+                    id: Date.now() + Math.random(),
+                    type: document.getElementById('type').value,
+                    amount: parseFloat(document.getElementById('amount').value),
+                    category: document.getElementById('category').value,
+                    paymentMethod: document.getElementById('paymentMethod').value,
+                    description: document.getElementById('description').value || '',
+                    date: document.getElementById('date').value
+                };
+
+                this.transactions.unshift(transaction);
+                this.saveTransactions();
+
+                document.getElementById('transactionForm').reset();
+                this.setDefaultDate();
+
+                this.refreshAll();
+
+                alert('Transaction added successfully!');
+            },
+
+            // Delete transaction
+            deleteTransaction(id) {
+                if (confirm('Are you sure you want to delete this transaction?')) {
+                    const originalLength = this.transactions.length;
+                    this.transactions = this.transactions.filter(t => t.id != id);
+
+                    if (this.transactions.length < originalLength) {
+                        this.saveTransactions();
+                        this.refreshAll();
+                        alert('Transaction deleted successfully!');
+                    } else {
+                        alert('Error: Transaction not found');
+                    }
+                }
+            },
+
+            // Display transactions in table
+            displayTransactions() {
+                const tbody = document.getElementById('transactionsBody');
+
+                if (this.transactions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">No transactions found. Add your first transaction to get started!</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                this.transactions.forEach(transaction => {
+                    const amountClass = transaction.type === 'income' ? 'amount-positive' : 'amount-negative';
+                    const amountPrefix = transaction.type === 'income' ? '+' : '-';
+                    const typeIcon = transaction.type === 'income' ? '↑' : '↓';
+                    const typeColor = transaction.type === 'income' ? '#10b981' : '#ef4444';
+
+                    html += `
+                        <tr>
+                            <td>${new Date(transaction.date).toLocaleDateString('en-IN')}</td>
+                            <td>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; color: ${typeColor};">
+                                    <span style="font-weight: bold;">${typeIcon}</span>
+                                    ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                                </span>
+                            </td>
+                            <td><strong>${transaction.category}</strong></td>
+                            <td>${transaction.description || '-'}</td>
+                            <td style="text-transform: capitalize;">${transaction.paymentMethod.replace('_', ' ')}</td>
+                            <td class="${amountClass}"><strong>${amountPrefix}₹${transaction.amount.toLocaleString('en-IN')}</strong></td>
+                            <td>
+                                <button class="delete-btn" onclick="MoneyTracker.deleteTransaction('${transaction.id}')" title="Delete transaction">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            },
+
+            // Update dashboard statistics
+            updateDashboard() {
+                const totalIncome = this.transactions
+                    .filter(t => t.type === 'income')
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const totalExpenses = this.transactions
+                    .filter(t => t.type === 'expense')
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const balance = totalIncome - totalExpenses;
+
+                document.getElementById('totalIncome').textContent = `₹${totalIncome.toLocaleString()}`;
+                document.getElementById('totalExpenses').textContent = `₹${totalExpenses.toLocaleString()}`;
+                document.getElementById('balance').textContent = `₹${balance.toLocaleString()}`;
+
+                const balanceElement = document.getElementById('balance');
+                balanceElement.style.color = balance >= 0 ? '#10b981' : '#ef4444';
+
+                this.displayRecentTransactions();
+            },
+
+            // Display recent transactions on dashboard
+            displayRecentTransactions() {
+                const recentContainer = document.getElementById('recentTransactions');
+                const recent = this.transactions.slice(0, 5);
+
+                if (recent.length === 0) {
+                    recentContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: #64748b;">No transactions yet. Add your first transaction to get started!</p>';
+                    return;
+                }
+
+                let html = '<table class="transactions-table"><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead><tbody>';
+
+                recent.forEach(transaction => {
+                    const amountClass = transaction.type === 'income' ? 'amount-positive' : 'amount-negative';
+                    const amountPrefix = transaction.type === 'income' ? '+' : '-';
+                    const typeIcon = transaction.type === 'income' ? '↑' : '↓';
+                    const typeColor = transaction.type === 'income' ? '#10b981' : '#ef4444';
+
+                    html += `
+                        <tr>
+                            <td>${new Date(transaction.date).toLocaleDateString('en-IN')}</td>
+                            <td>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; color: ${typeColor};">
+                                    <span style="font-weight: bold;">${typeIcon}</span>
+                                    ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                                </span>
+                            </td>
+                            <td><strong>${transaction.category}</strong></td>
+                            <td>${transaction.description || '-'}</td>
+                            <td class="${amountClass}"><strong>${amountPrefix}₹${transaction.amount.toLocaleString('en-IN')}</strong></td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                recentContainer.innerHTML = html;
+            },
+
+            // Create charts
+            createCharts() {
+                this.createDailyExpenseChart();
+                this.createExpensePieChart();
+                this.createIncomeExpenseChart();
+                this.createTimeSeriesChart();
+            },
+
+            // Create daily expense bar chart
+            createDailyExpenseChart() {
+                const ctx = document.getElementById('dailyExpenseChart').getContext('2d');
+
+                if (window.dailyExpenseChart instanceof Chart) {
+                    window.dailyExpenseChart.destroy();
+                }
+
+                const dailyExpenses = {};
+                this.transactions
+                    .filter(t => t.type === 'expense')
+                    .forEach(t => {
+                        const date = t.date;
+                        dailyExpenses[date] = (dailyExpenses[date] || 0) + t.amount;
+                    });
+
+                const sortedDates = Object.keys(dailyExpenses).sort();
+                const labels = sortedDates.slice(-30);
+                const data = labels.map(date => dailyExpenses[date]);
+
+                const formattedLabels = labels.map(date => {
+                    return new Date(date).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short'
+                    });
+                });
+
+                if (labels.length === 0) {
+                    ctx.font = '16px Inter';
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No expense data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                    return;
+                }
+
+                window.dailyExpenseChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: formattedLabels,
+                        datasets: [{
+                            label: 'Daily Expenses (₹)',
+                            data: data,
+                            backgroundColor: '#ef4444',
+                            borderColor: '#dc2626',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `₹${context.parsed.y.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return '₹' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            // Create expense category pie chart
+            createExpensePieChart() {
+                const ctx = document.getElementById('expensePieChart').getContext('2d');
+
+                if (window.expensePieChart instanceof Chart) {
+                    window.expensePieChart.destroy();
+                }
+
+                const expenseByCategory = {};
+                this.transactions
+                    .filter(t => t.type === 'expense')
+                    .forEach(t => {
+                        expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + t.amount;
+                    });
+
+                const labels = Object.keys(expenseByCategory);
+                const data = Object.values(expenseByCategory);
+
+                if (labels.length === 0) {
+                    ctx.font = '16px Inter';
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No expense data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                    return;
+                }
+
+                const colors = [
+                    '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
+                    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+                ];
+
+                window.expensePieChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${context.label}: ₹${value.toLocaleString()} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            // Create income vs expense chart
+            createIncomeExpenseChart() {
+                const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+
+                if (window.incomeExpenseChart instanceof Chart) {
+                    window.incomeExpenseChart.destroy();
+                }
+
+                const monthlyData = {};
+                this.transactions.forEach(t => {
+                    const month = new Date(t.date).toISOString().slice(0, 7);
+                    if (!monthlyData[month]) {
+                        monthlyData[month] = { income: 0, expense: 0 };
+                    }
+                    monthlyData[month][t.type] += t.amount;
+                });
+
+                const months = Object.keys(monthlyData).sort();
+                const incomeData = months.map(m => monthlyData[m].income);
+                const expenseData = months.map(m => monthlyData[m].expense);
+
+                const formattedLabels = months.map(m => {
+                    return new Date(m + '-01').toLocaleDateString('en-IN', {
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                });
+
+                if (months.length === 0) {
+                    ctx.font = '16px Inter';
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No transaction data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                    return;
+                }
+
+                window.incomeExpenseChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: formattedLabels,
+                        datasets: [{
+                            label: 'Income (₹)',
+                            data: incomeData,
+                            backgroundColor: '#10b981'
+                        }, {
+                            label: 'Expenses (₹)',
+                            data: expenseData,
+                            backgroundColor: '#ef4444'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return '₹' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            // Create Time Series Analysis Chart
+            createTimeSeriesChart() {
+                const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+
+                if (window.timeSeriesChart instanceof Chart) {
+                    window.timeSeriesChart.destroy();
+                }
+
+                // Perform time series analysis
+                const analysis = this.performTimeSeriesAnalysis();
+
+                if (analysis.dates.length === 0) {
+                    ctx.font = '16px Inter';
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No expense data available for time series analysis', ctx.canvas.width / 2, ctx.canvas.height / 2);
+
+                    document.getElementById('timeSeriesStats').innerHTML = '<p style="text-align: center; color: #64748b;">Add some expense transactions to see time series analysis</p>';
+                    return;
+                }
+
+                // Create the line chart
+                window.timeSeriesChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: analysis.dates,
+                        datasets: [{
+                            label: 'Daily Spending (₹)',
+                            data: analysis.amounts,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: { weight: 'bold' }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function (context) {
+                                        return analysis.rawDates[context[0].dataIndex];
+                                    },
+                                    label: function (context) {
+                                        const value = context.parsed.y;
+                                        if (value === 0) {
+                                            return 'No spending';
+                                        }
+                                        return `Spent: ₹${value.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date',
+                                    font: { weight: 'bold' }
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Amount (₹)',
+                                    font: { weight: 'bold' }
+                                },
+                                ticks: {
+                                    callback: function (value) {
+                                        return '₹' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Display statistics
+                const stats = analysis.stats;
+                const statsHtml = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div>
+                            <strong style="color: #0f172a;">Total Period:</strong><br>
+                            <span style="color: #64748b;">${stats.totalDays} days</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Days with Spending:</strong><br>
+                            <span style="color: #ef4444; font-weight: 600;">${stats.daysWithSpending} days</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Days without Spending:</strong><br>
+                            <span style="color: #10b981; font-weight: 600;">${stats.daysWithoutSpending} days</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Average Daily Spending:</strong><br>
+                            <span style="color: #3b82f6; font-weight: 600;">₹${stats.averageDailySpending.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Maximum Daily Spending:</strong><br>
+                            <span style="color: #ef4444; font-weight: 600;">₹${stats.maxSpending.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Minimum Daily Spending:</strong><br>
+                            <span style="color: #10b981; font-weight: 600;">₹${stats.minSpending.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Total Spending:</strong><br>
+                            <span style="color: #0f172a; font-weight: 700; font-size: 1.1rem;">₹${stats.totalSpending.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Spending Frequency:</strong><br>
+                            <span style="color: #64748b;">${((stats.daysWithSpending / stats.totalDays) * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('timeSeriesStats').innerHTML = statsHtml;
+            },
+
+            // Refresh all displays
+            refreshAll() {
+                this.updateDashboard();
+                if (this.currentTab === 'transactions') {
+                    this.displayTransactions();
+                }
+            },
+
+            // Time Series Analysis for Expenses
+            performTimeSeriesAnalysis() {
+                // Filter only expense transactions
+                const expenseTransactions = this.transactions.filter(t => t.type === 'expense');
+
+                if (expenseTransactions.length === 0) {
+                    return {
+                        dates: [],
+                        amounts: [],
+                        stats: {
+                            totalDays: 0,
+                            daysWithSpending: 0,
+                            daysWithoutSpending: 0,
+                            averageDailySpending: 0,
+                            maxSpending: 0,
+                            minSpending: 0
+                        }
+                    };
+                }
+
+                // Group expenses by date
+                const dailyExpenses = {};
+                expenseTransactions.forEach(t => {
+                    const date = t.date;
+                    dailyExpenses[date] = (dailyExpenses[date] || 0) + t.amount;
+                });
+
+                // Find date range (earliest to latest transaction)
+                const allDates = Object.keys(dailyExpenses).sort();
+                const startDate = new Date(allDates[0]);
+                const endDate = new Date(allDates[allDates.length - 1]);
+
+                // Fill in missing dates with zero spending
+                const completeTimeSeries = [];
+                const completeDates = [];
+
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    completeDates.push(dateStr);
+                    completeTimeSeries.push(dailyExpenses[dateStr] || 0);
+
+                    // Move to next day
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                // Calculate statistics
+                const nonZeroAmounts = completeTimeSeries.filter(amount => amount > 0);
+                const totalDays = completeTimeSeries.length;
+                const daysWithSpending = nonZeroAmounts.length;
+                const daysWithoutSpending = totalDays - daysWithSpending;
+                const totalSpending = completeTimeSeries.reduce((sum, amount) => sum + amount, 0);
+                const averageDailySpending = totalSpending / totalDays;
+                const maxSpending = nonZeroAmounts.length > 0 ? Math.max(...nonZeroAmounts) : 0;
+                const minSpending = nonZeroAmounts.length > 0 ? Math.min(...nonZeroAmounts) : 0;
+
+                // Format dates for display (convert to readable format)
+                const formattedDates = completeDates.map(dateStr => {
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short'
+                    });
+                });
+
+                return {
+                    dates: formattedDates,
+                    rawDates: completeDates,
+                    amounts: completeTimeSeries,
+                    stats: {
+                        totalDays,
+                        daysWithSpending,
+                        daysWithoutSpending,
+                        averageDailySpending: parseFloat(averageDailySpending.toFixed(2)),
+                        maxSpending,
+                        minSpending,
+                        totalSpending
+                    }
+                };
+            },
+
+            // Export to Excel
+            exportToExcel() {
+                if (this.transactions.length === 0) {
+                    alert('No transactions to export');
+                    return;
+                }
+
+                let csv = 'Date,Type,Category,Description,Payment Method,Amount\n';
+                this.transactions.forEach(t => {
+                    csv += `${t.date},${t.type},${t.category},"${t.description}",${t.paymentMethod},${t.amount}\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        };
+
+        // Global functions for HTML onclick handlers
+        function addCustomCategory() {
+            const customInput = document.getElementById('customCategory');
+            const typeSelect = document.getElementById('type');
+
+            if (!customInput.value.trim() || !typeSelect.value) {
+                alert('Please enter a category name and select a type first');
+                return;
+            }
+
+            const newCategory = customInput.value.trim();
+            const type = typeSelect.value;
+
+            if (MoneyTracker.getAllCategories(type).includes(newCategory)) {
+                alert('Category already exists');
+                return;
+            }
+
+            MoneyTracker.customCategories[type].push(newCategory);
+            MoneyTracker.saveCustomCategories();
+            MoneyTracker.loadCategoriesForType(type);
+
+            document.getElementById('category').value = newCategory;
+            customInput.value = '';
+
+            alert('Custom category added successfully!');
+        }
+
+        function exportToExcel() {
+            MoneyTracker.exportToExcel();
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            MoneyTracker.init();
+        });
+    </script>
+</body>
+
+</html>
