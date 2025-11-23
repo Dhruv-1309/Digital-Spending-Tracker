@@ -398,6 +398,107 @@
             margin: 0;
         }
 
+        .anomaly-alert-container {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);
+        }
+
+        .anomaly-alert-container h3 {
+            color: #92400e;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .anomaly-alert-container h3 i {
+            color: #f59e0b;
+            font-size: 1.3rem;
+        }
+
+        .anomaly-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .anomaly-item {
+            background: white;
+            border-left: 4px solid #f59e0b;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .anomaly-item:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+            transform: translateX(4px);
+        }
+
+        .anomaly-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .anomaly-category {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+
+        .anomaly-amount {
+            font-weight: 700;
+            color: #dc2626;
+            font-size: 1.1rem;
+        }
+
+        .anomaly-details {
+            display: flex;
+            gap: 16px;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .anomaly-details span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .anomaly-z-score {
+            display: inline-block;
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .no-anomalies {
+            text-align: center;
+            padding: 20px;
+            color: #059669;
+            background: white;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .no-anomalies i {
+            color: #10b981;
+            margin-right: 8px;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -471,6 +572,9 @@
                 </div>
             </div>
 
+            <!-- Anomaly Detection Alert Section -->
+            <div id="anomalyAlertSection"></div>
+
             <div class="form-section">
                 <h3><i class="fas fa-clock"></i> Recent Transactions</h3>
                 <div id="recentTransactions"></div>
@@ -516,6 +620,10 @@
                         <div class="form-group">
                             <label for="description">Description</label>
                             <input type="text" id="description" placeholder="Transaction description">
+                            <small style="color: #64748b; font-size: 0.75rem; margin-top: 4px; display: block;">
+                                💡 <strong>Smart Categorization:</strong> Type keywords like "uber", "coffee", "netflix"
+                                and the category will be auto-suggested
+                            </small>
                         </div>
                         <div class="form-group">
                             <label for="date">Date</label>
@@ -582,16 +690,20 @@
                 </div>
             </div>
 
-            <div class="chart-container">
-                <h3><i class="fas fa-chart-line"></i> Monthly Income vs Expenses</h3>
-                <canvas id="incomeExpenseChart" width="400" height="300"></canvas>
-            </div>
-
             <!-- Time Series Analysis Section -->
             <div class="chart-container" style="margin-top: 24px;">
                 <h3><i class="fas fa-chart-area"></i> Time Series Analysis - Expense Trends</h3>
                 <canvas id="timeSeriesChart" width="400" height="300"></canvas>
                 <div id="timeSeriesStats"
+                    style="margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 0.875rem;">
+                </div>
+            </div>
+
+            <!-- Day of Week Heatmap Section -->
+            <div class="chart-container" style="margin-top: 24px;">
+                <h3><i class="fas fa-fire"></i> Spending Heatmap - Day of Week Analysis</h3>
+                <canvas id="dayOfWeekChart" width="400" height="300"></canvas>
+                <div id="dayOfWeekStats"
                     style="margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 0.875rem;">
                 </div>
             </div>
@@ -604,6 +716,7 @@
         const MoneyTracker = {
             transactions: [],
             currentTab: 'dashboard',
+            approvedAnomalies: [], // Track IDs of approved anomalies
 
             // Default categories
             defaultCategories: {
@@ -627,6 +740,7 @@
             init() {
                 this.loadTransactions();
                 this.loadCustomCategories();
+                this.loadApprovedAnomalies();
                 this.setupEventListeners();
                 this.loadCategories();
                 this.setDefaultDate();
@@ -673,9 +787,246 @@
                 } catch (error) { }
             },
 
+            // Load approved anomalies
+            loadApprovedAnomalies() {
+                try {
+                    const stored = localStorage.getItem('moneyTracker_approvedAnomalies');
+                    if (stored) {
+                        this.approvedAnomalies = JSON.parse(stored);
+                    } else {
+                        this.approvedAnomalies = [];
+                    }
+                } catch (error) {
+                    this.approvedAnomalies = [];
+                }
+            },
+
+            // Save approved anomalies
+            saveApprovedAnomalies() {
+                try {
+                    localStorage.setItem('moneyTracker_approvedAnomalies', JSON.stringify(this.approvedAnomalies));
+                } catch (error) { }
+            },
+
+            // Mark anomaly as approved
+            approveAnomaly(transactionId) {
+                console.log('Approving anomaly:', transactionId);
+                console.log('Current approved list:', this.approvedAnomalies);
+
+                // Convert to string for consistent comparison
+                const idStr = String(transactionId);
+
+                if (!this.approvedAnomalies.includes(idStr)) {
+                    this.approvedAnomalies.push(idStr);
+                    this.saveApprovedAnomalies();
+                    console.log('Updated approved list:', this.approvedAnomalies);
+                    this.displayAnomalyAlerts(); // Refresh the alerts immediately
+                    alert('✅ Anomaly marked as legitimate and approved!');
+                } else {
+                    console.log('Already approved');
+                    alert('This anomaly is already approved!');
+                }
+            },
+
+            // Dismiss/remove anomaly approval
+            dismissAnomaly(transactionId) {
+                console.log('Dismissing anomaly:', transactionId);
+                console.log('Current approved list:', this.approvedAnomalies);
+
+                // Convert to string for consistent comparison
+                const idStr = String(transactionId);
+
+                // Find and DELETE the transaction
+                const originalLength = this.transactions.length;
+                this.transactions = this.transactions.filter(t => String(t.id) !== idStr);
+
+                if (this.transactions.length < originalLength) {
+                    // Transaction was found and deleted
+                    this.saveTransactions();
+                    console.log('Transaction deleted');
+
+                    // Also remove from approved list if it was there
+                    const index = this.approvedAnomalies.indexOf(idStr);
+                    if (index > -1) {
+                        this.approvedAnomalies.splice(index, 1);
+                        this.saveApprovedAnomalies();
+                    }
+
+                    // Refresh all displays
+                    this.refreshAll();
+
+                    alert('🗑️ Transaction dismissed and removed from your records!');
+                } else {
+                    console.log('Transaction not found');
+                    alert('❌ Error: Transaction not found');
+                }
+            },
+
             // Get all categories for a type
             getAllCategories(type) {
                 return [...this.defaultCategories[type], ...this.customCategories[type]];
+            },
+
+            // NLP Feature - Predict Category from Description
+            predictCategory(description, transactionType = 'expense') {
+                /**
+                 * Automatically categorizes transactions based on keywords in description
+                 * @param {String} description - Transaction description text
+                 * @param {String} transactionType - 'income' or 'expense'
+                 * @returns {String} Predicted category name or null if no match
+                 */
+
+                if (!description || description.trim() === '') {
+                    return null;
+                }
+
+                // Convert to lowercase for case-insensitive matching
+                const desc = description.toLowerCase();
+
+                // Keyword mapping dictionary for EXPENSES
+                const expenseKeywords = {
+                    // Food & Dining
+                    'Food & Dining': [
+                        'food', 'lunch', 'dinner', 'breakfast', 'restaurant', 'cafe', 'coffee',
+                        'burger', 'pizza', 'zomato', 'swiggy', 'uber eats', 'doordash',
+                        'mcdonald', 'kfc', 'dominos', 'subway', 'starbucks', 'dunkin',
+                        'meal', 'eating', 'snack', 'beverage', 'drink', 'bar', 'pub'
+                    ],
+
+                    // Groceries
+                    'Groceries': [
+                        'grocery', 'groceries', 'supermarket', 'market', 'vegetables', 'fruits',
+                        'walmart', 'target', 'costco', 'bigbasket', 'amazon fresh',
+                        'milk', 'bread', 'eggs', 'provisions', 'supplies'
+                    ],
+
+                    // Transportation
+                    'Transportation': [
+                        'uber', 'lyft', 'taxi', 'cab', 'bus', 'train', 'metro', 'subway',
+                        'transport', 'commute', 'ola', 'auto', 'rickshaw', 'ride',
+                        'parking', 'toll', 'fare', 'ticket'
+                    ],
+
+                    // Fuel/Gas
+                    'Fuel/Gas': [
+                        'fuel', 'gas', 'petrol', 'diesel', 'gasoline', 'pump',
+                        'shell', 'bp', 'chevron', 'exxon', 'indian oil', 'bharat petroleum'
+                    ],
+
+                    // Entertainment
+                    'Entertainment': [
+                        'movie', 'cinema', 'theater', 'netflix', 'spotify', 'amazon prime',
+                        'disney', 'hulu', 'entertainment', 'concert', 'show', 'event',
+                        'game', 'gaming', 'xbox', 'playstation', 'steam', 'pvr', 'inox'
+                    ],
+
+                    // Shopping
+                    'Shopping': [
+                        'shopping', 'amazon', 'flipkart', 'ebay', 'myntra', 'ajio',
+                        'online', 'store', 'mall', 'purchase', 'bought', 'shop'
+                    ],
+
+                    // Clothing
+                    'Clothing': [
+                        'clothes', 'clothing', 'shirt', 'pants', 'dress', 'shoes', 'fashion',
+                        'zara', 'h&m', 'nike', 'adidas', 'apparel', 'outfit', 'wear'
+                    ],
+
+                    // Utilities
+                    'Utilities': [
+                        'electricity', 'water', 'internet', 'wifi', 'broadband', 'phone bill',
+                        'utility', 'utilities', 'bill', 'mobile', 'recharge', 'airtel', 'jio'
+                    ],
+
+                    // Healthcare
+                    'Healthcare': [
+                        'doctor', 'hospital', 'clinic', 'medicine', 'pharmacy', 'medical',
+                        'health', 'healthcare', 'appointment', 'checkup', 'prescription',
+                        'apollo', 'fortis', 'medplus', 'dental', 'dentist'
+                    ],
+
+                    // Education
+                    'Education': [
+                        'education', 'course', 'class', 'tuition', 'school', 'college',
+                        'university', 'book', 'books', 'study', 'learning', 'udemy',
+                        'coursera', 'fees', 'exam'
+                    ],
+
+                    // Travel
+                    'Travel': [
+                        'travel', 'flight', 'hotel', 'airbnb', 'booking', 'vacation',
+                        'trip', 'tour', 'airline', 'makemytrip', 'goibibo', 'cleartrip'
+                    ],
+
+                    // Subscriptions
+                    'Subscriptions': [
+                        'subscription', 'monthly', 'yearly', 'membership', 'premium',
+                        'recurring', 'renew', 'renewal'
+                    ],
+
+                    // Electronics
+                    'Electronics': [
+                        'laptop', 'computer', 'phone', 'mobile', 'tablet', 'electronics',
+                        'gadget', 'apple', 'samsung', 'sony', 'dell', 'hp', 'tech'
+                    ],
+
+                    // Gifts & Donations
+                    'Gifts & Donations': [
+                        'gift', 'present', 'donation', 'charity', 'donate', 'contribution',
+                        'birthday', 'anniversary', 'wedding'
+                    ]
+                };
+
+                // Keyword mapping dictionary for INCOME
+                const incomeKeywords = {
+                    'Salary': [
+                        'salary', 'paycheck', 'wage', 'pay', 'income', 'earnings',
+                        'compensation', 'employer', 'company'
+                    ],
+
+                    'Freelance Work': [
+                        'freelance', 'freelancing', 'upwork', 'fiverr', 'contract',
+                        'project', 'gig', 'client work'
+                    ],
+
+                    'Business Income': [
+                        'business', 'revenue', 'sales', 'profit', 'customer payment',
+                        'invoice', 'commercial'
+                    ],
+
+                    'Investment Returns': [
+                        'investment', 'dividend', 'stock', 'mutual fund', 'returns',
+                        'interest', 'capital gain', 'equity', 'bonds'
+                    ],
+
+                    'Bonus': [
+                        'bonus', 'incentive', 'reward', 'commission', 'performance',
+                        'extra pay'
+                    ],
+
+                    'Gift/Cash Received': [
+                        'gift', 'received', 'cash gift', 'birthday money', 'present money'
+                    ],
+
+                    'Refund': [
+                        'refund', 'return', 'reimbursement', 'cashback', 'money back'
+                    ]
+                };
+
+                // Select the appropriate keyword dictionary
+                const keywords = transactionType === 'income' ? incomeKeywords : expenseKeywords;
+
+                // Search for keyword matches
+                for (const [category, keywordList] of Object.entries(keywords)) {
+                    for (const keyword of keywordList) {
+                        if (desc.includes(keyword)) {
+                            return category;
+                        }
+                    }
+                }
+
+                // No match found
+                return null;
             },
 
             // Setup event listeners
@@ -697,6 +1048,36 @@
                 // Type change for category loading
                 document.getElementById('type').addEventListener('change', (e) => {
                     this.loadCategoriesForType(e.target.value);
+                });
+
+                // Auto-categorization based on description (NLP feature)
+                document.getElementById('description').addEventListener('input', (e) => {
+                    const description = e.target.value;
+                    const typeSelect = document.getElementById('type');
+                    const categorySelect = document.getElementById('category');
+
+                    // Only auto-suggest if type is selected
+                    if (typeSelect.value && description.length >= 3) {
+                        const predictedCategory = this.predictCategory(description, typeSelect.value);
+
+                        if (predictedCategory) {
+                            // Check if the predicted category exists in the dropdown
+                            const options = Array.from(categorySelect.options);
+                            const matchingOption = options.find(opt => opt.value === predictedCategory);
+
+                            if (matchingOption) {
+                                categorySelect.value = predictedCategory;
+                                // Visual feedback - highlight the auto-selected category
+                                categorySelect.style.borderColor = '#10b981';
+                                categorySelect.style.backgroundColor = '#f0fdf4';
+
+                                setTimeout(() => {
+                                    categorySelect.style.borderColor = '';
+                                    categorySelect.style.backgroundColor = '';
+                                }, 1500);
+                            }
+                        }
+                    }
                 });
             },
 
@@ -849,6 +1230,7 @@
                 const balanceElement = document.getElementById('balance');
                 balanceElement.style.color = balance >= 0 ? '#10b981' : '#ef4444';
 
+                this.displayAnomalyAlerts();
                 this.displayRecentTransactions();
             },
 
@@ -894,8 +1276,8 @@
             createCharts() {
                 this.createDailyExpenseChart();
                 this.createExpensePieChart();
-                this.createIncomeExpenseChart();
                 this.createTimeSeriesChart();
+                this.createDayOfWeekHeatmap();
             },
 
             // Create daily expense bar chart
@@ -1035,76 +1417,6 @@
                 });
             },
 
-            // Create income vs expense chart
-            createIncomeExpenseChart() {
-                const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
-
-                if (window.incomeExpenseChart instanceof Chart) {
-                    window.incomeExpenseChart.destroy();
-                }
-
-                const monthlyData = {};
-                this.transactions.forEach(t => {
-                    const month = new Date(t.date).toISOString().slice(0, 7);
-                    if (!monthlyData[month]) {
-                        monthlyData[month] = { income: 0, expense: 0 };
-                    }
-                    monthlyData[month][t.type] += t.amount;
-                });
-
-                const months = Object.keys(monthlyData).sort();
-                const incomeData = months.map(m => monthlyData[m].income);
-                const expenseData = months.map(m => monthlyData[m].expense);
-
-                const formattedLabels = months.map(m => {
-                    return new Date(m + '-01').toLocaleDateString('en-IN', {
-                        month: 'short',
-                        year: 'numeric'
-                    });
-                });
-
-                if (months.length === 0) {
-                    ctx.font = '16px Inter';
-                    ctx.fillStyle = '#64748b';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('No transaction data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                    return;
-                }
-
-                window.incomeExpenseChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: formattedLabels,
-                        datasets: [{
-                            label: 'Income (₹)',
-                            data: incomeData,
-                            backgroundColor: '#10b981'
-                        }, {
-                            label: 'Expenses (₹)',
-                            data: expenseData,
-                            backgroundColor: '#ef4444'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: true, position: 'top' }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function (value) {
-                                        return '₹' + value.toLocaleString();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            },
-
             // Create Time Series Analysis Chart
             createTimeSeriesChart() {
                 const ctx = document.getElementById('timeSeriesChart').getContext('2d');
@@ -1121,7 +1433,7 @@
                     ctx.fillStyle = '#64748b';
                     ctx.textAlign = 'center';
                     ctx.fillText('No expense data available for time series analysis', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                    
+
                     document.getElementById('timeSeriesStats').innerHTML = '<p style="text-align: center; color: #64748b;">Add some expense transactions to see time series analysis</p>';
                     return;
                 }
@@ -1147,14 +1459,14 @@
 
                 // Combine dates for x-axis (actual + forecast)
                 let allLabels = [...analysis.dates];
-                
+
                 // Add forecast dataset if available
                 if (forecast.forecastDates.length > 0) {
                     allLabels = [...analysis.dates, ...forecast.forecastDates];
-                    
+
                     // Create forecast data array with nulls for actual data points
                     const forecastData = new Array(analysis.amounts.length).fill(null).concat(forecast.forecastAmounts);
-                    
+
                     datasets.push({
                         label: 'Predicted Spending (7-day SMA)',
                         data: forecastData,
@@ -1184,8 +1496,8 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { 
-                                display: true, 
+                            legend: {
+                                display: true,
                                 position: 'top',
                                 labels: {
                                     font: { weight: 'bold' },
@@ -1195,7 +1507,7 @@
                             },
                             tooltip: {
                                 callbacks: {
-                                    title: function(context) {
+                                    title: function (context) {
                                         const index = context[0].dataIndex;
                                         if (index < analysis.rawDates.length) {
                                             return analysis.rawDates[index];
@@ -1284,14 +1596,14 @@
                             <strong style="color: #0f172a;">Spending Frequency:</strong><br>
                             <span style="color: #64748b;">${((stats.daysWithSpending / stats.totalDays) * 100).toFixed(1)}%</span>
                         </div>`;
-                
+
                 // Add forecast statistics if available
                 if (forecast.forecastDates.length > 0) {
-                    const confidenceColor = forecast.confidence === 'high' ? '#10b981' : 
-                                           forecast.confidence === 'medium' ? '#f59e0b' : '#ef4444';
-                    const confidenceIcon = forecast.confidence === 'high' ? '✓' : 
-                                          forecast.confidence === 'medium' ? '⚠' : '!';
-                    
+                    const confidenceColor = forecast.confidence === 'high' ? '#10b981' :
+                        forecast.confidence === 'medium' ? '#f59e0b' : '#ef4444';
+                    const confidenceIcon = forecast.confidence === 'high' ? '✓' :
+                        forecast.confidence === 'medium' ? '⚠' : '!';
+
                     statsHtml += `
                         <div style="grid-column: 1 / -1; margin-top: 12px; padding-top: 16px; border-top: 2px solid #e2e8f0;">
                             <strong style="color: #8b5cf6; font-size: 1.05rem;">
@@ -1317,7 +1629,7 @@
                             <span style="color: #64748b;">${forecast.coefficientOfVariation.toFixed(1)}% CV</span>
                         </div>`;
                 }
-                
+
                 statsHtml += `</div>`;
                 document.getElementById('timeSeriesStats').innerHTML = statsHtml;
             },            // Refresh all displays
@@ -1338,7 +1650,7 @@
                  * @param {Number} forecastDays - Number of days to forecast (default: 7)
                  * @returns {Object} Object containing forecast dates, amounts, and SMA value
                  */
-                
+
                 if (amounts.length < window) {
                     return {
                         forecastDates: [],
@@ -1360,13 +1672,13 @@
                 for (let i = 1; i <= forecastDays; i++) {
                     const nextDate = new Date(lastDate);
                     nextDate.setDate(lastDate.getDate() + i);
-                    
+
                     const dateStr = nextDate.toISOString().split('T')[0];
                     const formattedDate = nextDate.toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short'
                     });
-                    
+
                     forecastDates.push(formattedDate);
                     forecastAmounts.push(smaValue); // Each forecasted day uses the SMA value
                 }
@@ -1395,6 +1707,464 @@
                     forecastDays,
                     coefficientOfVariation: parseFloat(coefficientOfVariation.toFixed(2))
                 };
+            },
+
+            // Anomaly Detection Function
+            detectSpendingAnomalies(threshold = 2) {
+                /**
+                 * Detects statistical outliers in expense transactions using Z-score analysis
+                 * @param {Number} threshold - Z-score threshold for anomaly detection (default: 2)
+                 * @returns {Object} Object containing anomalies and category statistics
+                 */
+
+                // Filter only expense transactions
+                const expenseTransactions = this.transactions.filter(t => t.type === 'expense');
+
+                if (expenseTransactions.length === 0) {
+                    return {
+                        anomalies: [],
+                        categoryStats: {},
+                        totalAnomalies: 0
+                    };
+                }
+
+                // Group transactions by category
+                const categoryGroups = {};
+                expenseTransactions.forEach(transaction => {
+                    const category = transaction.category;
+                    if (!categoryGroups[category]) {
+                        categoryGroups[category] = [];
+                    }
+                    categoryGroups[category].push(transaction);
+                });
+
+                // Calculate statistics for each category
+                const categoryStats = {};
+                const anomalies = [];
+
+                Object.keys(categoryGroups).forEach(category => {
+                    const transactions = categoryGroups[category];
+                    const amounts = transactions.map(t => t.amount);
+
+                    // Skip categories with less than 3 transactions (not enough data for meaningful statistics)
+                    if (amounts.length < 3) {
+                        categoryStats[category] = {
+                            count: amounts.length,
+                            mean: 0,
+                            stdDev: 0,
+                            insufficient: true
+                        };
+                        return;
+                    }
+
+                    // Calculate Mean (average)
+                    const mean = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
+
+                    // Calculate Standard Deviation
+                    const variance = amounts.reduce((sum, val) => {
+                        return sum + Math.pow(val - mean, 2);
+                    }, 0) / amounts.length;
+                    const stdDev = Math.sqrt(variance);
+
+                    // Store category statistics
+                    categoryStats[category] = {
+                        count: amounts.length,
+                        mean: parseFloat(mean.toFixed(2)),
+                        stdDev: parseFloat(stdDev.toFixed(2)),
+                        insufficient: false
+                    };
+
+                    // Detect anomalies (Z-score > threshold)
+                    transactions.forEach(transaction => {
+                        if (stdDev === 0) {
+                            // If stdDev is 0, all values are the same, no anomalies
+                            return;
+                        }
+
+                        // Calculate Z-score
+                        const zScore = (transaction.amount - mean) / stdDev;
+
+                        // Check if transaction is an anomaly (more than threshold standard deviations above mean)
+                        if (zScore > threshold) {
+                            anomalies.push({
+                                id: transaction.id,
+                                date: transaction.date,
+                                category: transaction.category,
+                                amount: transaction.amount,
+                                description: transaction.description || 'No description',
+                                paymentMethod: transaction.paymentMethod,
+                                zScore: parseFloat(zScore.toFixed(2)),
+                                mean: mean,
+                                stdDev: stdDev,
+                                deviationAmount: parseFloat((transaction.amount - mean).toFixed(2))
+                            });
+                        }
+                    });
+                });
+
+                // Sort anomalies by Z-score (highest first)
+                anomalies.sort((a, b) => b.zScore - a.zScore);
+
+                return {
+                    anomalies,
+                    categoryStats,
+                    totalAnomalies: anomalies.length,
+                    threshold
+                };
+            },
+
+            // Display Anomaly Alerts on Dashboard
+            displayAnomalyAlerts() {
+                const anomalySection = document.getElementById('anomalyAlertSection');
+                const detection = this.detectSpendingAnomalies(2);
+
+                console.log('Total anomalies detected:', detection.anomalies.length);
+                console.log('Approved anomalies:', this.approvedAnomalies);
+
+                // Filter out approved anomalies (convert IDs to strings for comparison)
+                const unapprovedAnomalies = detection.anomalies.filter(
+                    anomaly => !this.approvedAnomalies.includes(String(anomaly.id))
+                );
+
+                console.log('Unapproved anomalies:', unapprovedAnomalies.length);
+
+                if (unapprovedAnomalies.length === 0) {
+                    anomalySection.innerHTML = '';
+                    return;
+                }
+
+                let html = `
+                    <div class="anomaly-alert-container">
+                        <h3>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Unusual Spending Detected (${unapprovedAnomalies.length} Alert${unapprovedAnomalies.length > 1 ? 's' : ''})
+                        </h3>
+                        <p style="margin-bottom: 16px; color: #92400e; font-size: 0.9rem;">
+                            The following transactions are statistically unusual compared to your typical spending in each category:
+                        </p>
+                        <div class="anomaly-list">
+                `;
+
+                unapprovedAnomalies.forEach(anomaly => {
+                    const date = new Date(anomaly.date).toLocaleDateString('en-IN');
+                    const percentAboveMean = ((anomaly.amount - anomaly.mean) / anomaly.mean * 100).toFixed(0);
+
+                    html += `
+                        <div class="anomaly-item">
+                            <div class="anomaly-item-header">
+                                <span class="anomaly-category">
+                                    ${anomaly.category}
+                                    <span class="anomaly-z-score">Z-score: ${anomaly.zScore}</span>
+                                </span>
+                                <span class="anomaly-amount">₹${anomaly.amount.toLocaleString()}</span>
+                            </div>
+                            <div class="anomaly-details">
+                                <span><i class="fas fa-calendar"></i> ${date}</span>
+                                <span><i class="fas fa-credit-card"></i> ${anomaly.paymentMethod.replace('_', ' ')}</span>
+                                <span><i class="fas fa-chart-line"></i> ${percentAboveMean}% above average</span>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 0.875rem; color: #64748b;">
+                                <strong>Description:</strong> ${anomaly.description}
+                            </div>
+                            <div style="margin-top: 6px; font-size: 0.8rem; color: #92400e; background: #fef3c7; padding: 6px 10px; border-radius: 6px; display: inline-block;">
+                                💡 Typical ${anomaly.category} spending: ₹${anomaly.mean.toLocaleString()} (±₹${anomaly.stdDev.toLocaleString()})
+                            </div>
+                            <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                <button onclick="MoneyTracker.approveAnomaly('${anomaly.id}')" 
+                                    class="btn btn-success" 
+                                    style="padding: 8px 16px; font-size: 0.875rem;">
+                                    <i class="fas fa-check"></i> Approve (Legitimate)
+                                </button>
+                                <button onclick="MoneyTracker.dismissAnomaly('${anomaly.id}')" 
+                                    class="btn" 
+                                    style="padding: 8px 16px; font-size: 0.875rem; background: #94a3b8; color: white;">
+                                    <i class="fas fa-times"></i> Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+
+                anomalySection.innerHTML = html;
+            },
+
+            // Heatmap Data Preparation - Aggregate Expenses by Day of Week
+            getExpensesByDayOfWeek() {
+                /**
+                 * Aggregates expenses by day of the week for heatmap visualization
+                 * @returns {Object} Object containing day-wise spending data and statistics
+                 */
+
+                // Filter only expense transactions
+                const expenseTransactions = this.transactions.filter(t => t.type === 'expense');
+
+                if (expenseTransactions.length === 0) {
+                    return {
+                        dayTotals: {
+                            'Monday': 0,
+                            'Tuesday': 0,
+                            'Wednesday': 0,
+                            'Thursday': 0,
+                            'Friday': 0,
+                            'Saturday': 0,
+                            'Sunday': 0
+                        },
+                        dayAverages: {},
+                        dayCounts: {},
+                        totalExpenses: 0,
+                        isEmpty: true
+                    };
+                }
+
+                // Initialize day totals and counts
+                const dayTotals = {
+                    'Monday': 0,
+                    'Tuesday': 0,
+                    'Wednesday': 0,
+                    'Thursday': 0,
+                    'Friday': 0,
+                    'Saturday': 0,
+                    'Sunday': 0
+                };
+
+                const dayCounts = {
+                    'Monday': 0,
+                    'Tuesday': 0,
+                    'Wednesday': 0,
+                    'Thursday': 0,
+                    'Friday': 0,
+                    'Saturday': 0,
+                    'Sunday': 0
+                };
+
+                // Days of week array for mapping
+                const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+                // Aggregate expenses by day of week
+                expenseTransactions.forEach(transaction => {
+                    const date = new Date(transaction.date);
+                    const dayIndex = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                    const dayName = daysOfWeek[dayIndex];
+
+                    dayTotals[dayName] += transaction.amount;
+                    dayCounts[dayName] += 1;
+                });
+
+                // Calculate averages per day
+                const dayAverages = {};
+                Object.keys(dayTotals).forEach(day => {
+                    dayAverages[day] = dayCounts[day] > 0
+                        ? parseFloat((dayTotals[day] / dayCounts[day]).toFixed(2))
+                        : 0;
+                });
+
+                // Calculate total expenses
+                const totalExpenses = Object.values(dayTotals).reduce((sum, val) => sum + val, 0);
+
+                // Sort the results from Monday to Sunday
+                const sortedDayTotals = {
+                    'Monday': dayTotals['Monday'],
+                    'Tuesday': dayTotals['Tuesday'],
+                    'Wednesday': dayTotals['Wednesday'],
+                    'Thursday': dayTotals['Thursday'],
+                    'Friday': dayTotals['Friday'],
+                    'Saturday': dayTotals['Saturday'],
+                    'Sunday': dayTotals['Sunday']
+                };
+
+                const sortedDayAverages = {
+                    'Monday': dayAverages['Monday'],
+                    'Tuesday': dayAverages['Tuesday'],
+                    'Wednesday': dayAverages['Wednesday'],
+                    'Thursday': dayAverages['Thursday'],
+                    'Friday': dayAverages['Friday'],
+                    'Saturday': dayAverages['Saturday'],
+                    'Sunday': dayAverages['Sunday']
+                };
+
+                const sortedDayCounts = {
+                    'Monday': dayCounts['Monday'],
+                    'Tuesday': dayCounts['Tuesday'],
+                    'Wednesday': dayCounts['Wednesday'],
+                    'Thursday': dayCounts['Thursday'],
+                    'Friday': dayCounts['Friday'],
+                    'Saturday': dayCounts['Saturday'],
+                    'Sunday': dayCounts['Sunday']
+                };
+
+                // Find the day with highest and lowest spending
+                let maxDay = 'Monday';
+                let minDay = 'Monday';
+                let maxAmount = sortedDayTotals['Monday'];
+                let minAmount = sortedDayTotals['Monday'];
+
+                Object.keys(sortedDayTotals).forEach(day => {
+                    if (sortedDayTotals[day] > maxAmount) {
+                        maxAmount = sortedDayTotals[day];
+                        maxDay = day;
+                    }
+                    if (dayCounts[day] > 0 && sortedDayTotals[day] < minAmount) {
+                        minAmount = sortedDayTotals[day];
+                        minDay = day;
+                    }
+                });
+
+                return {
+                    dayTotals: sortedDayTotals,
+                    dayAverages: sortedDayAverages,
+                    dayCounts: sortedDayCounts,
+                    totalExpenses: parseFloat(totalExpenses.toFixed(2)),
+                    maxDay,
+                    maxAmount,
+                    minDay,
+                    minAmount,
+                    isEmpty: false
+                };
+            },
+
+            // Create Day of Week Heatmap Chart
+            createDayOfWeekHeatmap() {
+                const ctx = document.getElementById('dayOfWeekChart').getContext('2d');
+
+                if (window.dayOfWeekChart instanceof Chart) {
+                    window.dayOfWeekChart.destroy();
+                }
+
+                // Get day of week data
+                const data = this.getExpensesByDayOfWeek();
+
+                if (data.isEmpty) {
+                    ctx.font = '16px Inter';
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No expense data available for day of week analysis', ctx.canvas.width / 2, ctx.canvas.height / 2);
+
+                    document.getElementById('dayOfWeekStats').innerHTML = '<p style="text-align: center; color: #64748b;">Add some expense transactions to see day of week analysis</p>';
+                    return;
+                }
+
+                const days = Object.keys(data.dayTotals);
+                const totals = Object.values(data.dayTotals);
+                const averages = Object.values(data.dayAverages);
+
+                // Create gradient colors based on spending intensity
+                const maxTotal = Math.max(...totals);
+                const colors = totals.map(total => {
+                    const intensity = total / maxTotal;
+                    // Red gradient: lighter for less spending, darker for more
+                    const red = 239;
+                    const green = Math.floor(68 + (180 * (1 - intensity)));
+                    const blue = Math.floor(68 + (180 * (1 - intensity)));
+                    return `rgb(${red}, ${green}, ${blue})`;
+                });
+
+                // Create the bar chart
+                window.dayOfWeekChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: days,
+                        datasets: [{
+                            label: 'Total Spending (₹)',
+                            data: totals,
+                            backgroundColor: colors,
+                            borderColor: colors.map(color => color.replace('rgb', 'rgba').replace(')', ', 0.8)')),
+                            borderWidth: 2,
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: { weight: 'bold' }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function (context) {
+                                        const day = context[0].label;
+                                        const count = data.dayCounts[day];
+                                        return `${day} (${count} transaction${count !== 1 ? 's' : ''})`;
+                                    },
+                                    label: function (context) {
+                                        const day = context.label;
+                                        const total = context.parsed.y;
+                                        const avg = data.dayAverages[day];
+                                        return [
+                                            `Total: ₹${total.toLocaleString()}`,
+                                            `Average: ₹${avg.toLocaleString()} per transaction`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Day of Week',
+                                    font: { weight: 'bold' }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Total Spending (₹)',
+                                    font: { weight: 'bold' }
+                                },
+                                ticks: {
+                                    callback: function (value) {
+                                        return '₹' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Display statistics
+                const statsHtml = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div>
+                            <strong style="color: #0f172a;">Highest Spending Day:</strong><br>
+                            <span style="color: #ef4444; font-weight: 700; font-size: 1.1rem;">${data.maxDay}</span><br>
+                            <span style="color: #64748b; font-size: 0.9rem;">₹${data.maxAmount.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Lowest Spending Day:</strong><br>
+                            <span style="color: #10b981; font-weight: 700; font-size: 1.1rem;">${data.minDay}</span><br>
+                            <span style="color: #64748b; font-size: 0.9rem;">₹${data.minAmount.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Total Weekly Spending:</strong><br>
+                            <span style="color: #0f172a; font-weight: 700; font-size: 1.1rem;">₹${data.totalExpenses.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Average per Day:</strong><br>
+                            <span style="color: #3b82f6; font-weight: 600;">₹${(data.totalExpenses / 7).toFixed(0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                        <strong style="color: #0f172a;">💡 Spending Pattern Insight:</strong><br>
+                        <span style="color: #64748b; font-size: 0.9rem;">
+                            You tend to spend most on <strong style="color: #ef4444;">${data.maxDay}s</strong> 
+                            (₹${data.maxAmount.toLocaleString()}) and least on <strong style="color: #10b981;">${data.minDay}s</strong> 
+                            (₹${data.minAmount.toLocaleString()}). 
+                            ${data.maxAmount > data.totalExpenses / 7 * 1.5 ? 'Consider budgeting more carefully on ' + data.maxDay + 's.' : 'Your spending is relatively balanced across the week.'}
+                        </span>
+                    </div>
+                `;
+                document.getElementById('dayOfWeekStats').innerHTML = statsHtml;
             },
 
             // Time Series Analysis for Expenses
