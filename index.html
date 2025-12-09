@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Spending Tracker</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -499,6 +503,151 @@
             margin-right: 8px;
         }
 
+        /* Login Page Styles */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-card {
+            background: white;
+            padding: 48px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-logo {
+            width: 64px;
+            height: 64px;
+            background: #eff6ff;
+            color: #3b82f6;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 24px;
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        .auth-form-group {
+            margin-bottom: 20px;
+        }
+
+        .auth-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .auth-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .auth-btn-primary {
+            background: #3b82f6;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .auth-btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .auth-btn-secondary {
+            background: white;
+            color: #475569;
+            border: 2px solid #e2e8f0;
+        }
+
+        .auth-btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .auth-error {
+            background: #fef2f2;
+            color: #ef4444;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            border: 1px solid #fee2e2;
+            align-items: center;
+            gap: 8px;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -525,10 +674,63 @@
 </head>
 
 <body>
-    <div class="container">
+    <!-- Authentication Modal -->
+    <div id="authModal" class="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h2 class="auth-title">Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to manage your expenses</p>
+            </div>
+
+            <div id="authError" class="auth-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="authErrorMessage"></span>
+            </div>
+
+            <div class="auth-form-group">
+                <label class="auth-label">Email Address</label>
+                <input type="email" id="authEmail" class="auth-input" placeholder="name@example.com">
+            </div>
+
+            <div class="auth-form-group">
+                <label class="auth-label">Password</label>
+                <input type="password" id="authPassword" class="auth-input" placeholder="••••••••">
+            </div>
+
+            <button id="signInBtn" class="auth-btn auth-btn-primary">
+                Sign In <i class="fas fa-arrow-right"></i>
+            </button>
+
+            <div style="text-align: center; margin: 16px 0; color: #94a3b8; font-size: 14px;">or</div>
+
+            <button id="signUpBtn" class="auth-btn auth-btn-secondary">
+                Create New Account
+            </button>
+
+            <p style="margin-top: 24px; font-size: 13px; color: #94a3b8; text-align: center;">
+                <i class="fas fa-lock" style="margin-right: 4px;"></i> Secure Cloud Storage
+            </p>
+        </div>
+    </div>
+
+    <div class="container" id="appContainer" style="display: none;">
         <div class="header">
-            <h1><i class="fas fa-wallet"></i> Digital Spending Tracker</h1>
-            <p>Track your income and expenses with ease</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1><i class="fas fa-wallet"></i> Digital Spending Tracker</h1>
+                    <p>Track your income and expenses with ease</p>
+                </div>
+                <div>
+                    <span id="userEmail" style="color: #64748b; margin-right: 16px; font-size: 14px;"></span>
+                    <button id="signOutBtn"
+                        style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="nav-tabs">
@@ -620,10 +822,6 @@
                         <div class="form-group">
                             <label for="description">Description</label>
                             <input type="text" id="description" placeholder="Transaction description">
-                            <small style="color: #64748b; font-size: 0.75rem; margin-top: 4px; display: block;">
-                                💡 <strong>Smart Categorization:</strong> Type keywords like "uber", "coffee", "netflix"
-                                and the category will be auto-suggested
-                            </small>
                         </div>
                         <div class="form-group">
                             <label for="date">Date</label>
@@ -737,75 +935,110 @@
             customCategories: { income: [], expense: [] },
 
             // Initialize the app
-            init() {
-                this.loadTransactions();
-                this.loadCustomCategories();
-                this.loadApprovedAnomalies();
+            async init() {
+                await this.loadTransactions();
+                await this.loadCustomCategories();
+                await this.loadApprovedAnomalies();
                 this.setupEventListeners();
                 this.loadCategories();
                 this.setDefaultDate();
                 this.refreshAll();
             },
 
-            // Load transactions from storage
-            loadTransactions() {
+            // Load transactions from cloud storage
+            async loadTransactions() {
                 try {
-                    const stored = localStorage.getItem('moneyTracker_transactions');
-                    if (stored) {
-                        this.transactions = JSON.parse(stored);
+                    if (!window.db || !window.currentUser) {
+                        this.transactions = [];
+                        return;
+                    }
+                    const doc = await window.db.collection('users').doc(window.currentUser.uid).collection('data').doc('transactions').get();
+                    if (doc.exists) {
+                        this.transactions = doc.data().items || [];
                     } else {
                         this.transactions = [];
                     }
                 } catch (error) {
+                    console.error('Error loading transactions:', error);
                     this.transactions = [];
                 }
             },
 
-            // Save transactions to storage
-            saveTransactions() {
+            // Save transactions to cloud storage
+            async saveTransactions() {
                 try {
-                    localStorage.setItem('moneyTracker_transactions', JSON.stringify(this.transactions));
-                } catch (error) { }
+                    if (!window.db || !window.currentUser) return;
+                    await window.db.collection('users').doc(window.currentUser.uid).collection('data').doc('transactions').set({
+                        items: this.transactions,
+                        updatedAt: new Date()
+                    });
+                } catch (error) {
+                    console.error('Error saving transactions:', error);
+                }
             },
 
-            // Load custom categories
-            loadCustomCategories() {
+            // Load custom categories from cloud storage
+            async loadCustomCategories() {
                 try {
-                    const stored = localStorage.getItem('moneyTracker_customCategories');
-                    if (stored) {
-                        this.customCategories = JSON.parse(stored);
+                    if (!window.db || !window.currentUser) {
+                        this.customCategories = { income: [], expense: [] };
+                        return;
+                    }
+                    const doc = await window.db.collection('users').doc(window.currentUser.uid).collection('data').doc('categories').get();
+                    if (doc.exists) {
+                        this.customCategories = doc.data().items || { income: [], expense: [] };
+                    } else {
+                        this.customCategories = { income: [], expense: [] };
                     }
                 } catch (error) {
+                    console.error('Error loading categories:', error);
                     this.customCategories = { income: [], expense: [] };
                 }
             },
 
-            // Save custom categories
-            saveCustomCategories() {
+            // Save custom categories to cloud storage
+            async saveCustomCategories() {
                 try {
-                    localStorage.setItem('moneyTracker_customCategories', JSON.stringify(this.customCategories));
-                } catch (error) { }
+                    if (!window.db || !window.currentUser) return;
+                    await window.db.collection('users').doc(window.currentUser.uid).collection('data').doc('categories').set({
+                        items: this.customCategories,
+                        updatedAt: new Date()
+                    });
+                } catch (error) {
+                    console.error('Error saving categories:', error);
+                }
             },
 
-            // Load approved anomalies
-            loadApprovedAnomalies() {
+            // Load approved anomalies from cloud storage
+            async loadApprovedAnomalies() {
                 try {
-                    const stored = localStorage.getItem('moneyTracker_approvedAnomalies');
-                    if (stored) {
-                        this.approvedAnomalies = JSON.parse(stored);
+                    if (!window.db || !window.currentUser) {
+                        this.approvedAnomalies = [];
+                        return;
+                    }
+                    const doc = await window.db.collection('users').doc(window.currentUser.uid).collection('data').doc('anomalies').get();
+                    if (doc.exists) {
+                        this.approvedAnomalies = doc.data().items || [];
                     } else {
                         this.approvedAnomalies = [];
                     }
                 } catch (error) {
+                    console.error('Error loading anomalies:', error);
                     this.approvedAnomalies = [];
                 }
             },
 
-            // Save approved anomalies
-            saveApprovedAnomalies() {
+            // Save approved anomalies to cloud storage
+            async saveApprovedAnomalies() {
                 try {
-                    localStorage.setItem('moneyTracker_approvedAnomalies', JSON.stringify(this.approvedAnomalies));
-                } catch (error) { }
+                    if (!window.db || !window.currentUser) return;
+                    await window.db.collection('users').doc(window.currentUser.uid).collection('data').doc('anomalies').set({
+                        items: this.approvedAnomalies,
+                        updatedAt: new Date()
+                    });
+                } catch (error) {
+                    console.error('Error saving anomalies:', error);
+                }
             },
 
             // Mark anomaly as approved
@@ -867,168 +1100,6 @@
                 return [...this.defaultCategories[type], ...this.customCategories[type]];
             },
 
-            // NLP Feature - Predict Category from Description
-            predictCategory(description, transactionType = 'expense') {
-                /**
-                 * Automatically categorizes transactions based on keywords in description
-                 * @param {String} description - Transaction description text
-                 * @param {String} transactionType - 'income' or 'expense'
-                 * @returns {String} Predicted category name or null if no match
-                 */
-
-                if (!description || description.trim() === '') {
-                    return null;
-                }
-
-                // Convert to lowercase for case-insensitive matching
-                const desc = description.toLowerCase();
-
-                // Keyword mapping dictionary for EXPENSES
-                const expenseKeywords = {
-                    // Food & Dining
-                    'Food & Dining': [
-                        'food', 'lunch', 'dinner', 'breakfast', 'restaurant', 'cafe', 'coffee',
-                        'burger', 'pizza', 'zomato', 'swiggy', 'uber eats', 'doordash',
-                        'mcdonald', 'kfc', 'dominos', 'subway', 'starbucks', 'dunkin',
-                        'meal', 'eating', 'snack', 'beverage', 'drink', 'bar', 'pub'
-                    ],
-
-                    // Groceries
-                    'Groceries': [
-                        'grocery', 'groceries', 'supermarket', 'market', 'vegetables', 'fruits',
-                        'walmart', 'target', 'costco', 'bigbasket', 'amazon fresh',
-                        'milk', 'bread', 'eggs', 'provisions', 'supplies'
-                    ],
-
-                    // Transportation
-                    'Transportation': [
-                        'uber', 'lyft', 'taxi', 'cab', 'bus', 'train', 'metro', 'subway',
-                        'transport', 'commute', 'ola', 'auto', 'rickshaw', 'ride',
-                        'parking', 'toll', 'fare', 'ticket'
-                    ],
-
-                    // Fuel/Gas
-                    'Fuel/Gas': [
-                        'fuel', 'gas', 'petrol', 'diesel', 'gasoline', 'pump',
-                        'shell', 'bp', 'chevron', 'exxon', 'indian oil', 'bharat petroleum'
-                    ],
-
-                    // Entertainment
-                    'Entertainment': [
-                        'movie', 'cinema', 'theater', 'netflix', 'spotify', 'amazon prime',
-                        'disney', 'hulu', 'entertainment', 'concert', 'show', 'event',
-                        'game', 'gaming', 'xbox', 'playstation', 'steam', 'pvr', 'inox'
-                    ],
-
-                    // Shopping
-                    'Shopping': [
-                        'shopping', 'amazon', 'flipkart', 'ebay', 'myntra', 'ajio',
-                        'online', 'store', 'mall', 'purchase', 'bought', 'shop'
-                    ],
-
-                    // Clothing
-                    'Clothing': [
-                        'clothes', 'clothing', 'shirt', 'pants', 'dress', 'shoes', 'fashion',
-                        'zara', 'h&m', 'nike', 'adidas', 'apparel', 'outfit', 'wear'
-                    ],
-
-                    // Utilities
-                    'Utilities': [
-                        'electricity', 'water', 'internet', 'wifi', 'broadband', 'phone bill',
-                        'utility', 'utilities', 'bill', 'mobile', 'recharge', 'airtel', 'jio'
-                    ],
-
-                    // Healthcare
-                    'Healthcare': [
-                        'doctor', 'hospital', 'clinic', 'medicine', 'pharmacy', 'medical',
-                        'health', 'healthcare', 'appointment', 'checkup', 'prescription',
-                        'apollo', 'fortis', 'medplus', 'dental', 'dentist'
-                    ],
-
-                    // Education
-                    'Education': [
-                        'education', 'course', 'class', 'tuition', 'school', 'college',
-                        'university', 'book', 'books', 'study', 'learning', 'udemy',
-                        'coursera', 'fees', 'exam'
-                    ],
-
-                    // Travel
-                    'Travel': [
-                        'travel', 'flight', 'hotel', 'airbnb', 'booking', 'vacation',
-                        'trip', 'tour', 'airline', 'makemytrip', 'goibibo', 'cleartrip'
-                    ],
-
-                    // Subscriptions
-                    'Subscriptions': [
-                        'subscription', 'monthly', 'yearly', 'membership', 'premium',
-                        'recurring', 'renew', 'renewal'
-                    ],
-
-                    // Electronics
-                    'Electronics': [
-                        'laptop', 'computer', 'phone', 'mobile', 'tablet', 'electronics',
-                        'gadget', 'apple', 'samsung', 'sony', 'dell', 'hp', 'tech'
-                    ],
-
-                    // Gifts & Donations
-                    'Gifts & Donations': [
-                        'gift', 'present', 'donation', 'charity', 'donate', 'contribution',
-                        'birthday', 'anniversary', 'wedding'
-                    ]
-                };
-
-                // Keyword mapping dictionary for INCOME
-                const incomeKeywords = {
-                    'Salary': [
-                        'salary', 'paycheck', 'wage', 'pay', 'income', 'earnings',
-                        'compensation', 'employer', 'company'
-                    ],
-
-                    'Freelance Work': [
-                        'freelance', 'freelancing', 'upwork', 'fiverr', 'contract',
-                        'project', 'gig', 'client work'
-                    ],
-
-                    'Business Income': [
-                        'business', 'revenue', 'sales', 'profit', 'customer payment',
-                        'invoice', 'commercial'
-                    ],
-
-                    'Investment Returns': [
-                        'investment', 'dividend', 'stock', 'mutual fund', 'returns',
-                        'interest', 'capital gain', 'equity', 'bonds'
-                    ],
-
-                    'Bonus': [
-                        'bonus', 'incentive', 'reward', 'commission', 'performance',
-                        'extra pay'
-                    ],
-
-                    'Gift/Cash Received': [
-                        'gift', 'received', 'cash gift', 'birthday money', 'present money'
-                    ],
-
-                    'Refund': [
-                        'refund', 'return', 'reimbursement', 'cashback', 'money back'
-                    ]
-                };
-
-                // Select the appropriate keyword dictionary
-                const keywords = transactionType === 'income' ? incomeKeywords : expenseKeywords;
-
-                // Search for keyword matches
-                for (const [category, keywordList] of Object.entries(keywords)) {
-                    for (const keyword of keywordList) {
-                        if (desc.includes(keyword)) {
-                            return category;
-                        }
-                    }
-                }
-
-                // No match found
-                return null;
-            },
-
             // Setup event listeners
             setupEventListeners() {
                 // Tab navigation
@@ -1048,36 +1119,6 @@
                 // Type change for category loading
                 document.getElementById('type').addEventListener('change', (e) => {
                     this.loadCategoriesForType(e.target.value);
-                });
-
-                // Auto-categorization based on description (NLP feature)
-                document.getElementById('description').addEventListener('input', (e) => {
-                    const description = e.target.value;
-                    const typeSelect = document.getElementById('type');
-                    const categorySelect = document.getElementById('category');
-
-                    // Only auto-suggest if type is selected
-                    if (typeSelect.value && description.length >= 3) {
-                        const predictedCategory = this.predictCategory(description, typeSelect.value);
-
-                        if (predictedCategory) {
-                            // Check if the predicted category exists in the dropdown
-                            const options = Array.from(categorySelect.options);
-                            const matchingOption = options.find(opt => opt.value === predictedCategory);
-
-                            if (matchingOption) {
-                                categorySelect.value = predictedCategory;
-                                // Visual feedback - highlight the auto-selected category
-                                categorySelect.style.borderColor = '#10b981';
-                                categorySelect.style.backgroundColor = '#f0fdf4';
-
-                                setTimeout(() => {
-                                    categorySelect.style.borderColor = '';
-                                    categorySelect.style.backgroundColor = '';
-                                }, 1500);
-                            }
-                        }
-                    }
                 });
             },
 
@@ -2302,9 +2343,117 @@
             MoneyTracker.exportToExcel();
         }
 
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqRDG0wdaBrmIHZwIg8Y7Pgd4BIp2wj8U",
+            authDomain: "money-spending-tracker.firebaseapp.com",
+            projectId: "money-spending-tracker",
+            storageBucket: "money-spending-tracker.firebasestorage.app",
+            messagingSenderId: "259178922510",
+            appId: "1:259178922510:web:8c03f50cc2a8c40abc325f"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        window.db = firebase.firestore();
+        window.auth = firebase.auth();
+        window.currentUser = null;
+
+        // Authentication handlers
+        document.getElementById('signInBtn').addEventListener('click', async () => {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errorDiv = document.getElementById('authError');
+            const errorMessage = document.getElementById('authErrorMessage');
+
+            // Validate inputs
+            if (!email || !password) {
+                errorMessage.textContent = 'Please enter both email and password';
+                errorDiv.style.display = 'flex';
+                return;
+            }
+
+            try {
+                errorDiv.style.display = 'none';
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                // Friendly error messages
+                if (error.code === 'auth/invalid-credential') {
+                    errorMessage.textContent = 'Invalid email or password. Please check your credentials or create a new account.';
+                } else if (error.code === 'auth/user-not-found') {
+                    errorMessage.textContent = 'No account found with this email. Please create a new account.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage.textContent = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage.textContent = 'Invalid email format. Please enter a valid email address.';
+                } else {
+                    errorMessage.textContent = error.message;
+                }
+                errorDiv.style.display = 'flex';
+            }
+        });
+
+        document.getElementById('signUpBtn').addEventListener('click', async () => {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errorDiv = document.getElementById('authError');
+            const errorMessage = document.getElementById('authErrorMessage');
+
+            // Validate inputs
+            if (!email || !password) {
+                errorMessage.textContent = 'Please enter both email and password';
+                errorDiv.style.display = 'flex';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorMessage.textContent = 'Password must be at least 6 characters';
+                errorDiv.style.display = 'flex';
+                return;
+            }
+
+            try {
+                errorDiv.style.display = 'none';
+                await firebase.auth().createUserWithEmailAndPassword(email, password);
+            } catch (error) {
+                // Friendly error messages
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage.textContent = 'This email is already registered. Please sign in instead.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage.textContent = 'Invalid email format. Please enter a valid email address.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage.textContent = 'Password is too weak. Please use at least 6 characters.';
+                } else {
+                    errorMessage.textContent = error.message;
+                }
+                errorDiv.style.display = 'flex';
+            }
+        });
+
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
+            await firebase.auth().signOut();
+        });
+
+        // Listen for authentication state changes
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+                window.currentUser = user;
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                document.getElementById('userEmail').textContent = user.email;
+
+                // Initialize app after authentication
+                await MoneyTracker.init();
+            } else {
+                window.currentUser = null;
+                document.getElementById('authModal').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+            }
+        });
+
         // Initialize app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function () {
-            MoneyTracker.init();
+            // Authentication will handle initialization
         });
     </script>
 </body>
