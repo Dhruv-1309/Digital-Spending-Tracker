@@ -2035,7 +2035,8 @@ function openProfileModal() {
     document.getElementById("updatePasswordText").textContent = "Set Password";
   } else {
     passwordNotice.style.display = "none";
-    document.getElementById("updatePasswordText").textContent = "Update Password";
+    document.getElementById("updatePasswordText").textContent =
+      "Update Password";
   }
 
   // Clear form fields
@@ -2072,141 +2073,157 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
 });
 
 // Display Name Form
-document.getElementById("displayNameForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const displayName = document.getElementById("displayNameInput").value.trim();
-  const user = firebase.auth().currentUser;
+document
+  .getElementById("displayNameForm")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const displayName = document
+      .getElementById("displayNameInput")
+      .value.trim();
+    const user = firebase.auth().currentUser;
 
-  if (!user) return;
+    if (!user) return;
 
-  try {
-    await user.updateProfile({ displayName });
-    showProfileSuccess("Display name updated successfully!");
-  } catch (error) {
-    showProfileError(error.message);
-  }
-});
+    try {
+      await user.updateProfile({ displayName });
+      showProfileSuccess("Display name updated successfully!");
+    } catch (error) {
+      showProfileError(error.message);
+    }
+  });
 
 // Password Form
-document.getElementById("passwordForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+document
+  .getElementById("passwordForm")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const newPassword = document.getElementById("newPassword").value;
-  const confirmPassword = document.getElementById("confirmPassword").value;
-  const user = firebase.auth().currentUser;
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    const user = firebase.auth().currentUser;
 
-  // Validation
-  if (!newPassword || !confirmPassword) {
-    showProfileError("Please fill in all password fields.");
-    return;
-  }
-
-  if (newPassword.length < 6) {
-    showProfileError("Password must be at least 6 characters long.");
-    return;
-  }
-
-  if (newPassword !== confirmPassword) {
-    showProfileError("Passwords do not match.");
-    return;
-  }
-
-  if (!user) {
-    showProfileError("No user signed in.");
-    return;
-  }
-
-  setPasswordLoading(true);
-  hideProfileMessages();
-
-  try {
-    // Check if user has password provider
-    const providers = user.providerData.map((p) => p.providerId);
-    const hasPassword = providers.includes("password");
-
-    if (!hasPassword) {
-      // Link email/password credential to account
-      const credential = firebase.auth.EmailAuthProvider.credential(
-        user.email,
-        newPassword
-      );
-      await user.linkWithCredential(credential);
-      showProfileSuccess("Password has been set successfully! You can now sign in with email and password.");
-      document.getElementById("passwordNotSet").style.display = "none";
-      document.getElementById("updatePasswordText").textContent = "Update Password";
-      document.getElementById("profileAuthMethod").textContent = "Google + Email/Password";
-    } else {
-      // Update existing password
-      await user.updatePassword(newPassword);
-      showProfileSuccess("Password updated successfully!");
+    // Validation
+    if (!newPassword || !confirmPassword) {
+      showProfileError("Please fill in all password fields.");
+      return;
     }
 
-    // Clear fields
-    document.getElementById("newPassword").value = "";
-    document.getElementById("confirmPassword").value = "";
-  } catch (error) {
-    console.error("Password update error:", error);
-    if (error.code === "auth/requires-recent-login") {
-      showProfileError(
-        "For security reasons, please sign out and sign back in before changing your password."
-      );
-    } else if (error.code === "auth/provider-already-linked") {
-      showProfileError("A password is already set for this account. Try updating it instead.");
-    } else if (error.code === "auth/weak-password") {
-      showProfileError("Password is too weak. Please use a stronger password.");
-    } else {
-      showProfileError(error.message);
+    if (newPassword.length < 6) {
+      showProfileError("Password must be at least 6 characters long.");
+      return;
     }
-  } finally {
-    setPasswordLoading(false);
-  }
-});
+
+    if (newPassword !== confirmPassword) {
+      showProfileError("Passwords do not match.");
+      return;
+    }
+
+    if (!user) {
+      showProfileError("No user signed in.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    hideProfileMessages();
+
+    try {
+      // Check if user has password provider
+      const providers = user.providerData.map((p) => p.providerId);
+      const hasPassword = providers.includes("password");
+
+      if (!hasPassword) {
+        // Link email/password credential to account
+        const credential = firebase.auth.EmailAuthProvider.credential(
+          user.email,
+          newPassword
+        );
+        await user.linkWithCredential(credential);
+        showProfileSuccess(
+          "Password has been set successfully! You can now sign in with email and password."
+        );
+        document.getElementById("passwordNotSet").style.display = "none";
+        document.getElementById("updatePasswordText").textContent =
+          "Update Password";
+        document.getElementById("profileAuthMethod").textContent =
+          "Google + Email/Password";
+      } else {
+        // Update existing password
+        await user.updatePassword(newPassword);
+        showProfileSuccess("Password updated successfully!");
+      }
+
+      // Clear fields
+      document.getElementById("newPassword").value = "";
+      document.getElementById("confirmPassword").value = "";
+    } catch (error) {
+      console.error("Password update error:", error);
+      if (error.code === "auth/requires-recent-login") {
+        showProfileError(
+          "For security reasons, please sign out and sign back in before changing your password."
+        );
+      } else if (error.code === "auth/provider-already-linked") {
+        showProfileError(
+          "A password is already set for this account. Try updating it instead."
+        );
+      } else if (error.code === "auth/weak-password") {
+        showProfileError(
+          "Password is too weak. Please use a stronger password."
+        );
+      } else {
+        showProfileError(error.message);
+      }
+    } finally {
+      setPasswordLoading(false);
+    }
+  });
 
 // Delete Account
-document.getElementById("deleteAccountBtn").addEventListener("click", async () => {
-  const confirmed = confirm(
-    "Are you sure you want to delete your account?\n\nThis action is permanent and will delete all your data including transactions, custom categories, and settings.\n\nThis cannot be undone!"
-  );
+document
+  .getElementById("deleteAccountBtn")
+  .addEventListener("click", async () => {
+    const confirmed = confirm(
+      "Are you sure you want to delete your account?\n\nThis action is permanent and will delete all your data including transactions, custom categories, and settings.\n\nThis cannot be undone!"
+    );
 
-  if (!confirmed) return;
+    if (!confirmed) return;
 
-  const doubleConfirm = confirm(
-    "Please confirm again that you want to permanently delete your account and all associated data."
-  );
+    const doubleConfirm = confirm(
+      "Please confirm again that you want to permanently delete your account and all associated data."
+    );
 
-  if (!doubleConfirm) return;
+    if (!doubleConfirm) return;
 
-  const user = firebase.auth().currentUser;
-  if (!user) return;
+    const user = firebase.auth().currentUser;
+    if (!user) return;
 
-  try {
-    // Delete user data from Firestore
-    const userDocRef = window.db.collection("users").doc(user.uid);
+    try {
+      // Delete user data from Firestore
+      const userDocRef = window.db.collection("users").doc(user.uid);
 
-    // Delete subcollections
-    const dataCollection = await userDocRef.collection("data").get();
-    const deletePromises = dataCollection.docs.map((doc) => doc.ref.delete());
-    await Promise.all(deletePromises);
+      // Delete subcollections
+      const dataCollection = await userDocRef.collection("data").get();
+      const deletePromises = dataCollection.docs.map((doc) => doc.ref.delete());
+      await Promise.all(deletePromises);
 
-    // Delete user document
-    await userDocRef.delete();
+      // Delete user document
+      await userDocRef.delete();
 
-    // Delete auth account
-    await user.delete();
+      // Delete auth account
+      await user.delete();
 
-    closeProfileModal();
-    alert("Your account has been deleted successfully.");
-  } catch (error) {
-    console.error("Delete account error:", error);
-    if (error.code === "auth/requires-recent-login") {
-      showProfileError(
-        "For security reasons, please sign out and sign back in before deleting your account."
-      );
-    } else {
-      showProfileError(error.message);
+      closeProfileModal();
+      alert("Your account has been deleted successfully.");
+    } catch (error) {
+      console.error("Delete account error:", error);
+      if (error.code === "auth/requires-recent-login") {
+        showProfileError(
+          "For security reasons, please sign out and sign back in before deleting your account."
+        );
+      } else {
+        showProfileError(error.message);
+      }
     }
-  }
-});
+  });
 
 function showProfileError(message) {
   const errorEl = document.getElementById("passwordError");
