@@ -17,43 +17,36 @@
 <body>
     <!-- Authentication Modal -->
     <div id="authModal" class="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden">
-        <!-- Animated Background -->
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <!-- Animated Background with colorful blobs -->
+        <div class="absolute inset-0 bg-slate-100/80">
             <div
-                class="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob">
+                class="absolute top-[-10%] left-[-5%] w-80 h-80 bg-purple-300/60 rounded-full filter blur-3xl animate-blob">
             </div>
             <div
-                class="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000">
+                class="absolute top-[-5%] right-[-5%] w-96 h-96 bg-yellow-300/60 rounded-full filter blur-3xl animate-blob animation-delay-2000">
             </div>
             <div
-                class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000">
+                class="absolute bottom-[10%] left-[5%] w-80 h-80 bg-pink-300/60 rounded-full filter blur-3xl animate-blob animation-delay-4000">
             </div>
             <div
-                class="absolute bottom-20 right-20 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-6000">
+                class="absolute bottom-[20%] right-[5%] w-72 h-72 bg-blue-300/60 rounded-full filter blur-3xl animate-blob animation-delay-6000">
             </div>
         </div>
 
         <!-- Auth Card -->
-        <div
-            class="relative bg-white/80 backdrop-blur-2xl p-8 md:p-10 rounded-3xl shadow-2xl w-full max-w-md mx-4 border border-white/60 animate-fadeInUp">
-            <!-- Header -->
+        <div class="relative bg-white p-8 md:p-10 rounded-3xl shadow-xl w-full max-w-md mx-4 animate-fadeInUp">
+            <!-- Header with icon -->
             <div class="text-center mb-8">
-                <div class="relative w-20 h-20 mx-auto mb-6">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl rotate-6 opacity-80">
-                    </div>
-                    <div
-                        class="relative w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-500/40">
-                        <i class="fas fa-wallet"></i>
-                    </div>
+                <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <i class="fas fa-arrow-right text-white text-xl"></i>
                 </div>
-                <h2 class="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Welcome Back</h2>
-                <p class="text-slate-500 font-medium">Sign in to manage your expenses</p>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Sign in with email</h2>
+                <p class="text-slate-500 text-sm">Access your spending dashboard securely.</p>
             </div>
 
             <!-- Error Alert -->
             <div id="authError"
-                class="hidden bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-200 items-center gap-3 shadow-sm">
+                class="hidden bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-100 items-center gap-3">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-exclamation-circle"></i>
@@ -64,39 +57,44 @@
 
             <!-- Form -->
             <form id="authForm" class="space-y-5">
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold text-slate-700 ml-1">Email Address</label>
-                    <div class="relative group">
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-medium text-slate-700">Email</label>
+                    <div class="relative">
                         <div
-                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200">
-                            <i class="fas fa-envelope"></i>
+                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fas fa-envelope text-sm"></i>
                         </div>
                         <input type="email" id="authEmail" autocomplete="email"
-                            class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
+                            class="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all duration-200"
                             placeholder="name@example.com">
                     </div>
                 </div>
 
-                <div class="space-y-1">
-                    <label class="block text-sm font-semibold text-slate-700 ml-1">Password</label>
-                    <div class="relative group">
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-medium text-slate-700">Password</label>
+                        <button type="button" id="forgotPasswordBtn"
+                            class="text-sm text-slate-500 hover:text-blue-600 transition-colors">Forgot
+                            password?</button>
+                    </div>
+                    <div class="relative">
                         <div
-                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200">
-                            <i class="fas fa-lock"></i>
+                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fas fa-lock text-sm"></i>
                         </div>
                         <input type="password" id="authPassword" autocomplete="current-password"
-                            class="w-full pl-11 pr-12 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
+                            class="w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all duration-200"
                             placeholder="••••••••">
                         <button type="button" id="togglePassword"
                             class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
-                            <i class="fas fa-eye" id="eyeIcon"></i>
+                            <i class="fas fa-eye text-sm" id="eyeIcon"></i>
                         </button>
                     </div>
                 </div>
 
                 <button type="submit" id="signInBtn"
-                    class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/40 active:translate-y-0 active:shadow-md flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none">
-                    <span id="signInText">Sign In</span>
+                    class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span id="signInText">Get Started</span>
                     <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform" id="signInIcon"></i>
                     <svg id="signInSpinner" class="hidden animate-spin h-5 w-5 text-white"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -111,13 +109,13 @@
 
             <div class="relative flex py-5 items-center">
                 <div class="flex-grow border-t border-slate-200"></div>
-                <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-wider">or</span>
+                <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-medium">Or sign in with</span>
                 <div class="flex-grow border-t border-slate-200"></div>
             </div>
 
             <!-- Google Sign In Button -->
             <button id="googleSignInBtn"
-                class="w-full py-3.5 bg-white border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group">
+                class="w-full py-3.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed">
                 <svg id="googleIcon" class="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4"
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -138,26 +136,7 @@
                 </svg>
             </button>
 
-            <div class="relative flex py-4 items-center">
-                <div class="flex-grow border-t border-slate-200"></div>
-                <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-medium">New here?</span>
-                <div class="flex-grow border-t border-slate-200"></div>
-            </div>
-
-            <button id="signUpBtn"
-                class="w-full py-3.5 bg-slate-50 border-2 border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-white hover:border-blue-300 hover:text-blue-600 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-                <i class="fas fa-user-plus"></i>
-                <span id="signUpText">Create New Account</span>
-                <svg id="signUpSpinner" class="hidden animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-            </button>
-
-            <p class="mt-8 text-xs text-slate-400 text-center flex items-center justify-center gap-2 font-medium">
+            <p class="mt-6 text-xs text-slate-400 text-center flex items-center justify-center gap-2">
                 <i class="fas fa-shield-alt text-blue-400"></i>
                 <span>Your data is encrypted & secure</span>
             </p>
@@ -249,6 +228,10 @@
                     <div class="header-actions" style="margin-top: 14px; gap: 10px; flex-wrap: wrap;">
                         <span id="userEmail"
                             style="color:#1f2937; font-weight:700; font-size:14px; padding:8px 12px; background: rgba(15,23,42,0.06); border-radius: 10px; border: 1px solid rgba(226,232,240,0.9);"></span>
+                        <button id="profileBtn" class="btn"
+                            style="background: linear-gradient(135deg,#2563eb,#1d4ed8); color:white; border:none;">
+                            <i class="fas fa-user-circle"></i> Profile
+                        </button>
                         <button id="signOutBtn" class="btn"
                             style="background: linear-gradient(135deg,#ef4444,#dc2626); color:white; border:none;">
                             <i class="fas fa-sign-out-alt"></i> Sign Out
@@ -473,6 +456,115 @@
                 <canvas id="dayOfWeekChart" width="400" height="300"></canvas>
                 <div id="dayOfWeekStats"
                     style="margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 0.875rem;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="profile-modal-overlay" style="display: none;">
+        <div class="profile-modal">
+            <div class="profile-modal-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <button id="closeProfileModal" class="profile-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="profile-modal-body">
+                <h2 class="profile-title">Profile Settings</h2>
+                <p class="profile-subtitle" id="profileEmail">user@example.com</p>
+                
+                <!-- Profile Info Section -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-info-circle"></i> Account Information</h3>
+                    <div class="profile-info-grid">
+                        <div class="profile-info-item">
+                            <label>Email</label>
+                            <span id="profileEmailDisplay">user@example.com</span>
+                        </div>
+                        <div class="profile-info-item">
+                            <label>Account Type</label>
+                            <span id="profileAuthMethod">Email/Password</span>
+                        </div>
+                        <div class="profile-info-item">
+                            <label>Member Since</label>
+                            <span id="profileCreatedAt">-</span>
+                        </div>
+                        <div class="profile-info-item">
+                            <label>Last Sign In</label>
+                            <span id="profileLastSignIn">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Display Name Section -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-id-card"></i> Display Name</h3>
+                    <form id="displayNameForm" class="profile-form">
+                        <div class="profile-input-group">
+                            <input type="text" id="displayNameInput" placeholder="Enter your display name">
+                            <button type="submit" class="profile-save-btn">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                        <p class="profile-form-hint">This name will be displayed in your profile.</p>
+                    </form>
+                </div>
+                
+                <!-- Password Section -->
+                <div class="profile-section" id="passwordSection">
+                    <h3><i class="fas fa-lock"></i> Password Settings</h3>
+                    <div id="passwordNotSet" class="password-notice" style="display: none;">
+                        <div class="notice-icon"><i class="fas fa-exclamation-circle"></i></div>
+                        <div class="notice-content">
+                            <p><strong>No password set</strong></p>
+                            <p>Your account was created using Google Sign-In. Set a password to enable email login.</p>
+                        </div>
+                    </div>
+                    <form id="passwordForm" class="profile-form">
+                        <div class="password-fields">
+                            <div class="profile-input-wrapper">
+                                <label>New Password</label>
+                                <div class="password-input-container">
+                                    <input type="password" id="newPassword" placeholder="Enter new password" minlength="6">
+                                    <button type="button" class="toggle-password" data-target="newPassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="profile-input-wrapper">
+                                <label>Confirm Password</label>
+                                <div class="password-input-container">
+                                    <input type="password" id="confirmPassword" placeholder="Confirm new password" minlength="6">
+                                    <button type="button" class="toggle-password" data-target="confirmPassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="passwordError" class="profile-error" style="display: none;"></div>
+                        <div id="passwordSuccess" class="profile-success" style="display: none;"></div>
+                        <button type="submit" id="updatePasswordBtn" class="profile-action-btn">
+                            <i class="fas fa-key"></i>
+                            <span id="updatePasswordText">Update Password</span>
+                            <svg id="passwordSpinner" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Danger Zone -->
+                <div class="profile-section danger-zone">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+                    <p class="danger-text">Once you delete your account, there is no going back. Please be certain.</p>
+                    <button id="deleteAccountBtn" class="delete-account-btn">
+                        <i class="fas fa-trash-alt"></i> Delete Account
+                    </button>
                 </div>
             </div>
         </div>

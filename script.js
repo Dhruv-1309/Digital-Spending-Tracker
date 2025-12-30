@@ -1736,9 +1736,11 @@ function setSignUpLoading(isLoading) {
   const text = document.getElementById("signUpText");
   const spinner = document.getElementById("signUpSpinner");
 
+  if (!btn) return; // Button doesn't exist
   btn.disabled = isLoading;
-  text.textContent = isLoading ? "Creating account..." : "Create New Account";
-  spinner.classList.toggle("hidden", !isLoading);
+  if (text)
+    text.textContent = isLoading ? "Creating account..." : "Create New Account";
+  if (spinner) spinner.classList.toggle("hidden", !isLoading);
 }
 
 function showAuthError(message) {
@@ -1758,6 +1760,54 @@ function hideAuthError() {
   errorDiv.classList.add("hidden");
   errorDiv.classList.remove("flex");
 }
+
+function showAuthSuccess(message) {
+  const errorDiv = document.getElementById("authError");
+  const errorMessage = document.getElementById("authErrorMessage");
+  errorMessage.textContent = message;
+  errorDiv.classList.remove(
+    "hidden",
+    "bg-red-50",
+    "text-red-600",
+    "border-red-100"
+  );
+  errorDiv.classList.add(
+    "flex",
+    "bg-green-50",
+    "text-green-600",
+    "border-green-100"
+  );
+  errorDiv.querySelector(".w-8").classList.remove("bg-red-100");
+  errorDiv.querySelector(".w-8").classList.add("bg-green-100");
+  errorDiv.querySelector("i").classList.remove("fa-exclamation-circle");
+  errorDiv.querySelector("i").classList.add("fa-check-circle");
+}
+
+// Forgot Password handler
+document
+  .getElementById("forgotPasswordBtn")
+  .addEventListener("click", async () => {
+    const email = document.getElementById("authEmail").value.trim();
+
+    if (!email) {
+      showAuthError("Please enter your email address first");
+      return;
+    }
+
+    try {
+      hideAuthError();
+      await firebase.auth().sendPasswordResetEmail(email);
+      showAuthSuccess("Password reset email sent! Check your inbox.");
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        showAuthError("No account found with this email.");
+      } else if (error.code === "auth/invalid-email") {
+        showAuthError("Invalid email format.");
+      } else {
+        showAuthError(error.message);
+      }
+    }
+  });
 
 // Form submission handler (Enter key support)
 document.getElementById("authForm").addEventListener("submit", async (e) => {
@@ -1784,13 +1834,32 @@ document.getElementById("signInBtn").addEventListener("click", async (e) => {
   } catch (error) {
     // Friendly error messages
     if (error.code === "auth/invalid-credential") {
-      showAuthError(
-        "Invalid email or password. Please check your credentials or create a new account."
-      );
+      // Try to create account if user doesn't exist
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        // Account created successfully, user is now signed in
+        return;
+      } catch (createError) {
+        if (createError.code === "auth/email-already-in-use") {
+          showAuthError("Incorrect password. Please try again.");
+        } else if (createError.code === "auth/weak-password") {
+          showAuthError(
+            "Password is too weak. Please use at least 6 characters."
+          );
+        } else {
+          showAuthError(
+            "Invalid email or password. Please check your credentials."
+          );
+        }
+      }
     } else if (error.code === "auth/user-not-found") {
-      showAuthError(
-        "No account found with this email. Please create a new account."
-      );
+      // Auto-create account for new users
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        return;
+      } catch (createError) {
+        showAuthError(createError.message);
+      }
     } else if (error.code === "auth/wrong-password") {
       showAuthError("Incorrect password. Please try again.");
     } else if (error.code === "auth/invalid-email") {
@@ -1807,44 +1876,50 @@ document.getElementById("signInBtn").addEventListener("click", async (e) => {
   }
 });
 
-document.getElementById("signUpBtn").addEventListener("click", async () => {
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
+// Sign Up button handler (only if button exists)
+const signUpBtnElement = document.getElementById("signUpBtn");
+if (signUpBtnElement) {
+  signUpBtnElement.addEventListener("click", async () => {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
 
-  // Validate inputs
-  if (!email || !password) {
-    showAuthError("Please enter both email and password");
-    return;
-  }
-
-  if (password.length < 6) {
-    showAuthError("Password must be at least 6 characters");
-    return;
-  }
-
-  try {
-    hideAuthError();
-    setSignUpLoading(true);
-    await firebase.auth().createUserWithEmailAndPassword(email, password);
-  } catch (error) {
-    // Friendly error messages
-    if (error.code === "auth/email-already-in-use") {
-      showAuthError(
-        "This email is already registered. Please sign in instead."
-      );
-    } else if (error.code === "auth/invalid-email") {
-      showAuthError(
-        "Invalid email format. Please enter a valid email address."
-      );
-    } else if (error.code === "auth/weak-password") {
-      showAuthError("Password is too weak. Please use at least 6 characters.");
-    } else {
-      showAuthError(error.message);
+    // Validate inputs
+    if (!email || !password) {
+      showAuthError("Please enter both email and password");
+      return;
     }
-  } finally {
-    setSignUpLoading(false);
-  }
-});
+
+    if (password.length < 6) {
+      showAuthError("Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      hideAuthError();
+      setSignUpLoading(true);
+      await firebase.auth().createUserWithEmailAndPassword(email, password);
+    } catch (error) {
+      // Friendly error messages
+      if (error.code === "auth/email-already-in-use") {
+        showAuthError(
+          "This email is already registered. Please sign in instead."
+        );
+      } else if (error.code === "auth/invalid-email") {
+        showAuthError(
+          "Invalid email format. Please enter a valid email address."
+        );
+      } else if (error.code === "auth/weak-password") {
+        showAuthError(
+          "Password is too weak. Please use at least 6 characters."
+        );
+      } else {
+        showAuthError(error.message);
+      }
+    } finally {
+      setSignUpLoading(false);
+    }
+  });
+}
 
 // Google Sign In
 function setGoogleLoading(isLoading) {
@@ -1892,6 +1967,285 @@ document
 document.getElementById("signOutBtn").addEventListener("click", async () => {
   await firebase.auth().signOut();
 });
+
+// ========== Profile Modal Logic ==========
+
+// Open profile modal
+document.getElementById("profileBtn").addEventListener("click", () => {
+  openProfileModal();
+});
+
+// Close profile modal
+document.getElementById("closeProfileModal").addEventListener("click", () => {
+  closeProfileModal();
+});
+
+// Close on overlay click
+document.getElementById("profileModal").addEventListener("click", (e) => {
+  if (e.target.id === "profileModal") {
+    closeProfileModal();
+  }
+});
+
+function openProfileModal() {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  // Populate profile info
+  document.getElementById("profileEmail").textContent = user.email;
+  document.getElementById("profileEmailDisplay").textContent = user.email;
+  document.getElementById("displayNameInput").value = user.displayName || "";
+
+  // Determine auth method
+  const providers = user.providerData.map((p) => p.providerId);
+  let authMethod = "Email/Password";
+  if (providers.includes("google.com")) {
+    authMethod = "Google";
+    if (providers.includes("password")) {
+      authMethod = "Google + Email/Password";
+    }
+  }
+  document.getElementById("profileAuthMethod").textContent = authMethod;
+
+  // Format dates
+  const createdAt = user.metadata.creationTime
+    ? new Date(user.metadata.creationTime).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "-";
+  const lastSignIn = user.metadata.lastSignInTime
+    ? new Date(user.metadata.lastSignInTime).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "-";
+  document.getElementById("profileCreatedAt").textContent = createdAt;
+  document.getElementById("profileLastSignIn").textContent = lastSignIn;
+
+  // Show/hide password notice based on auth method
+  const hasPassword = providers.includes("password");
+  const passwordNotice = document.getElementById("passwordNotSet");
+  if (!hasPassword) {
+    passwordNotice.style.display = "flex";
+    document.getElementById("updatePasswordText").textContent = "Set Password";
+  } else {
+    passwordNotice.style.display = "none";
+    document.getElementById("updatePasswordText").textContent = "Update Password";
+  }
+
+  // Clear form fields
+  document.getElementById("newPassword").value = "";
+  document.getElementById("confirmPassword").value = "";
+  document.getElementById("passwordError").style.display = "none";
+  document.getElementById("passwordSuccess").style.display = "none";
+
+  // Show modal
+  document.getElementById("profileModal").style.display = "flex";
+}
+
+function closeProfileModal() {
+  document.getElementById("profileModal").style.display = "none";
+}
+
+// Toggle password visibility in profile modal
+document.querySelectorAll(".toggle-password").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const targetId = btn.getAttribute("data-target");
+    const input = document.getElementById(targetId);
+    const icon = btn.querySelector("i");
+
+    if (input.type === "password") {
+      input.type = "text";
+      icon.classList.remove("fa-eye");
+      icon.classList.add("fa-eye-slash");
+    } else {
+      input.type = "password";
+      icon.classList.remove("fa-eye-slash");
+      icon.classList.add("fa-eye");
+    }
+  });
+});
+
+// Display Name Form
+document.getElementById("displayNameForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const displayName = document.getElementById("displayNameInput").value.trim();
+  const user = firebase.auth().currentUser;
+
+  if (!user) return;
+
+  try {
+    await user.updateProfile({ displayName });
+    showProfileSuccess("Display name updated successfully!");
+  } catch (error) {
+    showProfileError(error.message);
+  }
+});
+
+// Password Form
+document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const newPassword = document.getElementById("newPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const user = firebase.auth().currentUser;
+
+  // Validation
+  if (!newPassword || !confirmPassword) {
+    showProfileError("Please fill in all password fields.");
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    showProfileError("Password must be at least 6 characters long.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    showProfileError("Passwords do not match.");
+    return;
+  }
+
+  if (!user) {
+    showProfileError("No user signed in.");
+    return;
+  }
+
+  setPasswordLoading(true);
+  hideProfileMessages();
+
+  try {
+    // Check if user has password provider
+    const providers = user.providerData.map((p) => p.providerId);
+    const hasPassword = providers.includes("password");
+
+    if (!hasPassword) {
+      // Link email/password credential to account
+      const credential = firebase.auth.EmailAuthProvider.credential(
+        user.email,
+        newPassword
+      );
+      await user.linkWithCredential(credential);
+      showProfileSuccess("Password has been set successfully! You can now sign in with email and password.");
+      document.getElementById("passwordNotSet").style.display = "none";
+      document.getElementById("updatePasswordText").textContent = "Update Password";
+      document.getElementById("profileAuthMethod").textContent = "Google + Email/Password";
+    } else {
+      // Update existing password
+      await user.updatePassword(newPassword);
+      showProfileSuccess("Password updated successfully!");
+    }
+
+    // Clear fields
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+  } catch (error) {
+    console.error("Password update error:", error);
+    if (error.code === "auth/requires-recent-login") {
+      showProfileError(
+        "For security reasons, please sign out and sign back in before changing your password."
+      );
+    } else if (error.code === "auth/provider-already-linked") {
+      showProfileError("A password is already set for this account. Try updating it instead.");
+    } else if (error.code === "auth/weak-password") {
+      showProfileError("Password is too weak. Please use a stronger password.");
+    } else {
+      showProfileError(error.message);
+    }
+  } finally {
+    setPasswordLoading(false);
+  }
+});
+
+// Delete Account
+document.getElementById("deleteAccountBtn").addEventListener("click", async () => {
+  const confirmed = confirm(
+    "Are you sure you want to delete your account?\n\nThis action is permanent and will delete all your data including transactions, custom categories, and settings.\n\nThis cannot be undone!"
+  );
+
+  if (!confirmed) return;
+
+  const doubleConfirm = confirm(
+    "Please confirm again that you want to permanently delete your account and all associated data."
+  );
+
+  if (!doubleConfirm) return;
+
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  try {
+    // Delete user data from Firestore
+    const userDocRef = window.db.collection("users").doc(user.uid);
+
+    // Delete subcollections
+    const dataCollection = await userDocRef.collection("data").get();
+    const deletePromises = dataCollection.docs.map((doc) => doc.ref.delete());
+    await Promise.all(deletePromises);
+
+    // Delete user document
+    await userDocRef.delete();
+
+    // Delete auth account
+    await user.delete();
+
+    closeProfileModal();
+    alert("Your account has been deleted successfully.");
+  } catch (error) {
+    console.error("Delete account error:", error);
+    if (error.code === "auth/requires-recent-login") {
+      showProfileError(
+        "For security reasons, please sign out and sign back in before deleting your account."
+      );
+    } else {
+      showProfileError(error.message);
+    }
+  }
+});
+
+function showProfileError(message) {
+  const errorEl = document.getElementById("passwordError");
+  errorEl.textContent = message;
+  errorEl.style.display = "block";
+  document.getElementById("passwordSuccess").style.display = "none";
+}
+
+function showProfileSuccess(message) {
+  const successEl = document.getElementById("passwordSuccess");
+  successEl.textContent = message;
+  successEl.style.display = "block";
+  document.getElementById("passwordError").style.display = "none";
+}
+
+function hideProfileMessages() {
+  document.getElementById("passwordError").style.display = "none";
+  document.getElementById("passwordSuccess").style.display = "none";
+}
+
+function setPasswordLoading(loading) {
+  const btn = document.getElementById("updatePasswordBtn");
+  const text = document.getElementById("updatePasswordText");
+  const spinner = document.getElementById("passwordSpinner");
+
+  btn.disabled = loading;
+  if (loading) {
+    text.textContent = "Updating...";
+    spinner.classList.remove("hidden");
+  } else {
+    // Restore text based on whether user has password
+    const user = firebase.auth().currentUser;
+    const hasPassword = user?.providerData?.some(
+      (p) => p.providerId === "password"
+    );
+    text.textContent = hasPassword ? "Update Password" : "Set Password";
+    spinner.classList.add("hidden");
+  }
+}
 
 // Listen for authentication state changes
 firebase.auth().onAuthStateChanged(async (user) => {
