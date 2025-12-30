@@ -337,7 +337,36 @@
                         </div>
                         <div class="form-group">
                             <label for="date">Date</label>
-                            <input type="date" id="date" required>
+                            <div class="custom-datepicker-wrapper" id="datePickerWrapper">
+                                <div class="datepicker-trigger" id="datePickerTrigger">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span class="datepicker-display" id="dateDisplay">Select Date</span>
+                                    <i class="fas fa-chevron-down datepicker-arrow"></i>
+                                </div>
+                                <input type="hidden" id="date" required>
+                                <div class="datepicker-dropdown" id="datePickerDropdown">
+                                    <div class="datepicker-header">
+                                        <button type="button" class="datepicker-nav prev" id="prevMonth">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                        <div class="datepicker-month-year">
+                                            <span id="currentMonth">December</span>
+                                            <span id="currentYear">2025</span>
+                                        </div>
+                                        <button type="button" class="datepicker-nav next" id="nextMonth">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="datepicker-weekdays">
+                                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                    </div>
+                                    <div class="datepicker-days" id="datepickerDays"></div>
+                                    <div class="datepicker-footer">
+                                        <button type="button" class="datepicker-btn clear" id="clearDate">Clear</button>
+                                        <button type="button" class="datepicker-btn today" id="todayBtn">Today</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

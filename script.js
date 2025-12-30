@@ -55,6 +55,8 @@ const MoneyTracker = {
     this.refreshAll();
     // Initialize custom dropdowns
     initCustomSelects();
+    // Initialize custom date picker
+    initCustomDatePicker();
   },
 
   // Load transactions from cloud storage
@@ -321,6 +323,10 @@ const MoneyTracker = {
   setDefaultDate() {
     const today = new Date().toISOString().split("T")[0];
     document.getElementById("date").value = today;
+    // Update custom date picker if it exists
+    if (typeof CustomDatePicker !== "undefined" && CustomDatePicker.setDate) {
+      CustomDatePicker.setDate(today);
+    }
   },
 
   // Add new transaction
@@ -2133,4 +2139,279 @@ function refreshCustomSelect(selectId) {
       triggerSpan.classList.toggle("placeholder", selectedOption.value === "");
     }
   }
+}
+
+// ========== Custom Date Picker ==========
+const CustomDatePicker = {
+  currentDate: new Date(),
+  selectedDate: null,
+  isOpen: false,
+
+  months: [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ],
+
+  init() {
+    const trigger = document.getElementById("datePickerTrigger");
+    const dropdown = document.getElementById("datePickerDropdown");
+    const prevBtn = document.getElementById("prevMonth");
+    const nextBtn = document.getElementById("nextMonth");
+    const todayBtn = document.getElementById("todayBtn");
+    const clearBtn = document.getElementById("clearDate");
+
+    if (!trigger || !dropdown) return;
+
+    // Set today's date as default
+    this.selectedDate = new Date();
+    this.currentDate = new Date();
+    this.updateDisplay();
+    this.renderCalendar();
+
+    // Toggle dropdown
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+
+    // Navigation
+    prevBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.prevMonth();
+    });
+
+    nextBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.nextMonth();
+    });
+
+    // Today button
+    todayBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.selectToday();
+    });
+
+    // Clear button
+    clearBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.clear();
+    });
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".custom-datepicker-wrapper")) {
+        this.close();
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.isOpen) {
+        this.close();
+      }
+    });
+  },
+
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  },
+
+  open() {
+    const trigger = document.getElementById("datePickerTrigger");
+    const dropdown = document.getElementById("datePickerDropdown");
+
+    trigger.classList.add("active");
+    dropdown.classList.add("open");
+    this.isOpen = true;
+
+    // If there's a selected date, show that month
+    if (this.selectedDate) {
+      this.currentDate = new Date(this.selectedDate);
+    }
+    this.renderCalendar();
+  },
+
+  close() {
+    const trigger = document.getElementById("datePickerTrigger");
+    const dropdown = document.getElementById("datePickerDropdown");
+
+    trigger.classList.remove("active");
+    dropdown.classList.remove("open");
+    this.isOpen = false;
+  },
+
+  prevMonth() {
+    this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+    this.renderCalendar();
+  },
+
+  nextMonth() {
+    this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+    this.renderCalendar();
+  },
+
+  selectDate(year, month, day) {
+    this.selectedDate = new Date(year, month, day);
+    this.updateDisplay();
+    this.updateHiddenInput();
+    this.renderCalendar();
+
+    // Close after selection with slight delay for visual feedback
+    setTimeout(() => this.close(), 150);
+  },
+
+  selectToday() {
+    const today = new Date();
+    this.selectedDate = today;
+    this.currentDate = new Date(today);
+    this.updateDisplay();
+    this.updateHiddenInput();
+    this.renderCalendar();
+    setTimeout(() => this.close(), 150);
+  },
+
+  clear() {
+    this.selectedDate = null;
+    this.updateDisplay();
+    document.getElementById("date").value = "";
+    this.renderCalendar();
+  },
+
+  updateDisplay() {
+    const display = document.getElementById("dateDisplay");
+    if (this.selectedDate) {
+      const options = {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      };
+      display.textContent = this.selectedDate.toLocaleDateString(
+        "en-US",
+        options
+      );
+      display.classList.remove("placeholder");
+    } else {
+      display.textContent = "Select Date";
+      display.classList.add("placeholder");
+    }
+  },
+
+  updateHiddenInput() {
+    const input = document.getElementById("date");
+    if (this.selectedDate) {
+      const year = this.selectedDate.getFullYear();
+      const month = String(this.selectedDate.getMonth() + 1).padStart(2, "0");
+      const day = String(this.selectedDate.getDate()).padStart(2, "0");
+      input.value = `${year}-${month}-${day}`;
+    } else {
+      input.value = "";
+    }
+  },
+
+  renderCalendar() {
+    const monthEl = document.getElementById("currentMonth");
+    const yearEl = document.getElementById("currentYear");
+    const daysContainer = document.getElementById("datepickerDays");
+
+    const year = this.currentDate.getFullYear();
+    const month = this.currentDate.getMonth();
+
+    monthEl.textContent = this.months[month];
+    yearEl.textContent = year;
+
+    // Get first day of month and total days
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    // Today's date for comparison
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+    // Selected date for comparison
+    const selectedStr = this.selectedDate
+      ? `${this.selectedDate.getFullYear()}-${this.selectedDate.getMonth()}-${this.selectedDate.getDate()}`
+      : null;
+
+    let html = "";
+
+    // Previous month days
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const day = daysInPrevMonth - i;
+      const prevMonth = month === 0 ? 11 : month - 1;
+      const prevYear = month === 0 ? year - 1 : year;
+      html += `<button type="button" class="datepicker-day other-month" 
+                data-year="${prevYear}" data-month="${prevMonth}" data-day="${day}">${day}</button>`;
+    }
+
+    // Current month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${month}-${day}`;
+      const isToday = dateStr === todayStr;
+      const isSelected = dateStr === selectedStr;
+
+      let classes = "datepicker-day";
+      if (isToday) classes += " today";
+      if (isSelected) classes += " selected";
+
+      html += `<button type="button" class="${classes}" 
+                data-year="${year}" data-month="${month}" data-day="${day}">${day}</button>`;
+    }
+
+    // Next month days
+    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+    const nextMonthDays = totalCells - (firstDay + daysInMonth);
+    for (let day = 1; day <= nextMonthDays; day++) {
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      html += `<button type="button" class="datepicker-day other-month" 
+                data-year="${nextYear}" data-month="${nextMonth}" data-day="${day}">${day}</button>`;
+    }
+
+    daysContainer.innerHTML = html;
+
+    // Add click handlers to all day buttons
+    daysContainer.querySelectorAll(".datepicker-day").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const y = parseInt(btn.dataset.year);
+        const m = parseInt(btn.dataset.month);
+        const d = parseInt(btn.dataset.day);
+        this.selectDate(y, m, d);
+      });
+    });
+  },
+
+  // Method to set date programmatically (for form reset)
+  setDate(dateString) {
+    if (dateString) {
+      this.selectedDate = new Date(dateString + "T00:00:00");
+      this.currentDate = new Date(this.selectedDate);
+    } else {
+      this.selectedDate = new Date();
+      this.currentDate = new Date();
+    }
+    this.updateDisplay();
+    this.updateHiddenInput();
+  },
+};
+
+// Initialize date picker when DOM is ready
+function initCustomDatePicker() {
+  CustomDatePicker.init();
 }
