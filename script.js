@@ -1663,82 +1663,194 @@ window.db = firebase.firestore();
 window.auth = firebase.auth();
 window.currentUser = null;
 
-// Authentication handlers
-document.getElementById("signInBtn").addEventListener("click", async () => {
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
+// Password visibility toggle
+document
+  .getElementById("togglePassword")
+  .addEventListener("click", function () {
+    const passwordInput = document.getElementById("authPassword");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+      eyeIcon.classList.remove("fa-eye");
+      eyeIcon.classList.add("fa-eye-slash");
+    } else {
+      passwordInput.type = "password";
+      eyeIcon.classList.remove("fa-eye-slash");
+      eyeIcon.classList.add("fa-eye");
+    }
+  });
+
+// Helper functions for loading states
+function setSignInLoading(isLoading) {
+  const btn = document.getElementById("signInBtn");
+  const text = document.getElementById("signInText");
+  const icon = document.getElementById("signInIcon");
+  const spinner = document.getElementById("signInSpinner");
+
+  btn.disabled = isLoading;
+  text.textContent = isLoading ? "Signing in..." : "Sign In";
+  icon.classList.toggle("hidden", isLoading);
+  spinner.classList.toggle("hidden", !isLoading);
+}
+
+function setSignUpLoading(isLoading) {
+  const btn = document.getElementById("signUpBtn");
+  const text = document.getElementById("signUpText");
+  const spinner = document.getElementById("signUpSpinner");
+
+  btn.disabled = isLoading;
+  text.textContent = isLoading ? "Creating account..." : "Create New Account";
+  spinner.classList.toggle("hidden", !isLoading);
+}
+
+function showAuthError(message) {
   const errorDiv = document.getElementById("authError");
   const errorMessage = document.getElementById("authErrorMessage");
+  errorMessage.textContent = message;
+  errorDiv.classList.remove("hidden");
+  errorDiv.classList.add("flex");
+  // Shake animation
+  errorDiv.style.animation = "none";
+  errorDiv.offsetHeight; // Trigger reflow
+  errorDiv.style.animation = "shake 0.5s ease-in-out";
+}
+
+function hideAuthError() {
+  const errorDiv = document.getElementById("authError");
+  errorDiv.classList.add("hidden");
+  errorDiv.classList.remove("flex");
+}
+
+// Form submission handler (Enter key support)
+document.getElementById("authForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  document.getElementById("signInBtn").click();
+});
+
+// Authentication handlers
+document.getElementById("signInBtn").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
 
   // Validate inputs
   if (!email || !password) {
-    errorMessage.textContent = "Please enter both email and password";
-    errorDiv.style.display = "flex";
+    showAuthError("Please enter both email and password");
     return;
   }
 
   try {
-    errorDiv.style.display = "none";
+    hideAuthError();
+    setSignInLoading(true);
     await firebase.auth().signInWithEmailAndPassword(email, password);
   } catch (error) {
     // Friendly error messages
     if (error.code === "auth/invalid-credential") {
-      errorMessage.textContent =
-        "Invalid email or password. Please check your credentials or create a new account.";
+      showAuthError(
+        "Invalid email or password. Please check your credentials or create a new account."
+      );
     } else if (error.code === "auth/user-not-found") {
-      errorMessage.textContent =
-        "No account found with this email. Please create a new account.";
+      showAuthError(
+        "No account found with this email. Please create a new account."
+      );
     } else if (error.code === "auth/wrong-password") {
-      errorMessage.textContent = "Incorrect password. Please try again.";
+      showAuthError("Incorrect password. Please try again.");
     } else if (error.code === "auth/invalid-email") {
-      errorMessage.textContent =
-        "Invalid email format. Please enter a valid email address.";
+      showAuthError(
+        "Invalid email format. Please enter a valid email address."
+      );
+    } else if (error.code === "auth/too-many-requests") {
+      showAuthError("Too many failed attempts. Please try again later.");
     } else {
-      errorMessage.textContent = error.message;
+      showAuthError(error.message);
     }
-    errorDiv.style.display = "flex";
+  } finally {
+    setSignInLoading(false);
   }
 });
 
 document.getElementById("signUpBtn").addEventListener("click", async () => {
-  const email = document.getElementById("authEmail").value;
+  const email = document.getElementById("authEmail").value.trim();
   const password = document.getElementById("authPassword").value;
-  const errorDiv = document.getElementById("authError");
-  const errorMessage = document.getElementById("authErrorMessage");
 
   // Validate inputs
   if (!email || !password) {
-    errorMessage.textContent = "Please enter both email and password";
-    errorDiv.style.display = "flex";
+    showAuthError("Please enter both email and password");
     return;
   }
 
   if (password.length < 6) {
-    errorMessage.textContent = "Password must be at least 6 characters";
-    errorDiv.style.display = "flex";
+    showAuthError("Password must be at least 6 characters");
     return;
   }
 
   try {
-    errorDiv.style.display = "none";
+    hideAuthError();
+    setSignUpLoading(true);
     await firebase.auth().createUserWithEmailAndPassword(email, password);
   } catch (error) {
     // Friendly error messages
     if (error.code === "auth/email-already-in-use") {
-      errorMessage.textContent =
-        "This email is already registered. Please sign in instead.";
+      showAuthError(
+        "This email is already registered. Please sign in instead."
+      );
     } else if (error.code === "auth/invalid-email") {
-      errorMessage.textContent =
-        "Invalid email format. Please enter a valid email address.";
+      showAuthError(
+        "Invalid email format. Please enter a valid email address."
+      );
     } else if (error.code === "auth/weak-password") {
-      errorMessage.textContent =
-        "Password is too weak. Please use at least 6 characters.";
+      showAuthError("Password is too weak. Please use at least 6 characters.");
     } else {
-      errorMessage.textContent = error.message;
+      showAuthError(error.message);
     }
-    errorDiv.style.display = "flex";
+  } finally {
+    setSignUpLoading(false);
   }
 });
+
+// Google Sign In
+function setGoogleLoading(isLoading) {
+  const btn = document.getElementById("googleSignInBtn");
+  const text = document.getElementById("googleSignInText");
+  const icon = document.getElementById("googleIcon");
+  const spinner = document.getElementById("googleSpinner");
+
+  btn.disabled = isLoading;
+  text.textContent = isLoading ? "Signing in..." : "Continue with Google";
+  icon.classList.toggle("hidden", isLoading);
+  spinner.classList.toggle("hidden", !isLoading);
+}
+
+document
+  .getElementById("googleSignInBtn")
+  .addEventListener("click", async () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    try {
+      hideAuthError();
+      setGoogleLoading(true);
+      await firebase.auth().signInWithPopup(provider);
+    } catch (error) {
+      if (error.code === "auth/popup-closed-by-user") {
+        // User closed the popup, no need to show error
+      } else if (error.code === "auth/cancelled-popup-request") {
+        // Multiple popups, ignore
+      } else if (error.code === "auth/popup-blocked") {
+        showAuthError("Popup was blocked. Please allow popups for this site.");
+      } else if (
+        error.code === "auth/account-exists-with-different-credential"
+      ) {
+        showAuthError(
+          "An account already exists with this email using a different sign-in method."
+        );
+      } else {
+        showAuthError(error.message);
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  });
 
 document.getElementById("signOutBtn").addEventListener("click", async () => {
   await firebase.auth().signOut();
