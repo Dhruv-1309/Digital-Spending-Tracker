@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+app/node_modules/
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# App folder (React/Vite project - not part of main project)
+app/
+ANOMALY_DETECTION_README.md
