@@ -53,6 +53,8 @@ const MoneyTracker = {
     this.loadCategories();
     this.setDefaultDate();
     this.refreshAll();
+    // Initialize custom dropdowns
+    initCustomSelects();
   },
 
   // Load transactions from cloud storage
@@ -308,6 +310,11 @@ const MoneyTracker = {
         }</option>`;
       });
     }
+    
+    // Refresh custom dropdown UI
+    if (typeof refreshCustomSelect === 'function') {
+      refreshCustomSelect('category');
+    }
   },
 
   // Set default date
@@ -333,6 +340,13 @@ const MoneyTracker = {
 
     document.getElementById("transactionForm").reset();
     this.setDefaultDate();
+    
+    // Refresh all custom dropdowns after form reset
+    if (typeof refreshCustomSelect === 'function') {
+      refreshCustomSelect('type');
+      refreshCustomSelect('category');
+      refreshCustomSelect('paymentMethod');
+    }
 
     this.refreshAll();
 
@@ -432,8 +446,19 @@ const MoneyTracker = {
       "balance"
     ).textContent = `₹${balance.toLocaleString()}`;
 
+    const incomeHero = document.getElementById("incomeHero");
+    const expenseHero = document.getElementById("expenseHero");
+    const balanceHero = document.getElementById("balanceHero");
+    if (incomeHero) incomeHero.textContent = `₹${totalIncome.toLocaleString()}`;
+    if (expenseHero) expenseHero.textContent = `₹${totalExpenses.toLocaleString()}`;
+    if (balanceHero) balanceHero.textContent = `₹${balance.toLocaleString()}`;
+
     const balanceElement = document.getElementById("balance");
     balanceElement.style.color = balance >= 0 ? "#10b981" : "#ef4444";
+
+    if (balanceHero) {
+      balanceHero.style.color = balance >= 0 ? "#22c55e" : "#ef4444";
+    }
 
     this.displayAnomalyAlerts();
     this.displayRecentTransactions();
@@ -1639,6 +1664,11 @@ function addCustomCategory() {
 
   document.getElementById("category").value = newCategory;
   customInput.value = "";
+  
+  // Refresh custom dropdown to show newly selected category
+  if (typeof refreshCustomSelect === 'function') {
+    refreshCustomSelect('category');
+  }
 
   alert("Custom category added successfully!");
 }
@@ -1877,3 +1907,227 @@ firebase.auth().onAuthStateChanged(async (user) => {
 document.addEventListener("DOMContentLoaded", function () {
   // Authentication will handle initialization
 });
+
+// ========== Custom Dropdown Logic ==========
+
+// Icon mapping for dropdown options
+const dropdownIcons = {
+  // Type dropdown
+  income: '<i class="fas fa-arrow-up"></i>',
+  expense: '<i class="fas fa-arrow-down"></i>',
+  // Payment method dropdown
+  cash: '<i class="fas fa-money-bill-wave"></i>',
+  card: '<i class="fas fa-credit-card"></i>',
+  bank_transfer: '<i class="fas fa-university"></i>',
+  upi: '<i class="fas fa-mobile-alt"></i>',
+  wallet: '<i class="fas fa-wallet"></i>',
+  other: '<i class="fas fa-ellipsis-h"></i>',
+  // Default for categories
+  default: '<i class="fas fa-tag"></i>'
+};
+
+function initCustomSelects() {
+  const selects = document.querySelectorAll('.form-group select');
+  
+  selects.forEach(select => {
+    // Skip if already initialized
+    if (select.parentNode.classList.contains('custom-select-wrapper')) return;
+    
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);
+    
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-select-trigger';
+    trigger.tabIndex = 0;
+    
+    // Initial value
+    const selectedOption = select.options[select.selectedIndex];
+    const initialText = selectedOption ? selectedOption.text : 'Select';
+    const isPlaceholder = !selectedOption || selectedOption.value === '';
+    
+    trigger.innerHTML = `
+      <span class="${isPlaceholder ? 'placeholder' : ''}">${initialText}</span>
+      <div class="custom-select-arrow"></div>
+    `;
+    wrapper.appendChild(trigger);
+    
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'custom-options';
+    wrapper.appendChild(optionsContainer);
+    
+    // Populate options
+    populateCustomOptions(select, optionsContainer, trigger);
+    
+    // Click event for trigger
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = wrapper.classList.contains('open');
+      closeAllCustomSelects();
+      if (!wasOpen) {
+        wrapper.classList.add('open');
+        // Focus management for accessibility
+        const firstOption = optionsContainer.querySelector('.custom-option');
+        if (firstOption) firstOption.focus();
+      }
+    });
+    
+    // Keyboard navigation
+    trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        trigger.click();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!wrapper.classList.contains('open')) {
+          trigger.click();
+        }
+      } else if (e.key === 'Escape') {
+        closeAllCustomSelects();
+        trigger.focus();
+      }
+    });
+  });
+  
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-select-wrapper')) {
+      closeAllCustomSelects();
+    }
+  });
+  
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAllCustomSelects();
+    }
+  });
+}
+
+function populateCustomOptions(select, optionsContainer, trigger) {
+  optionsContainer.innerHTML = '';
+  
+  Array.from(select.options).forEach((option, index) => {
+    // Skip empty placeholder options
+    if (option.value === '' && select.options.length > 1) return;
+    
+    const customOption = document.createElement('div');
+    customOption.className = 'custom-option';
+    customOption.tabIndex = 0;
+    if (option.selected && option.value !== '') {
+      customOption.classList.add('selected');
+    }
+    customOption.dataset.value = option.value;
+    
+    // Get icon for this option
+    const icon = dropdownIcons[option.value] || dropdownIcons.default;
+    
+    customOption.innerHTML = `
+      <span class="option-icon">${icon}</span>
+      <span class="option-text">${option.text}</span>
+    `;
+    
+    // Click handler with ripple effect
+    customOption.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      // Create ripple effect
+      createRipple(e, customOption);
+      
+      // Update select value
+      select.value = option.value;
+      
+      // Update trigger text
+      const triggerSpan = trigger.querySelector('span');
+      triggerSpan.textContent = option.text;
+      triggerSpan.classList.remove('placeholder');
+      
+      // Update selected styling with smooth transition
+      optionsContainer.querySelectorAll('.custom-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      customOption.classList.add('selected');
+      
+      // Close dropdown with slight delay for visual feedback
+      setTimeout(() => {
+        trigger.closest('.custom-select-wrapper').classList.remove('open');
+      }, 150);
+      
+      // Trigger change event on original select
+      const event = new Event('change', { bubbles: true });
+      select.dispatchEvent(event);
+    });
+    
+    // Keyboard navigation for options
+    customOption.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        customOption.click();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = customOption.nextElementSibling;
+        if (next) next.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = customOption.previousElementSibling;
+        if (prev) prev.focus();
+        else trigger.focus();
+      } else if (e.key === 'Escape') {
+        closeAllCustomSelects();
+        trigger.focus();
+      }
+    });
+    
+    optionsContainer.appendChild(customOption);
+  });
+}
+
+function createRipple(event, element) {
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  
+  const rect = element.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
+  ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+  
+  element.appendChild(ripple);
+  
+  // Remove ripple after animation
+  setTimeout(() => {
+    ripple.remove();
+  }, 600);
+}
+
+function closeAllCustomSelects() {
+  document.querySelectorAll('.custom-select-wrapper.open').forEach(wrapper => {
+    wrapper.classList.remove('open');
+  });
+}
+
+// Function to refresh a specific custom select (call when options change dynamically)
+function refreshCustomSelect(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  
+  const wrapper = select.closest('.custom-select-wrapper');
+  if (!wrapper) return;
+  
+  const optionsContainer = wrapper.querySelector('.custom-options');
+  const trigger = wrapper.querySelector('.custom-select-trigger');
+  
+  if (optionsContainer && trigger) {
+    populateCustomOptions(select, optionsContainer, trigger);
+    
+    // Update trigger text
+    const selectedOption = select.options[select.selectedIndex];
+    const triggerSpan = trigger.querySelector('span');
+    if (selectedOption) {
+      triggerSpan.textContent = selectedOption.text;
+      triggerSpan.classList.toggle('placeholder', selectedOption.value === '');
+    }
+  }
+}
