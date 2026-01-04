@@ -31,7 +31,16 @@ A modern, cloud-based personal finance management application that helps you tra
 - Expense breakdown by category (pie charts)
 - Time series analysis of spending trends
 - Day-of-week spending heatmap
+- **Money Runway Prediction** - Estimates when your balance will reach zero based on spending patterns
 - Comprehensive financial statistics
+
+### 🔄 **Autopay Management**
+
+- Set up recurring monthly payments
+- Track subscription and bill due dates
+- Automatic expense logging on scheduled days
+- Visual calendar-style date picker for selecting deduction day
+- Support for "Last day of month" scheduling
 
 ### 💾 **Data Export**
 
@@ -165,12 +174,12 @@ If Z-Score > 2: Transaction flagged as anomaly
 ## Future Enhancements
 
 - [ ] Budget setting and tracking
-- [ ] Recurring transaction automation
+- [x] Recurring transaction automation (Autopay)
 - [ ] Multi-currency support
 - [ ] Mobile app version
 - [ ] Advanced reporting features
 - [ ] Category-specific spending limits
-- [ ] Machine learning for smarter predictions
+- [x] Money runway prediction (Balance depletion forecast)
 - [ ] Export to PDF reports
 
 ## License
@@ -183,7 +192,7 @@ For setup help, refer to `FIREBASE_SETUP.md` for detailed Firebase configuration
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: December 2025  
+**Version**: 2.1  
+**Last Updated**: January 2026  
 **Architecture**: Single Page Application (SPA)  
 **Status**: Production Ready
