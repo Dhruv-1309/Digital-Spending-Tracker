@@ -1417,9 +1417,90 @@ const MoneyTracker = {
                         </div>`;
     }
 
+    // Add Money Runway Prediction (when will money run out)
+    const runway = this.calculateMoneyRunway(stats.averageDailySpending);
+    if (runway) {
+      const runwayColor = runway.daysRemaining <= 7 ? "#ef4444" : 
+                          runway.daysRemaining <= 30 ? "#f59e0b" : 
+                          runway.daysRemaining === Infinity ? "#10b981" : "#3b82f6";
+
+      statsHtml += `
+                        <div style="grid-column: 1 / -1; margin-top: 12px; padding-top: 16px; border-top: 2px solid #e2e8f0;">
+                            <strong style="color: ${runwayColor}; font-size: 1.05rem;">
+                                <i class="fas fa-hourglass-half"></i> Money Runway Prediction
+                            </strong>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Current Balance:</strong><br>
+                            <span style="color: ${runway.balance >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700; font-size: 1.1rem;">₹${runway.balance.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Days Until Depleted:</strong><br>
+                            <span style="color: ${runwayColor}; font-weight: 700; font-size: 1.1rem;">${runway.daysRemaining === Infinity ? '∞ (Sustainable)' : runway.daysRemaining + ' days'}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Estimated Depletion:</strong><br>
+                            <span style="color: ${runwayColor}; font-weight: 600;">${runway.depletionDate}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #0f172a;">Daily Burn Rate:</strong><br>
+                            <span style="color: #64748b;">${runway.burnRatePercent}%/day</span>
+                        </div>`;
+    }
+
     statsHtml += `</div>`;
     document.getElementById("timeSeriesStats").innerHTML = statsHtml;
-  }, // Refresh all displays
+  },
+
+  // Calculate Money Runway - Predict when money will run out
+  calculateMoneyRunway(avgDailySpend) {
+    const totalIncome = this.transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalExpenses = this.transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const currentBalance = totalIncome - totalExpenses;
+
+    if (currentBalance <= 0) {
+      return {
+        balance: currentBalance,
+        daysRemaining: 0,
+        depletionDate: "Already Depleted",
+        burnRatePercent: "100"
+      };
+    }
+
+    if (!avgDailySpend || avgDailySpend <= 0) {
+      return {
+        balance: currentBalance,
+        daysRemaining: Infinity,
+        depletionDate: "N/A (No spending)",
+        burnRatePercent: "0"
+      };
+    }
+
+    const daysRemaining = Math.floor(currentBalance / avgDailySpend);
+    const depletionDate = new Date();
+    depletionDate.setDate(depletionDate.getDate() + daysRemaining);
+
+    const formattedDate = depletionDate.toLocaleDateString('en-IN', { 
+      day: 'numeric', month: 'short', year: 'numeric' 
+    });
+
+    const burnRatePercent = ((avgDailySpend / currentBalance) * 100).toFixed(2);
+
+    return {
+      balance: currentBalance,
+      daysRemaining: daysRemaining,
+      depletionDate: formattedDate,
+      burnRatePercent: burnRatePercent
+    };
+  },
+
+  // Refresh all displays
   refreshAll() {
     this.updateDashboard();
     if (this.currentTab === "transactions") {
