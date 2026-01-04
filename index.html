@@ -252,6 +252,9 @@
             <button class="nav-tab" data-tab="transactions">
                 <i class="fas fa-list"></i> Transactions
             </button>
+            <button class="nav-tab" data-tab="autopay">
+                <i class="fas fa-sync-alt"></i> Autopay
+            </button>
             <button class="nav-tab" data-tab="analytics">
                 <i class="fas fa-chart-pie"></i> Analytics
             </button>
@@ -425,6 +428,125 @@
                     <tbody id="transactionsBody">
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Autopay Tab -->
+        <div id="autopay" class="tab-content">
+            <div class="autopay-container">
+                <!-- Add New Autopay Section -->
+                <div class="add-autopay-section">
+                    <div class="form-header">
+                        <h3><i class="fas fa-plus-circle"></i> Add Autopay</h3>
+                        <p>Set up recurring payments that will be automatically deducted each month</p>
+                    </div>
+                    <form id="autopayForm" class="modern-form">
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="autopayName">Payment Name</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-tag"></i>
+                                    <input type="text" id="autopayName" placeholder="e.g., Netflix, Spotify, Rent"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="amount-input-group" style="margin-bottom: 0;">
+                                <label>Amount</label>
+                                <div class="amount-wrapper">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="autopayAmount" step="0.01" min="0" placeholder="0.00"
+                                        required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="autopayCategory">Category</label>
+                                <select id="autopayCategory" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Subscriptions">Subscriptions</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Rent/Mortgage">Rent/Mortgage</option>
+                                    <option value="Insurance">Insurance</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Healthcare">Healthcare</option>
+                                    <option value="Other Expenses">Other Expenses</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="autopayDay">Deduction Day</label>
+                                <div class="autopay-day-picker-wrapper">
+                                    <div class="autopay-day-input-container">
+                                        <i class="fas fa-calendar-day"></i>
+                                        <input type="number" id="autopayDay" min="1" max="31"
+                                            placeholder="Select day (1-31)">
+                                        <button type="button" class="autopay-day-toggle" id="autopayDayToggle">
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                    </div>
+                                    <div class="autopay-day-calendar" id="autopayDayCalendar">
+                                        <div class="autopay-day-calendar-header">
+                                            <span>Select Day of Month</span>
+                                        </div>
+                                        <div class="autopay-day-weekdays">
+                                            <span>SU</span>
+                                            <span>MO</span>
+                                            <span>TU</span>
+                                            <span>WE</span>
+                                            <span>TH</span>
+                                            <span>FR</span>
+                                            <span>SA</span>
+                                        </div>
+                                        <div class="autopay-day-grid" id="autopayDayGrid">
+                                            <!-- Days 1-31 will be generated by JS -->
+                                        </div>
+                                        <div class="autopay-day-calendar-footer">
+                                            <button type="button" class="autopay-clear-btn"
+                                                id="autopayClearBtn">Clear</button>
+                                            <button type="button" class="autopay-last-day-btn"
+                                                id="autopayLastDayBtn">Last Day</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="autopayDescription">Description (Optional)</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-align-left"></i>
+                                <input type="text" id="autopayDescription"
+                                    placeholder="Additional details about this payment">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit-transaction">
+                            <i class="fas fa-plus"></i> Add Autopay
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Autopay List Section -->
+                <div class="autopay-list-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-list-check"></i> Your Autopays</h3>
+                        <div class="autopay-summary">
+                            <span class="autopay-total-label">Monthly Total:</span>
+                            <span class="autopay-total-amount" id="autopayTotalAmount">₹0</span>
+                        </div>
+                    </div>
+                    <div id="autopayList" class="autopay-list">
+                        <p class="empty-message">No autopays set up yet. Add your first recurring payment above!</p>
+                    </div>
+                </div>
+
+                <!-- Upcoming Autopays Section -->
+                <div class="upcoming-autopays-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-calendar-alt"></i> Upcoming This Month</h3>
+                    </div>
+                    <div id="upcomingAutopays" class="upcoming-list">
+                        <p class="empty-message">No upcoming autopays this month.</p>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -3,6 +3,7 @@ const MoneyTracker = {
   transactions: [],
   currentTab: "dashboard",
   approvedAnomalies: [], // Track IDs of approved anomalies
+  autopays: [], // Track recurring autopay items
 
   // Default categories
   defaultCategories: {
@@ -49,9 +50,12 @@ const MoneyTracker = {
     await this.loadTransactions();
     await this.loadCustomCategories();
     await this.loadApprovedAnomalies();
+    await this.loadAutopays();
+    this.checkAndProcessAutopays();
     this.setupEventListeners();
     this.loadCategories();
     this.setDefaultDate();
+    this.initAutopayDaySelector();
     this.refreshAll();
     // Initialize custom dropdowns
     initCustomSelects();
@@ -244,6 +248,462 @@ const MoneyTracker = {
     return [...this.defaultCategories[type], ...this.customCategories[type]];
   },
 
+  // ============ AUTOPAY METHODS ============
+
+  // Load autopays from cloud storage
+  async loadAutopays() {
+    try {
+      if (!window.db || !window.currentUser) {
+        this.autopays = [];
+        return;
+      }
+      const doc = await window.db
+        .collection("users")
+        .doc(window.currentUser.uid)
+        .collection("data")
+        .doc("autopays")
+        .get();
+      if (doc.exists) {
+        this.autopays = doc.data().items || [];
+      } else {
+        this.autopays = [];
+      }
+    } catch (error) {
+      console.error("Error loading autopays:", error);
+      this.autopays = [];
+    }
+  },
+
+  // Save autopays to cloud storage
+  async saveAutopays() {
+    try {
+      if (!window.db || !window.currentUser) return;
+      await window.db
+        .collection("users")
+        .doc(window.currentUser.uid)
+        .collection("data")
+        .doc("autopays")
+        .set({
+          items: this.autopays,
+          updatedAt: new Date(),
+        });
+    } catch (error) {
+      console.error("Error saving autopays:", error);
+    }
+  },
+
+  // Initialize autopay day selector calendar
+  initAutopayDaySelector() {
+    const dayInput = document.getElementById("autopayDay");
+    const dayGrid = document.getElementById("autopayDayGrid");
+    const dayCalendar = document.getElementById("autopayDayCalendar");
+    const dayToggle = document.getElementById("autopayDayToggle");
+    const lastDayBtn = document.getElementById("autopayLastDayBtn");
+    const clearBtn = document.getElementById("autopayClearBtn");
+
+    if (!dayInput || !dayGrid || !dayCalendar) return;
+
+    // Generate day grid (1-31)
+    dayGrid.innerHTML = "";
+    for (let i = 1; i <= 31; i++) {
+      const dayBtn = document.createElement("button");
+      dayBtn.type = "button";
+      dayBtn.className = "autopay-day-btn";
+      dayBtn.textContent = i;
+      dayBtn.dataset.day = i;
+      dayBtn.addEventListener("click", () => {
+        this.selectAutopayDay(i);
+      });
+      dayGrid.appendChild(dayBtn);
+    }
+
+    // Toggle calendar visibility
+    dayToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dayCalendar.classList.toggle("active");
+    });
+
+    // Also toggle when clicking the input (focus)
+    dayInput.addEventListener("focus", () => {
+      dayCalendar.classList.add("active");
+    });
+
+    // Handle manual input with validation (1-31)
+    dayInput.addEventListener("input", (e) => {
+      let value = parseInt(e.target.value);
+      if (value < 1) e.target.value = 1;
+      if (value > 31) e.target.value = 31;
+      // Update selected state in grid
+      this.updateDayGridSelection(e.target.value);
+    });
+
+    // Validate on blur
+    dayInput.addEventListener("blur", (e) => {
+      let value = parseInt(e.target.value);
+      if (isNaN(value) || value < 1) e.target.value = "";
+      if (value > 31) e.target.value = 31;
+    });
+
+    // Handle last day button
+    lastDayBtn.addEventListener("click", () => {
+      this.selectAutopayDay("last");
+    });
+
+    // Handle clear button
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        dayInput.value = "";
+        dayInput.placeholder = "Select day (1-31)";
+        delete dayInput.dataset.lastDay;
+        this.updateDayGridSelection(null);
+      });
+    }
+
+    // Close calendar when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".autopay-day-picker-wrapper")) {
+        dayCalendar.classList.remove("active");
+      }
+    });
+  },
+
+  // Select a day in the autopay calendar
+  selectAutopayDay(day) {
+    const dayInput = document.getElementById("autopayDay");
+    const dayCalendar = document.getElementById("autopayDayCalendar");
+
+    if (day === "last") {
+      dayInput.value = "";
+      dayInput.placeholder = "Last day of month";
+      dayInput.dataset.lastDay = "true";
+    } else {
+      dayInput.value = day;
+      dayInput.placeholder = "Select day (1-31)";
+      delete dayInput.dataset.lastDay;
+    }
+
+    this.updateDayGridSelection(day);
+    dayCalendar.classList.remove("active");
+  },
+
+  // Update the visual selection in the day grid
+  updateDayGridSelection(selectedDay) {
+    const dayBtns = document.querySelectorAll(".autopay-day-btn");
+    const lastDayBtn = document.getElementById("autopayLastDayBtn");
+
+    dayBtns.forEach((btn) => {
+      btn.classList.remove("selected");
+      if (btn.dataset.day == selectedDay) {
+        btn.classList.add("selected");
+      }
+    });
+
+    if (lastDayBtn) {
+      if (selectedDay === "last") {
+        lastDayBtn.classList.add("selected");
+      } else {
+        lastDayBtn.classList.remove("selected");
+      }
+    }
+  },
+
+  // Get ordinal suffix for day
+  getDaySuffix(day) {
+    if (day >= 11 && day <= 13) return "th";
+    switch (day % 10) {
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
+    }
+  },
+
+  // Add new autopay
+  addAutopay() {
+    const name = document.getElementById("autopayName").value.trim();
+    const amount = parseFloat(document.getElementById("autopayAmount").value);
+    const category = document.getElementById("autopayCategory").value;
+    const dayInput = document.getElementById("autopayDay");
+    const day = dayInput.dataset.lastDay === "true" ? "last" : dayInput.value;
+    const description = document
+      .getElementById("autopayDescription")
+      .value.trim();
+
+    if (
+      !name ||
+      !amount ||
+      !category ||
+      (!day && dayInput.dataset.lastDay !== "true")
+    ) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const autopay = {
+      id: Date.now() + Math.random(),
+      name: name,
+      amount: amount,
+      category: category,
+      day: day,
+      description: description,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      lastProcessed: null,
+    };
+
+    this.autopays.push(autopay);
+    this.saveAutopays();
+
+    // Reset form
+    document.getElementById("autopayForm").reset();
+
+    // Reset the day picker state
+    dayInput.placeholder = "Select day (1-31)";
+    delete dayInput.dataset.lastDay;
+    this.updateDayGridSelection(null);
+
+    // Refresh custom dropdowns
+    if (typeof refreshCustomSelect === "function") {
+      refreshCustomSelect("autopayCategory");
+    }
+
+    this.displayAutopays();
+    alert("✅ Autopay added successfully!");
+  },
+
+  // Delete autopay
+  deleteAutopay(id) {
+    if (confirm("Are you sure you want to delete this autopay?")) {
+      this.autopays = this.autopays.filter((a) => a.id != id);
+      this.saveAutopays();
+      this.displayAutopays();
+      alert("🗑️ Autopay deleted successfully!");
+    }
+  },
+
+  // Toggle autopay active status
+  toggleAutopay(id) {
+    const autopay = this.autopays.find((a) => a.id == id);
+    if (autopay) {
+      autopay.isActive = !autopay.isActive;
+      this.saveAutopays();
+      this.displayAutopays();
+    }
+  },
+
+  // Check and process autopays for current month
+  checkAndProcessAutopays() {
+    const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    this.autopays.forEach((autopay) => {
+      if (!autopay.isActive) return;
+
+      // Check if already processed this month
+      if (autopay.lastProcessed) {
+        const lastProcessedDate = new Date(autopay.lastProcessed);
+        if (
+          lastProcessedDate.getMonth() === currentMonth &&
+          lastProcessedDate.getFullYear() === currentYear
+        ) {
+          return; // Already processed this month
+        }
+      }
+
+      // Determine the autopay day
+      let autopayDay =
+        autopay.day === "last" ? lastDayOfMonth : parseInt(autopay.day);
+
+      // If autopay day has passed this month (or is today), process it
+      if (currentDay >= autopayDay) {
+        this.processAutopay(autopay, currentYear, currentMonth, autopayDay);
+      }
+    });
+  },
+
+  // Process a single autopay - create transaction
+  processAutopay(autopay, year, month, day) {
+    const transactionDate = new Date(year, month, day);
+    const dateString = transactionDate.toISOString().split("T")[0];
+
+    const transaction = {
+      id: Date.now() + Math.random(),
+      type: "expense",
+      amount: autopay.amount,
+      category: autopay.category,
+      paymentMethod: "bank_transfer",
+      description: `[Autopay] ${autopay.name}${
+        autopay.description ? " - " + autopay.description : ""
+      }`,
+      date: dateString,
+      isAutopay: true,
+      autopayId: autopay.id,
+    };
+
+    this.transactions.unshift(transaction);
+    this.saveTransactions();
+
+    // Update last processed date
+    autopay.lastProcessed = new Date().toISOString();
+    this.saveAutopays();
+  },
+
+  // Display autopays in the list
+  displayAutopays() {
+    const listContainer = document.getElementById("autopayList");
+    const upcomingContainer = document.getElementById("upcomingAutopays");
+    const totalElement = document.getElementById("autopayTotalAmount");
+
+    if (!listContainer) return;
+
+    if (this.autopays.length === 0) {
+      listContainer.innerHTML =
+        '<p class="empty-message">No autopays set up yet. Add your first recurring payment above!</p>';
+      if (upcomingContainer) {
+        upcomingContainer.innerHTML =
+          '<p class="empty-message">No upcoming autopays this month.</p>';
+      }
+      if (totalElement) {
+        totalElement.textContent = "₹0";
+      }
+      return;
+    }
+
+    // Calculate total
+    const total = this.autopays
+      .filter((a) => a.isActive)
+      .reduce((sum, a) => sum + a.amount, 0);
+    if (totalElement) {
+      totalElement.textContent = `₹${total.toLocaleString("en-IN")}`;
+    }
+
+    // Display all autopays
+    let html = "";
+    this.autopays.forEach((autopay) => {
+      const statusClass = autopay.isActive ? "active" : "inactive";
+      const statusText = autopay.isActive ? "Active" : "Paused";
+      const dayDisplay =
+        autopay.day === "last"
+          ? "Last day"
+          : `${autopay.day}${this.getDaySuffix(parseInt(autopay.day))}`;
+
+      html += `
+        <div class="autopay-card ${statusClass}">
+          <div class="autopay-info">
+            <div class="autopay-header">
+              <h4>${autopay.name}</h4>
+              <span class="autopay-status ${statusClass}">${statusText}</span>
+            </div>
+            <div class="autopay-details">
+              <span class="autopay-amount">₹${autopay.amount.toLocaleString(
+                "en-IN"
+              )}</span>
+              <span class="autopay-category"><i class="fas fa-folder"></i> ${
+                autopay.category
+              }</span>
+              <span class="autopay-day"><i class="fas fa-calendar"></i> ${dayDisplay} of each month</span>
+            </div>
+            ${
+              autopay.description
+                ? `<p class="autopay-desc">${autopay.description}</p>`
+                : ""
+            }
+          </div>
+          <div class="autopay-actions">
+            <button class="autopay-btn toggle" onclick="MoneyTracker.toggleAutopay('${
+              autopay.id
+            }')" title="${autopay.isActive ? "Pause" : "Activate"}">
+              <i class="fas fa-${autopay.isActive ? "pause" : "play"}"></i>
+            </button>
+            <button class="autopay-btn delete" onclick="MoneyTracker.deleteAutopay('${
+              autopay.id
+            }')" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    listContainer.innerHTML = html;
+
+    // Display upcoming autopays for this month
+    if (upcomingContainer) {
+      this.displayUpcomingAutopays(upcomingContainer);
+    }
+  },
+
+  // Display upcoming autopays for the current month
+  displayUpcomingAutopays(container) {
+    const today = new Date();
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    const upcoming = this.autopays
+      .filter((autopay) => {
+        if (!autopay.isActive) return false;
+
+        // Check if already processed this month
+        if (autopay.lastProcessed) {
+          const lastProcessedDate = new Date(autopay.lastProcessed);
+          if (
+            lastProcessedDate.getMonth() === currentMonth &&
+            lastProcessedDate.getFullYear() === currentYear
+          ) {
+            return false;
+          }
+        }
+
+        const autopayDay =
+          autopay.day === "last" ? lastDayOfMonth : parseInt(autopay.day);
+        return autopayDay > currentDay;
+      })
+      .sort((a, b) => {
+        const dayA = a.day === "last" ? lastDayOfMonth : parseInt(a.day);
+        const dayB = b.day === "last" ? lastDayOfMonth : parseInt(b.day);
+        return dayA - dayB;
+      });
+
+    if (upcoming.length === 0) {
+      container.innerHTML =
+        '<p class="empty-message">All autopays for this month have been processed.</p>';
+      return;
+    }
+
+    let html = "";
+    upcoming.forEach((autopay) => {
+      const dayDisplay = autopay.day === "last" ? lastDayOfMonth : autopay.day;
+      const monthName = today.toLocaleString("default", { month: "short" });
+
+      html += `
+        <div class="upcoming-card">
+          <div class="upcoming-date">
+            <span class="day">${dayDisplay}</span>
+            <span class="month">${monthName}</span>
+          </div>
+          <div class="upcoming-info">
+            <h4>${autopay.name}</h4>
+            <span class="upcoming-category">${autopay.category}</span>
+          </div>
+          <div class="upcoming-amount">₹${autopay.amount.toLocaleString(
+            "en-IN"
+          )}</div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  },
+
+  // ============ END AUTOPAY METHODS ============
+
   // Setup event listeners
   setupEventListeners() {
     // Tab navigation
@@ -261,6 +721,15 @@ const MoneyTracker = {
         e.preventDefault();
         this.addTransaction();
       });
+
+    // Autopay form submission
+    const autopayForm = document.getElementById("autopayForm");
+    if (autopayForm) {
+      autopayForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.addAutopay();
+      });
+    }
 
     // Type change for category loading
     document.getElementById("type").addEventListener("change", (e) => {
@@ -290,6 +759,8 @@ const MoneyTracker = {
       setTimeout(() => this.createCharts(), 100);
     } else if (tabName === "dashboard") {
       this.updateDashboard();
+    } else if (tabName === "autopay") {
+      this.displayAutopays();
     }
   },
 
@@ -392,6 +863,9 @@ const MoneyTracker = {
       const amountPrefix = transaction.type === "income" ? "+" : "-";
       const typeIcon = transaction.type === "income" ? "↑" : "↓";
       const typeColor = transaction.type === "income" ? "#10b981" : "#ef4444";
+      const autopayBadge = transaction.isAutopay
+        ? '<span style="display: inline-flex; align-items: center; gap: 4px; background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 6px;"><i class="fas fa-sync-alt" style="font-size: 0.6rem;"></i> Auto</span>'
+        : "";
 
       html += `
                         <tr>
@@ -407,7 +881,9 @@ const MoneyTracker = {
                                     }
                                 </span>
                             </td>
-                            <td><strong>${transaction.category}</strong></td>
+                            <td><strong>${
+                              transaction.category
+                            }</strong>${autopayBadge}</td>
                             <td>${transaction.description || "-"}</td>
                             <td style="text-transform: capitalize;">${transaction.paymentMethod.replace(
                               "_",
@@ -491,6 +967,9 @@ const MoneyTracker = {
       const amountPrefix = transaction.type === "income" ? "+" : "-";
       const typeIcon = transaction.type === "income" ? "↑" : "↓";
       const typeColor = transaction.type === "income" ? "#10b981" : "#ef4444";
+      const autopayBadge = transaction.isAutopay
+        ? '<span style="display: inline-flex; align-items: center; gap: 4px; background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 6px;"><i class="fas fa-sync-alt" style="font-size: 0.6rem;"></i> Auto</span>'
+        : "";
 
       html += `
                         <tr>
@@ -506,7 +985,9 @@ const MoneyTracker = {
                                     }
                                 </span>
                             </td>
-                            <td><strong>${transaction.category}</strong></td>
+                            <td><strong>${
+                              transaction.category
+                            }</strong>${autopayBadge}</td>
                             <td>${transaction.description || "-"}</td>
                             <td class="${amountClass}"><strong>${amountPrefix}₹${transaction.amount.toLocaleString(
         "en-IN"
@@ -943,6 +1424,9 @@ const MoneyTracker = {
     this.updateDashboard();
     if (this.currentTab === "transactions") {
       this.displayTransactions();
+    }
+    if (this.currentTab === "autopay") {
+      this.displayAutopays();
     }
   },
 
