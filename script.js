@@ -202,10 +202,10 @@ const MoneyTracker = {
       this.saveApprovedAnomalies();
       console.log("Updated approved list:", this.approvedAnomalies);
       this.displayAnomalyAlerts(); // Refresh the alerts immediately
-      alert("✅ Anomaly marked as legitimate and approved!");
+      showToast("Anomaly marked as legitimate and approved.", "success");
     } else {
       console.log("Already approved");
-      alert("This anomaly is already approved!");
+      showToast("This anomaly is already approved.", "info");
     }
   },
 
@@ -236,10 +236,13 @@ const MoneyTracker = {
       // Refresh all displays
       this.refreshAll();
 
-      alert("🗑️ Transaction dismissed and removed from your records!");
+      showToast(
+        "Transaction dismissed and removed from your records.",
+        "success",
+      );
     } else {
       console.log("Transaction not found");
-      alert("❌ Error: Transaction not found");
+      showToast("Error: transaction not found.", "error");
     }
   },
 
@@ -439,7 +442,7 @@ const MoneyTracker = {
       !category ||
       (!day && dayInput.dataset.lastDay !== "true")
     ) {
-      alert("Please fill in all required fields.");
+      showToast("Please fill in all required fields.", "warning");
       return;
     }
 
@@ -472,17 +475,26 @@ const MoneyTracker = {
     }
 
     this.displayAutopays();
-    alert("✅ Autopay added successfully!");
+    showToast("Autopay added successfully.", "success");
   },
 
   // Delete autopay
-  deleteAutopay(id) {
-    if (confirm("Are you sure you want to delete this autopay?")) {
-      this.autopays = this.autopays.filter((a) => a.id != id);
-      this.saveAutopays();
-      this.displayAutopays();
-      alert("🗑️ Autopay deleted successfully!");
-    }
+  async deleteAutopay(id) {
+    const confirmed = await showConfirm(
+      "Are you sure you want to delete this autopay?",
+      {
+        title: "Delete autopay",
+        confirmText: "Delete",
+        variant: "danger",
+      },
+    );
+
+    if (!confirmed) return;
+
+    this.autopays = this.autopays.filter((a) => a.id != id);
+    this.saveAutopays();
+    this.displayAutopays();
+    showToast("Autopay deleted successfully.", "success");
   },
 
   // Toggle autopay active status
@@ -603,7 +615,7 @@ const MoneyTracker = {
             </div>
             <div class="autopay-details">
               <span class="autopay-amount">₹${autopay.amount.toLocaleString(
-                "en-IN"
+                "en-IN",
               )}</span>
               <span class="autopay-category"><i class="fas fa-folder"></i> ${
                 autopay.category
@@ -694,7 +706,7 @@ const MoneyTracker = {
             <span class="upcoming-category">${autopay.category}</span>
           </div>
           <div class="upcoming-amount">₹${autopay.amount.toLocaleString(
-            "en-IN"
+            "en-IN",
           )}</div>
         </div>
       `;
@@ -735,6 +747,27 @@ const MoneyTracker = {
     document.getElementById("type").addEventListener("change", (e) => {
       this.loadCategoriesForType(e.target.value);
     });
+
+    // Transaction Search & Filter Listeners
+    const txSearch = document.getElementById("txSearch");
+    if (txSearch) {
+        txSearch.addEventListener("input", () => this.displayTransactions());
+    }
+
+    const txFilter = document.getElementById("txFilterType");
+    if (txFilter) {
+        txFilter.addEventListener("change", () => this.displayTransactions());
+    }
+
+    const txMonthFilter = document.getElementById("txMonthFilter");
+    if (txMonthFilter) {
+      txMonthFilter.addEventListener("change", () => this.displayTransactions());
+    }
+
+    const txSortBy = document.getElementById("txSortBy");
+    if (txSortBy) {
+      txSortBy.addEventListener("change", () => this.displayTransactions());
+    }
   },
 
   // Show specific tab
@@ -827,106 +860,210 @@ const MoneyTracker = {
 
     this.refreshAll();
 
-    alert("Transaction added successfully!");
+    showToast("Transaction added successfully.", "success");
   },
 
   // Delete transaction
-  deleteTransaction(id) {
-    if (confirm("Are you sure you want to delete this transaction?")) {
-      const originalLength = this.transactions.length;
-      this.transactions = this.transactions.filter((t) => t.id != id);
+  async deleteTransaction(id) {
+    const confirmed = await showConfirm(
+      "Are you sure you want to delete this transaction?",
+      {
+        title: "Delete transaction",
+        confirmText: "Delete",
+        variant: "danger",
+      },
+    );
 
-      if (this.transactions.length < originalLength) {
-        this.saveTransactions();
-        this.refreshAll();
-        alert("Transaction deleted successfully!");
-      } else {
-        alert("Error: Transaction not found");
-      }
+    if (!confirmed) return;
+
+    const originalLength = this.transactions.length;
+    this.transactions = this.transactions.filter((t) => t.id != id);
+
+    if (this.transactions.length < originalLength) {
+      this.saveTransactions();
+      this.refreshAll();
+      showToast("Transaction deleted successfully.", "success");
+    } else {
+      showToast("Error: transaction not found.", "error");
     }
   },
 
   // Display transactions in table
   displayTransactions() {
-    const tbody = document.getElementById("transactionsBody");
+    const listContainer = document.getElementById("transactionsList");
+    const countBadge = document.getElementById("txCount");
+    const searchInput = document.getElementById("txSearch");
+    const typeFilter = document.getElementById("txFilterType");
+    const monthFilter = document.getElementById("txMonthFilter");
+    const sortSelect = document.getElementById("txSortBy");
+    
+    // Safety check if elements exist (in case user hasn't refreshed or navigated yet)
+    if (!listContainer) return;
 
-    if (this.transactions.length === 0) {
-      tbody.innerHTML =
-        '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">No transactions found. Add your first transaction to get started!</td></tr>';
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
+    const filterType = typeFilter ? typeFilter.value : "all";
+
+    const getMonthKey = (dateStr) => {
+      const date = new Date(dateStr);
+      if (Number.isNaN(date.getTime())) {
+        return null;
+      }
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      return `${date.getFullYear()}-${month}`;
+    };
+
+    if (monthFilter) {
+      const currentValue = monthFilter.value || "all";
+      const monthKeys = Array.from(
+        new Set(
+          this.transactions
+            .map((t) => getMonthKey(t.date))
+            .filter((key) => key !== null),
+        ),
+      ).sort((a, b) => b.localeCompare(a));
+
+      const monthOptions = monthKeys
+        .map((key) => {
+          const [year, month] = key.split("-").map(Number);
+          const label = new Date(year, month - 1, 1).toLocaleDateString(
+            "en-IN",
+            {
+              month: "short",
+              year: "numeric",
+            },
+          );
+          return `<option value="${key}">${label}</option>`;
+        })
+        .join("");
+
+      monthFilter.innerHTML =
+        `<option value="all">All Months</option>${monthOptions}`;
+      monthFilter.value = monthKeys.includes(currentValue)
+        ? currentValue
+        : "all";
+    }
+
+    const filterMonth = monthFilter ? monthFilter.value : "all";
+    const sortBy = sortSelect ? sortSelect.value : "date-desc";
+
+    // Filter transactions
+    const filtered = this.transactions.filter((t) => {
+      const matchesSearch =
+        t.category.toLowerCase().includes(searchTerm) ||
+        (t.description && t.description.toLowerCase().includes(searchTerm));
+      const matchesType = filterType === "all" || t.type === filterType;
+      const monthKey = getMonthKey(t.date);
+      const matchesMonth = filterMonth === "all" || monthKey === filterMonth;
+      return matchesSearch && matchesType && matchesMonth;
+    });
+
+    if (countBadge) countBadge.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+      listContainer.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #64748b;">
+            <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 16px; opacity: 0.5;"></i>
+            <p>No transactions found matching your criteria.</p>
+        </div>
+      `;
       return;
     }
 
     let html = "";
-    this.transactions.forEach((transaction) => {
-      const amountClass =
-        transaction.type === "income" ? "amount-positive" : "amount-negative";
-      const amountPrefix = transaction.type === "income" ? "+" : "-";
-      const typeIcon = transaction.type === "income" ? "↑" : "↓";
-      const typeColor = transaction.type === "income" ? "#10b981" : "#ef4444";
-      const autopayBadge = transaction.isAutopay
-        ? '<span style="display: inline-flex; align-items: center; gap: 4px; background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 6px;"><i class="fas fa-sync-alt" style="font-size: 0.6rem;"></i> Auto</span>'
-        : "";
+    // Sort by date or month
+    const sorted = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      const timeA = Number.isNaN(dateA.getTime()) ? 0 : dateA.getTime();
+      const timeB = Number.isNaN(dateB.getTime()) ? 0 : dateB.getTime();
+      const monthA = Number.isNaN(dateA.getTime())
+        ? 0
+        : dateA.getFullYear() * 12 + dateA.getMonth();
+      const monthB = Number.isNaN(dateB.getTime())
+        ? 0
+        : dateB.getFullYear() * 12 + dateB.getMonth();
 
-      html += `
-                        <tr>
-                            <td>${new Date(transaction.date).toLocaleDateString(
-                              "en-IN"
-                            )}</td>
-                            <td>
-                                <span style="display: inline-flex; align-items: center; gap: 6px; color: ${typeColor};">
-                                    <span style="font-weight: bold;">${typeIcon}</span>
-                                    ${
-                                      transaction.type.charAt(0).toUpperCase() +
-                                      transaction.type.slice(1)
-                                    }
-                                </span>
-                            </td>
-                            <td><strong>${
-                              transaction.category
-                            }</strong>${autopayBadge}</td>
-                            <td>${transaction.description || "-"}</td>
-                            <td style="text-transform: capitalize;">${transaction.paymentMethod.replace(
-                              "_",
-                              " "
-                            )}</td>
-                            <td class="${amountClass}"><strong>${amountPrefix}₹${transaction.amount.toLocaleString(
-        "en-IN"
-      )}</strong></td>
-                            <td>
-                                <button class="delete-btn" onclick="MoneyTracker.deleteTransaction('${
-                                  transaction.id
-                                }')" title="Delete transaction">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
+      if (sortBy === "date-asc") return timeA - timeB;
+      if (sortBy === "month-desc") return monthB - monthA || timeB - timeA;
+      if (sortBy === "month-asc") return monthA - monthB || timeA - timeB;
+      return timeB - timeA;
     });
 
-    tbody.innerHTML = html;
+    sorted.forEach((transaction) => {
+      const isIncome = transaction.type === "income";
+      const amountPrefix = isIncome ? "+" : "-";
+      // Using arrow icons based on type
+      const icon = isIncome ? "fa-arrow-down" : "fa-arrow-up"; 
+      const iconBg = isIncome ? "#dcfce7" : "#fee2e2";
+      const iconColor = isIncome ? "#16a34a" : "#dc2626";
+      const amountColor = isIncome ? "#16a34a" : "#1e293b"; // Income green, expense dark
+
+      const dateStr = new Date(transaction.date).toLocaleDateString("en-IN", {
+          year: 'numeric',
+          month: 'short', 
+          day: 'numeric'
+      });
+
+        const paymentMethod = transaction.paymentMethod
+        ? transaction.paymentMethod.replace("_", " ")
+        : "-";
+
+        html += `
+        <div class="tx-card">
+            <div class="tx-icon-wrapper" style="background: ${iconBg}; color: ${iconColor};">
+                <i class="fas ${icon}"></i>
+            </div>
+            
+            <div class="tx-details">
+                <div class="tx-category">${transaction.category}</div>
+                <div class="tx-meta">
+                    <span><i class="far fa-calendar"></i> ${dateStr}</span>
+                    <span>•</span>
+              <span style="text-transform: capitalize;">${paymentMethod}</span>
+                    ${transaction.description ? `<span>• ${transaction.description}</span>` : ''}
+                    ${transaction.isAutopay ? '<span style="color: #3b82f6; background: #eff6ff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">AUTO</span>' : ''}
+                </div>
+            </div>
+
+            <div class="tx-amount" style="color: ${amountColor}">
+                ${amountPrefix}₹${transaction.amount.toLocaleString("en-IN")}
+            </div>
+
+            <div class="tx-actions">
+                <button class="btn-icon-only" onclick="MoneyTracker.deleteTransaction('${transaction.id}')" title="Delete">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+      `;
+    });
+
+    listContainer.innerHTML = html;
   },
 
   // Update dashboard statistics
   updateDashboard() {
-    const totalIncome = this.transactions
+    const { start, end } = this.getCurrentMonthRange();
+    const monthTransactions = this.transactions.filter((t) =>
+      this.isDateInRange(t.date, start, end),
+    );
+
+    const totalIncome = monthTransactions
       .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const totalExpenses = this.transactions
+    const totalExpenses = monthTransactions
       .filter((t) => t.type === "expense")
       .reduce((sum, t) => sum + t.amount, 0);
 
     const balance = totalIncome - totalExpenses;
 
-    document.getElementById(
-      "totalIncome"
-    ).textContent = `₹${totalIncome.toLocaleString()}`;
-    document.getElementById(
-      "totalExpenses"
-    ).textContent = `₹${totalExpenses.toLocaleString()}`;
-    document.getElementById(
-      "balance"
-    ).textContent = `₹${balance.toLocaleString()}`;
+    document.getElementById("totalIncome").textContent =
+      `₹${totalIncome.toLocaleString()}`;
+    document.getElementById("totalExpenses").textContent =
+      `₹${totalExpenses.toLocaleString()}`;
+    document.getElementById("balance").textContent =
+      `₹${balance.toLocaleString()}`;
 
     const incomeHero = document.getElementById("incomeHero");
     const expenseHero = document.getElementById("expenseHero");
@@ -945,59 +1082,196 @@ const MoneyTracker = {
 
     this.displayAnomalyAlerts();
     this.displayRecentTransactions();
+    this.createDashboardChart();
+  },
+
+  getCurrentMonthRange() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+    return { start, end };
+  },
+
+  isDateInRange(dateStr, start, end) {
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      return false;
+    }
+    return date >= start && date <= end;
   },
 
   // Display recent transactions on dashboard
   displayRecentTransactions() {
     const recentContainer = document.getElementById("recentTransactions");
+    // Sort logic should ideally be here if not already sorted, but assuming this.transactions is sorted
     const recent = this.transactions.slice(0, 5);
 
     if (recent.length === 0) {
       recentContainer.innerHTML =
-        '<p style="text-align: center; padding: 20px; color: #64748b;">No transactions yet. Add your first transaction to get started!</p>';
+        '<p style="text-align: center; padding: 20px; color: #64748b; font-size: 0.9rem;">No recent activity.</p>';
       return;
     }
 
-    let html =
-      '<table class="transactions-table"><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead><tbody>';
+    let html = '<div class="recent-list">';
 
     recent.forEach((transaction) => {
-      const amountClass =
-        transaction.type === "income" ? "amount-positive" : "amount-negative";
-      const amountPrefix = transaction.type === "income" ? "+" : "-";
-      const typeIcon = transaction.type === "income" ? "↑" : "↓";
-      const typeColor = transaction.type === "income" ? "#10b981" : "#ef4444";
-      const autopayBadge = transaction.isAutopay
-        ? '<span style="display: inline-flex; align-items: center; gap: 4px; background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 6px;"><i class="fas fa-sync-alt" style="font-size: 0.6rem;"></i> Auto</span>'
-        : "";
+      const isIncome = transaction.type === "income";
+      const amountPrefix = isIncome ? "+" : "-";
+      const iconClass = isIncome ? "fa-arrow-down" : "fa-arrow-up"; // Income adds to wallet (down into it?), usually arrow up is income. Let's stick to standard: Up = Income (Green), Down = Expense (Red). 
+      // Wait, original code had Up for Income.
+      const icon = isIncome ? "fa-arrow-up" : "fa-arrow-down"; 
+      
+      const iconBg = isIncome ? "#dcfce7" : "#fee2e2";
+      const iconColor = isIncome ? "#16a34a" : "#dc2626";
 
       html += `
-                        <tr>
-                            <td>${new Date(transaction.date).toLocaleDateString(
-                              "en-IN"
-                            )}</td>
-                            <td>
-                                <span style="display: inline-flex; align-items: center; gap: 6px; color: ${typeColor};">
-                                    <span style="font-weight: bold;">${typeIcon}</span>
-                                    ${
-                                      transaction.type.charAt(0).toUpperCase() +
-                                      transaction.type.slice(1)
-                                    }
-                                </span>
-                            </td>
-                            <td><strong>${
-                              transaction.category
-                            }</strong>${autopayBadge}</td>
-                            <td>${transaction.description || "-"}</td>
-                            <td class="${amountClass}"><strong>${amountPrefix}₹${transaction.amount.toLocaleString(
-        "en-IN"
-      )}</strong></td>
-                        </tr>
-                    `;
+        <div class="recent-item-clean">
+            <div class="recent-info">
+                <div class="recent-icon" style="background: ${iconBg}; color: ${iconColor};">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="recent-details">
+                    <h4>${transaction.category}</h4>
+                    <p>${new Date(transaction.date).toLocaleDateString("en-IN", { month: 'short', day: 'numeric' })} • ${transaction.paymentMethod || 'Cash'}</p>
+                </div>
+            </div>
+            <div class="recent-amount" style="color: ${iconColor}">
+                ${amountPrefix}₹${transaction.amount.toLocaleString("en-IN")}
+            </div>
+        </div>
+      `;
     });
 
-    html += "</tbody></table>";
+    html += "</div>";
     recentContainer.innerHTML = html;
+  },
+
+  createDashboardChart() {
+      const canvas = document.getElementById("dashboardChart");
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext("2d");
+
+      if (window.dashboardChart instanceof Chart) {
+          window.dashboardChart.destroy();
+      }
+
+      // Get last 7 days data
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          last7Days.push(d);
+      }
+
+      const expenses = last7Days.map(date => {
+          const dateStr = date.toISOString().split('T')[0];
+          // Simple string match for date or more robust comparison
+          return this.transactions
+              .filter(t => t.type === 'expense' && new Date(t.date).toDateString() === date.toDateString())
+              .reduce((sum, t) => sum + t.amount, 0);
+      });
+
+      const incomes = last7Days.map(date => {
+        return this.transactions
+            .filter(t => t.type === 'income' && new Date(t.date).toDateString() === date.toDateString())
+            .reduce((sum, t) => sum + t.amount, 0);
+      });
+
+      const labels = last7Days.map(d => d.toLocaleDateString('en-IN', { weekday: 'short' }));
+
+      // Create gradient
+      const gradientExpense = ctx.createLinearGradient(0, 0, 0, 400);
+      gradientExpense.addColorStop(0, 'rgba(239, 68, 68, 0.5)');   
+      gradientExpense.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+
+      const gradientIncome = ctx.createLinearGradient(0, 0, 0, 400);
+      gradientIncome.addColorStop(0, 'rgba(16, 185, 129, 0.5)');   
+      gradientIncome.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+      window.dashboardChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: labels,
+              datasets: [
+                  {
+                      label: 'Income',
+                      data: incomes,
+                      borderColor: '#10b981',
+                      backgroundColor: gradientIncome,
+                      borderWidth: 2,
+                      tension: 0.4,
+                      fill: true,
+                      pointBackgroundColor: '#ffffff',
+                      pointBorderColor: '#10b981',
+                      pointRadius: 4
+                  },
+                  {
+                      label: 'Expense',
+                      data: expenses,
+                      borderColor: '#ef4444',
+                      backgroundColor: gradientExpense,
+                      borderWidth: 2,
+                      tension: 0.4,
+                      fill: true,
+                      pointBackgroundColor: '#ffffff',
+                      pointBorderColor: '#ef4444',
+                      pointRadius: 4
+                  }
+              ]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: {
+                      position: 'top',
+                      align: 'end',
+                      labels: {
+                          usePointStyle: true,
+                          boxWidth: 8
+                      }
+                  },
+                  tooltip: {
+                      mode: 'index',
+                      intersect: false,
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      titleColor: '#1e293b',
+                      bodyColor: '#475569',
+                      borderColor: '#e2e8f0',
+                      borderWidth: 1,
+                      padding: 10,
+                      displayColors: true
+                  }
+              },
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                      grid: {
+                          display: true,
+                          color: '#f1f5f9',
+                          drawBorder: false
+                      },
+                      ticks: {
+                          display: false 
+                      }
+                  },
+                  x: {
+                      grid: {
+                          display: false
+                      }
+                  }
+              }
+          }
+      });
   },
 
   // Create charts
@@ -1042,7 +1316,7 @@ const MoneyTracker = {
       ctx.fillText(
         "No expense data available",
         ctx.canvas.width / 2,
-        ctx.canvas.height / 2
+        ctx.canvas.height / 2,
       );
       return;
     }
@@ -1115,7 +1389,7 @@ const MoneyTracker = {
       ctx.fillText(
         "No expense data available",
         ctx.canvas.width / 2,
-        ctx.canvas.height / 2
+        ctx.canvas.height / 2,
       );
       return;
     }
@@ -1186,7 +1460,7 @@ const MoneyTracker = {
       ctx.fillText(
         "No expense data available for time series analysis",
         ctx.canvas.width / 2,
-        ctx.canvas.height / 2
+        ctx.canvas.height / 2,
       );
 
       document.getElementById("timeSeriesStats").innerHTML =
@@ -1199,7 +1473,7 @@ const MoneyTracker = {
       analysis.rawDates,
       analysis.amounts,
       7,
-      7
+      7,
     );
 
     // Prepare datasets
@@ -1279,7 +1553,7 @@ const MoneyTracker = {
                 } else {
                   // For forecast dates, calculate the actual date
                   const lastDate = new Date(
-                    analysis.rawDates[analysis.rawDates.length - 1]
+                    analysis.rawDates[analysis.rawDates.length - 1],
                   );
                   const daysAhead = index - analysis.rawDates.length + 1;
                   lastDate.setDate(lastDate.getDate() + daysAhead);
@@ -1380,14 +1654,14 @@ const MoneyTracker = {
         forecast.confidence === "high"
           ? "#10b981"
           : forecast.confidence === "medium"
-          ? "#f59e0b"
-          : "#ef4444";
+            ? "#f59e0b"
+            : "#ef4444";
       const confidenceIcon =
         forecast.confidence === "high"
           ? "✓"
           : forecast.confidence === "medium"
-          ? "⚠"
-          : "!";
+            ? "⚠"
+            : "!";
 
       statsHtml += `
                         <div style="grid-column: 1 / -1; margin-top: 12px; padding-top: 16px; border-top: 2px solid #e2e8f0;">
@@ -1412,7 +1686,7 @@ const MoneyTracker = {
                         <div>
                             <strong style="color: #0f172a;">Data Variance:</strong><br>
                             <span style="color: #64748b;">${forecast.coefficientOfVariation.toFixed(
-                              1
+                              1,
                             )}% CV</span>
                         </div>`;
     }
@@ -1420,9 +1694,14 @@ const MoneyTracker = {
     // Add Money Runway Prediction (when will money run out)
     const runway = this.calculateMoneyRunway(stats.averageDailySpending);
     if (runway) {
-      const runwayColor = runway.daysRemaining <= 7 ? "#ef4444" : 
-                          runway.daysRemaining <= 30 ? "#f59e0b" : 
-                          runway.daysRemaining === Infinity ? "#10b981" : "#3b82f6";
+      const runwayColor =
+        runway.daysRemaining <= 7
+          ? "#ef4444"
+          : runway.daysRemaining <= 30
+            ? "#f59e0b"
+            : runway.daysRemaining === Infinity
+              ? "#10b981"
+              : "#3b82f6";
 
       statsHtml += `
                         <div style="grid-column: 1 / -1; margin-top: 12px; padding-top: 16px; border-top: 2px solid #e2e8f0;">
@@ -1432,11 +1711,11 @@ const MoneyTracker = {
                         </div>
                         <div>
                             <strong style="color: #0f172a;">Current Balance:</strong><br>
-                            <span style="color: ${runway.balance >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700; font-size: 1.1rem;">₹${runway.balance.toLocaleString()}</span>
+                            <span style="color: ${runway.balance >= 0 ? "#10b981" : "#ef4444"}; font-weight: 700; font-size: 1.1rem;">₹${runway.balance.toLocaleString()}</span>
                         </div>
                         <div>
                             <strong style="color: #0f172a;">Days Until Depleted:</strong><br>
-                            <span style="color: ${runwayColor}; font-weight: 700; font-size: 1.1rem;">${runway.daysRemaining === Infinity ? '∞ (Sustainable)' : runway.daysRemaining + ' days'}</span>
+                            <span style="color: ${runwayColor}; font-weight: 700; font-size: 1.1rem;">${runway.daysRemaining === Infinity ? "∞ (Sustainable)" : runway.daysRemaining + " days"}</span>
                         </div>
                         <div>
                             <strong style="color: #0f172a;">Estimated Depletion:</strong><br>
@@ -1469,7 +1748,7 @@ const MoneyTracker = {
         balance: currentBalance,
         daysRemaining: 0,
         depletionDate: "Already Depleted",
-        burnRatePercent: "100"
+        burnRatePercent: "100",
       };
     }
 
@@ -1478,7 +1757,7 @@ const MoneyTracker = {
         balance: currentBalance,
         daysRemaining: Infinity,
         depletionDate: "N/A (No spending)",
-        burnRatePercent: "0"
+        burnRatePercent: "0",
       };
     }
 
@@ -1486,8 +1765,10 @@ const MoneyTracker = {
     const depletionDate = new Date();
     depletionDate.setDate(depletionDate.getDate() + daysRemaining);
 
-    const formattedDate = depletionDate.toLocaleDateString('en-IN', { 
-      day: 'numeric', month: 'short', year: 'numeric' 
+    const formattedDate = depletionDate.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
 
     const burnRatePercent = ((avgDailySpend / currentBalance) * 100).toFixed(2);
@@ -1496,7 +1777,7 @@ const MoneyTracker = {
       balance: currentBalance,
       daysRemaining: daysRemaining,
       depletionDate: formattedDate,
-      burnRatePercent: burnRatePercent
+      burnRatePercent: burnRatePercent,
     };
   },
 
@@ -1592,7 +1873,7 @@ const MoneyTracker = {
 
     // Filter only expense transactions
     const expenseTransactions = this.transactions.filter(
-      (t) => t.type === "expense"
+      (t) => t.type === "expense",
     );
 
     if (expenseTransactions.length === 0) {
@@ -1699,7 +1980,7 @@ const MoneyTracker = {
 
     // Filter out approved anomalies (convert IDs to strings for comparison)
     const unapprovedAnomalies = detection.anomalies.filter(
-      (anomaly) => !this.approvedAnomalies.includes(String(anomaly.id))
+      (anomaly) => !this.approvedAnomalies.includes(String(anomaly.id)),
     );
 
     console.log("Unapproved anomalies:", unapprovedAnomalies.length);
@@ -1745,7 +2026,7 @@ const MoneyTracker = {
                                 <span><i class="fas fa-calendar"></i> ${date}</span>
                                 <span><i class="fas fa-credit-card"></i> ${anomaly.paymentMethod.replace(
                                   "_",
-                                  " "
+                                  " ",
                                 )}</span>
                                 <span><i class="fas fa-chart-line"></i> ${percentAboveMean}% above average</span>
                             </div>
@@ -1796,7 +2077,7 @@ const MoneyTracker = {
 
     // Filter only expense transactions
     const expenseTransactions = this.transactions.filter(
-      (t) => t.type === "expense"
+      (t) => t.type === "expense",
     );
 
     if (expenseTransactions.length === 0) {
@@ -1871,7 +2152,7 @@ const MoneyTracker = {
     // Calculate total expenses
     const totalExpenses = Object.values(dayTotals).reduce(
       (sum, val) => sum + val,
-      0
+      0,
     );
 
     // Sort the results from Monday to Sunday
@@ -1953,7 +2234,7 @@ const MoneyTracker = {
       ctx.fillText(
         "No expense data available for day of week analysis",
         ctx.canvas.width / 2,
-        ctx.canvas.height / 2
+        ctx.canvas.height / 2,
       );
 
       document.getElementById("dayOfWeekStats").innerHTML =
@@ -1987,7 +2268,7 @@ const MoneyTracker = {
             data: totals,
             backgroundColor: colors,
             borderColor: colors.map((color) =>
-              color.replace("rgb", "rgba").replace(")", ", 0.8)")
+              color.replace("rgb", "rgba").replace(")", ", 0.8)"),
             ),
             borderWidth: 2,
             borderRadius: 8,
@@ -2086,8 +2367,8 @@ const MoneyTracker = {
                               data.maxDay
                             }s</strong> 
                             (₹${data.maxAmount.toLocaleString()}) and least on <strong style="color: #10b981;">${
-      data.minDay
-    }s</strong> 
+                              data.minDay
+                            }s</strong> 
                             (₹${data.minAmount.toLocaleString()}). 
                             ${
                               data.maxAmount > (data.totalExpenses / 7) * 1.5
@@ -2106,7 +2387,7 @@ const MoneyTracker = {
   performTimeSeriesAnalysis() {
     // Filter only expense transactions
     const expenseTransactions = this.transactions.filter(
-      (t) => t.type === "expense"
+      (t) => t.type === "expense",
     );
 
     if (expenseTransactions.length === 0) {
@@ -2157,7 +2438,7 @@ const MoneyTracker = {
     const daysWithoutSpending = totalDays - daysWithSpending;
     const totalSpending = completeTimeSeries.reduce(
       (sum, amount) => sum + amount,
-      0
+      0,
     );
     const averageDailySpending = totalSpending / totalDays;
     const maxSpending =
@@ -2193,7 +2474,7 @@ const MoneyTracker = {
   // Export to Excel
   exportToExcel() {
     if (this.transactions.length === 0) {
-      alert("No transactions to export");
+      showToast("No transactions to export.", "info");
       return;
     }
 
@@ -2212,13 +2493,134 @@ const MoneyTracker = {
   },
 };
 
+function showToast(message, type = "info", duration = 3800) {
+  const container = document.getElementById("toastContainer");
+  if (!container) {
+    console.warn("Toast container not found.");
+    return;
+  }
+
+  const iconMap = {
+    success: "fa-check-circle",
+    error: "fa-circle-xmark",
+    warning: "fa-triangle-exclamation",
+    info: "fa-circle-info",
+  };
+
+  const toast = document.createElement("div");
+  const safeType = iconMap[type] ? type : "info";
+  toast.className = `toast toast--${safeType}`;
+  toast.setAttribute("role", "status");
+  toast.innerHTML = `
+    <div class="toast__icon">
+      <i class="fas ${iconMap[safeType]}"></i>
+    </div>
+    <div class="toast__content">${message}</div>
+    <button class="toast__close" type="button" aria-label="Close notification">
+      <i class="fas fa-xmark"></i>
+    </button>
+  `;
+
+  container.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.classList.add("toast--show");
+  });
+
+  const removeToast = () => {
+    toast.classList.remove("toast--show");
+    toast.classList.add("toast--hide");
+    toast.addEventListener(
+      "transitionend",
+      () => {
+        toast.remove();
+      },
+      { once: true },
+    );
+  };
+
+  const timer = setTimeout(removeToast, duration);
+  toast.querySelector(".toast__close").addEventListener("click", () => {
+    clearTimeout(timer);
+    removeToast();
+  });
+}
+
+function showConfirm(message, options = {}) {
+  const modal = document.getElementById("confirmModal");
+  if (!modal) {
+    return Promise.resolve(window.confirm(message));
+  }
+
+  const titleEl = document.getElementById("confirmTitle");
+  const messageEl = document.getElementById("confirmMessage");
+  const okBtn = document.getElementById("confirmOkBtn");
+  const cancelBtn = document.getElementById("confirmCancelBtn");
+  const closeBtn = modal.querySelector(".confirm-close");
+  const backdrop = modal.querySelector("[data-confirm-close]");
+
+  const {
+    title = "Please confirm",
+    confirmText = "Confirm",
+    cancelText = "Cancel",
+    variant = "warning",
+  } = options;
+
+  titleEl.textContent = title;
+  messageEl.textContent = message;
+  okBtn.textContent = confirmText;
+  cancelBtn.textContent = cancelText;
+  modal.dataset.variant = variant;
+
+  okBtn.classList.remove("confirm-btn--primary", "confirm-btn--danger");
+  okBtn.classList.add(
+    variant === "danger" ? "confirm-btn--danger" : "confirm-btn--primary",
+  );
+
+  modal.classList.add("active");
+  modal.setAttribute("aria-hidden", "false");
+
+  return new Promise((resolve) => {
+    let resolved = false;
+
+    const cleanup = (result) => {
+      if (resolved) return;
+      resolved = true;
+      modal.classList.remove("active");
+      modal.setAttribute("aria-hidden", "true");
+      okBtn.removeEventListener("click", onConfirm);
+      cancelBtn.removeEventListener("click", onCancel);
+      closeBtn.removeEventListener("click", onCancel);
+      backdrop.removeEventListener("click", onCancel);
+      document.removeEventListener("keydown", onKeyDown);
+      resolve(result);
+    };
+
+    const onConfirm = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        cleanup(false);
+      }
+    };
+
+    okBtn.addEventListener("click", onConfirm);
+    cancelBtn.addEventListener("click", onCancel);
+    closeBtn.addEventListener("click", onCancel);
+    backdrop.addEventListener("click", onCancel);
+    document.addEventListener("keydown", onKeyDown);
+  });
+}
+
 // Global functions for HTML onclick handlers
 function addCustomCategory() {
   const customInput = document.getElementById("customCategory");
   const typeSelect = document.getElementById("type");
 
   if (!customInput.value.trim() || !typeSelect.value) {
-    alert("Please enter a category name and select a type first");
+    showToast(
+      "Please enter a category name and select a type first.",
+      "warning",
+    );
     return;
   }
 
@@ -2226,7 +2628,7 @@ function addCustomCategory() {
   const type = typeSelect.value;
 
   if (MoneyTracker.getAllCategories(type).includes(newCategory)) {
-    alert("Category already exists");
+    showToast("Category already exists.", "info");
     return;
   }
 
@@ -2242,7 +2644,7 @@ function addCustomCategory() {
     refreshCustomSelect("category");
   }
 
-  alert("Custom category added successfully!");
+  showToast("Custom category added successfully.", "success");
 }
 
 function exportToExcel() {
@@ -2334,13 +2736,13 @@ function showAuthSuccess(message) {
     "hidden",
     "bg-red-50",
     "text-red-600",
-    "border-red-100"
+    "border-red-100",
   );
   errorDiv.classList.add(
     "flex",
     "bg-green-50",
     "text-green-600",
-    "border-green-100"
+    "border-green-100",
   );
   errorDiv.querySelector(".w-8").classList.remove("bg-red-100");
   errorDiv.querySelector(".w-8").classList.add("bg-green-100");
@@ -2409,11 +2811,11 @@ document.getElementById("signInBtn").addEventListener("click", async (e) => {
           showAuthError("Incorrect password. Please try again.");
         } else if (createError.code === "auth/weak-password") {
           showAuthError(
-            "Password is too weak. Please use at least 6 characters."
+            "Password is too weak. Please use at least 6 characters.",
           );
         } else {
           showAuthError(
-            "Invalid email or password. Please check your credentials."
+            "Invalid email or password. Please check your credentials.",
           );
         }
       }
@@ -2429,7 +2831,7 @@ document.getElementById("signInBtn").addEventListener("click", async (e) => {
       showAuthError("Incorrect password. Please try again.");
     } else if (error.code === "auth/invalid-email") {
       showAuthError(
-        "Invalid email format. Please enter a valid email address."
+        "Invalid email format. Please enter a valid email address.",
       );
     } else if (error.code === "auth/too-many-requests") {
       showAuthError("Too many failed attempts. Please try again later.");
@@ -2467,15 +2869,15 @@ if (signUpBtnElement) {
       // Friendly error messages
       if (error.code === "auth/email-already-in-use") {
         showAuthError(
-          "This email is already registered. Please sign in instead."
+          "This email is already registered. Please sign in instead.",
         );
       } else if (error.code === "auth/invalid-email") {
         showAuthError(
-          "Invalid email format. Please enter a valid email address."
+          "Invalid email format. Please enter a valid email address.",
         );
       } else if (error.code === "auth/weak-password") {
         showAuthError(
-          "Password is too weak. Please use at least 6 characters."
+          "Password is too weak. Please use at least 6 characters.",
         );
       } else {
         showAuthError(error.message);
@@ -2519,7 +2921,7 @@ document
         error.code === "auth/account-exists-with-different-credential"
       ) {
         showAuthError(
-          "An account already exists with this email using a different sign-in method."
+          "An account already exists with this email using a different sign-in method.",
         );
       } else {
         showAuthError(error.message);
@@ -2700,11 +3102,11 @@ document
         // Link email/password credential to account
         const credential = firebase.auth.EmailAuthProvider.credential(
           user.email,
-          newPassword
+          newPassword,
         );
         await user.linkWithCredential(credential);
         showProfileSuccess(
-          "Password has been set successfully! You can now sign in with email and password."
+          "Password has been set successfully! You can now sign in with email and password.",
         );
         document.getElementById("passwordNotSet").style.display = "none";
         document.getElementById("updatePasswordText").textContent =
@@ -2724,15 +3126,15 @@ document
       console.error("Password update error:", error);
       if (error.code === "auth/requires-recent-login") {
         showProfileError(
-          "For security reasons, please sign out and sign back in before changing your password."
+          "For security reasons, please sign out and sign back in before changing your password.",
         );
       } else if (error.code === "auth/provider-already-linked") {
         showProfileError(
-          "A password is already set for this account. Try updating it instead."
+          "A password is already set for this account. Try updating it instead.",
         );
       } else if (error.code === "auth/weak-password") {
         showProfileError(
-          "Password is too weak. Please use a stronger password."
+          "Password is too weak. Please use a stronger password.",
         );
       } else {
         showProfileError(error.message);
@@ -2746,14 +3148,24 @@ document
 document
   .getElementById("deleteAccountBtn")
   .addEventListener("click", async () => {
-    const confirmed = confirm(
-      "Are you sure you want to delete your account?\n\nThis action is permanent and will delete all your data including transactions, custom categories, and settings.\n\nThis cannot be undone!"
+    const confirmed = await showConfirm(
+      "Are you sure you want to delete your account?\n\nThis action is permanent and will delete all your data including transactions, custom categories, and settings.\n\nThis cannot be undone!",
+      {
+        title: "Delete account",
+        confirmText: "Continue",
+        variant: "danger",
+      },
     );
 
     if (!confirmed) return;
 
-    const doubleConfirm = confirm(
-      "Please confirm again that you want to permanently delete your account and all associated data."
+    const doubleConfirm = await showConfirm(
+      "Please confirm again that you want to permanently delete your account and all associated data.",
+      {
+        title: "Final confirmation",
+        confirmText: "Delete account",
+        variant: "danger",
+      },
     );
 
     if (!doubleConfirm) return;
@@ -2777,12 +3189,12 @@ document
       await user.delete();
 
       closeProfileModal();
-      alert("Your account has been deleted successfully.");
+      showToast("Your account has been deleted successfully.", "success");
     } catch (error) {
       console.error("Delete account error:", error);
       if (error.code === "auth/requires-recent-login") {
         showProfileError(
-          "For security reasons, please sign out and sign back in before deleting your account."
+          "For security reasons, please sign out and sign back in before deleting your account.",
         );
       } else {
         showProfileError(error.message);
@@ -2822,7 +3234,7 @@ function setPasswordLoading(loading) {
     // Restore text based on whether user has password
     const user = firebase.auth().currentUser;
     const hasPassword = user?.providerData?.some(
-      (p) => p.providerId === "password"
+      (p) => p.providerId === "password",
     );
     text.textContent = hasPassword ? "Update Password" : "Set Password";
     spinner.classList.add("hidden");
@@ -3238,7 +3650,7 @@ const CustomDatePicker = {
       };
       display.textContent = this.selectedDate.toLocaleDateString(
         "en-US",
-        options
+        options,
       );
       display.classList.remove("placeholder");
     } else {

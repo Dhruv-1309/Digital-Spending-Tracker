@@ -8,7 +8,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=3">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -16,6 +16,29 @@
 </head>
 
 <body>
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <div id="confirmModal" class="confirm-modal" aria-hidden="true">
+        <div class="confirm-backdrop" data-confirm-close="true"></div>
+        <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"
+            aria-describedby="confirmMessage">
+            <div class="confirm-header">
+                <div class="confirm-icon" id="confirmIcon">
+                    <i class="fas fa-triangle-exclamation"></i>
+                </div>
+                <div class="confirm-text">
+                    <h3 id="confirmTitle">Please confirm</h3>
+                    <p id="confirmMessage"></p>
+                </div>
+                <button class="confirm-close" type="button" aria-label="Close confirmation">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="confirm-actions">
+                <button id="confirmCancelBtn" class="btn confirm-btn confirm-btn--ghost" type="button">Cancel</button>
+                <button id="confirmOkBtn" class="btn confirm-btn confirm-btn--primary" type="button">Confirm</button>
+            </div>
+        </div>
+    </div>
     <!-- Authentication Modal -->
     <div id="authModal" class="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden">
         <!-- Animated Background with colorful blobs -->
@@ -221,22 +244,30 @@
 
     <div class="container" id="appContainer" style="display: none;">
         <div class="header">
-            <div class="header-content">
-                <div>
-                    <div class="pill"><i class="fas fa-bolt"></i> Real-time finance snapshot</div>
-                    <h1><i class="fas fa-wallet"></i> Digital Spending Tracker</h1>
-                    <p>Track your income, expenses, and trends in one clean view.</p>
-                    <div class="header-actions" style="margin-top: 14px; gap: 10px; flex-wrap: wrap;">
-                        <span id="userEmail"
-                            style="color:#1f2937; font-weight:700; font-size:14px; padding:8px 12px; background: rgba(15,23,42,0.06); border-radius: 10px; border: 1px solid rgba(226,232,240,0.9);"></span>
-                        <button id="profileBtn" class="btn"
-                            style="background: linear-gradient(135deg,#2563eb,#1d4ed8); color:white; border:none;">
-                            <i class="fas fa-user-circle"></i> Profile
-                        </button>
-                        <button id="signOutBtn" class="btn"
-                            style="background: linear-gradient(135deg,#ef4444,#dc2626); color:white; border:none;">
-                            <i class="fas fa-sign-out-alt"></i> Sign Out
-                        </button>
+            <div class="clean-header-content">
+                <div class="header-left">
+                    <div class="brand">
+                        <div class="brand-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="brand-text">
+                            <h1>MoneyTracker</h1>
+                            <p>Overview & Analysis</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="user-badge">
+                        <span id="userEmail" class="user-email-text"></span>
+                        <div class="header-actions">
+                            <button id="profileBtn" class="h-btn" title="Profile">
+                                <i class="fas fa-user"></i>
+                            </button>
+                            <button id="signOutBtn" class="h-btn logout" title="Sign Out">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -262,36 +293,60 @@
 
         <!-- Dashboard Tab -->
         <div id="dashboard" class="tab-content active">
-            <div class="stats-grid">
-                <div class="stat-card income">
-                    <div class="icon">
-                        <i class="fas fa-arrow-up"></i>
+            <div class="dashboard-container">
+                <div class="dashboard-main">
+                    <div class="stats-grid">
+                        <div class="stat-card income">
+                            <div class="icon">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div>
+                                <h3>Total Income</h3>
+                                <div class="amount" id="totalIncome">₹0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card expense">
+                            <div class="icon">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div>
+                                <h3>Total Expenses</h3>
+                                <div class="amount" id="totalExpenses">₹0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card balance">
+                            <div class="icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div>
+                                <h3>Current Balance</h3>
+                                <div class="amount" id="balance">₹0</div>
+                            </div>
+                        </div>
                     </div>
-                    <h3>Total Income</h3>
-                    <div class="amount" id="totalIncome">₹0</div>
-                </div>
-                <div class="stat-card expense">
-                    <div class="icon">
-                        <i class="fas fa-arrow-down"></i>
-                    </div>
-                    <h3>Total Expenses</h3>
-                    <div class="amount" id="totalExpenses">₹0</div>
-                </div>
-                <div class="stat-card balance">
-                    <div class="icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <h3>Current Balance</h3>
-                    <div class="amount" id="balance">₹0</div>
-                </div>
-            </div>
 
-            <!-- Anomaly Detection Alert Section -->
-            <div id="anomalyAlertSection"></div>
+                    <div class="chart-section dashboard-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-area"></i> Weekly Activity</h3>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="dashboardChart"></canvas>
+                        </div>
+                    </div>
 
-            <div class="form-section">
-                <h3><i class="fas fa-clock"></i> Recent Transactions</h3>
-                <div id="recentTransactions"></div>
+                    <!-- Anomaly Detection Alert Section -->
+                    <div id="anomalyAlertSection"></div>
+                </div>
+
+                <div class="dashboard-sidebar">
+                    <div class="dashboard-card h-full">
+                        <div class="card-header">
+                            <h3><i class="fas fa-clock"></i> Recent Transactions</h3>
+                            <button class="view-all-btn" onclick="document.querySelector('[data-tab=\'transactions\']').click()">View All</button>
+                        </div>
+                        <div id="recentTransactions" class="recent-list"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -406,28 +461,55 @@
 
         <!-- Transactions Tab -->
         <div id="transactions" class="tab-content">
-            <div class="section-header">
-                <h3>All Transactions</h3>
-                <button class="btn btn-export" onclick="exportToExcel()">
-                    <i class="fas fa-download"></i> Export to Excel
-                </button>
+            <div class="transactions-header-area">
+                <div class="header-title">
+                    <h3>All Transactions</h3>
+                    <span class="badge-count" id="txCount">0</span>
+                </div>
+                <div class="actions-group">
+                    <button class="btn btn-export" onclick="exportToExcel()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-primary" onclick="document.querySelector('[data-tab=\'add-transaction\']').click()">
+                        <i class="fas fa-plus"></i> New
+                    </button>
+                </div>
             </div>
-            <div id="transactionsList">
-                <table class="transactions-table" id="transactionsTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th>Payment Method</th>
-                            <th>Amount</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionsBody">
-                    </tbody>
-                </table>
+
+            <div class="filters-toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="txSearch" placeholder="Search transactions...">
+                </div>
+                <div class="filter-group">
+                    <div class="custom-select">
+                        <select id="txFilterType">
+                            <option value="all">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="custom-select">
+                        <select id="txMonthFilter">
+                            <option value="all">All Months</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="custom-select">
+                        <select id="txSortBy">
+                            <option value="date-desc">Date: Newest</option>
+                            <option value="date-asc">Date: Oldest</option>
+                            <option value="month-desc">Month: Newest</option>
+                            <option value="month-asc">Month: Oldest</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="transactionsList" class="transaction-feed">
+                <!-- Transactions will be injected here -->
             </div>
         </div>
 
