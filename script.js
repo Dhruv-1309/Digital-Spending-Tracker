@@ -751,17 +751,19 @@ const MoneyTracker = {
     // Transaction Search & Filter Listeners
     const txSearch = document.getElementById("txSearch");
     if (txSearch) {
-        txSearch.addEventListener("input", () => this.displayTransactions());
+      txSearch.addEventListener("input", () => this.displayTransactions());
     }
 
     const txFilter = document.getElementById("txFilterType");
     if (txFilter) {
-        txFilter.addEventListener("change", () => this.displayTransactions());
+      txFilter.addEventListener("change", () => this.displayTransactions());
     }
 
     const txMonthFilter = document.getElementById("txMonthFilter");
     if (txMonthFilter) {
-      txMonthFilter.addEventListener("change", () => this.displayTransactions());
+      txMonthFilter.addEventListener("change", () =>
+        this.displayTransactions(),
+      );
     }
 
     const txSortBy = document.getElementById("txSortBy");
@@ -896,7 +898,7 @@ const MoneyTracker = {
     const typeFilter = document.getElementById("txFilterType");
     const monthFilter = document.getElementById("txMonthFilter");
     const sortSelect = document.getElementById("txSortBy");
-    
+
     // Safety check if elements exist (in case user hasn't refreshed or navigated yet)
     if (!listContainer) return;
 
@@ -936,8 +938,7 @@ const MoneyTracker = {
         })
         .join("");
 
-      monthFilter.innerHTML =
-        `<option value="all">All Months</option>${monthOptions}`;
+      monthFilter.innerHTML = `<option value="all">All Months</option>${monthOptions}`;
       monthFilter.value = monthKeys.includes(currentValue)
         ? currentValue
         : "all";
@@ -993,22 +994,22 @@ const MoneyTracker = {
       const isIncome = transaction.type === "income";
       const amountPrefix = isIncome ? "+" : "-";
       // Using arrow icons based on type
-      const icon = isIncome ? "fa-arrow-down" : "fa-arrow-up"; 
+      const icon = isIncome ? "fa-arrow-down" : "fa-arrow-up";
       const iconBg = isIncome ? "#dcfce7" : "#fee2e2";
       const iconColor = isIncome ? "#16a34a" : "#dc2626";
       const amountColor = isIncome ? "#16a34a" : "#1e293b"; // Income green, expense dark
 
       const dateStr = new Date(transaction.date).toLocaleDateString("en-IN", {
-          year: 'numeric',
-          month: 'short', 
-          day: 'numeric'
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
 
-        const paymentMethod = transaction.paymentMethod
+      const paymentMethod = transaction.paymentMethod
         ? transaction.paymentMethod.replace("_", " ")
         : "-";
 
-        html += `
+      html += `
         <div class="tx-card">
             <div class="tx-icon-wrapper" style="background: ${iconBg}; color: ${iconColor};">
                 <i class="fas ${icon}"></i>
@@ -1020,8 +1021,8 @@ const MoneyTracker = {
                     <span><i class="far fa-calendar"></i> ${dateStr}</span>
                     <span>•</span>
               <span style="text-transform: capitalize;">${paymentMethod}</span>
-                    ${transaction.description ? `<span>• ${transaction.description}</span>` : ''}
-                    ${transaction.isAutopay ? '<span style="color: #3b82f6; background: #eff6ff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">AUTO</span>' : ''}
+                    ${transaction.description ? `<span>• ${transaction.description}</span>` : ""}
+                    ${transaction.isAutopay ? '<span style="color: #3b82f6; background: #eff6ff; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">AUTO</span>' : ""}
                 </div>
             </div>
 
@@ -1125,10 +1126,10 @@ const MoneyTracker = {
     recent.forEach((transaction) => {
       const isIncome = transaction.type === "income";
       const amountPrefix = isIncome ? "+" : "-";
-      const iconClass = isIncome ? "fa-arrow-down" : "fa-arrow-up"; // Income adds to wallet (down into it?), usually arrow up is income. Let's stick to standard: Up = Income (Green), Down = Expense (Red). 
+      const iconClass = isIncome ? "fa-arrow-down" : "fa-arrow-up"; // Income adds to wallet (down into it?), usually arrow up is income. Let's stick to standard: Up = Income (Green), Down = Expense (Red).
       // Wait, original code had Up for Income.
-      const icon = isIncome ? "fa-arrow-up" : "fa-arrow-down"; 
-      
+      const icon = isIncome ? "fa-arrow-up" : "fa-arrow-down";
+
       const iconBg = isIncome ? "#dcfce7" : "#fee2e2";
       const iconColor = isIncome ? "#16a34a" : "#dc2626";
 
@@ -1140,7 +1141,7 @@ const MoneyTracker = {
                 </div>
                 <div class="recent-details">
                     <h4>${transaction.category}</h4>
-                    <p>${new Date(transaction.date).toLocaleDateString("en-IN", { month: 'short', day: 'numeric' })} • ${transaction.paymentMethod || 'Cash'}</p>
+                    <p>${new Date(transaction.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" })} • ${transaction.paymentMethod || "Cash"}</p>
                 </div>
             </div>
             <div class="recent-amount" style="color: ${iconColor}">
@@ -1155,123 +1156,133 @@ const MoneyTracker = {
   },
 
   createDashboardChart() {
-      const canvas = document.getElementById("dashboardChart");
-      if (!canvas) return;
-      
-      const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById("dashboardChart");
+    if (!canvas) return;
 
-      if (window.dashboardChart instanceof Chart) {
-          window.dashboardChart.destroy();
-      }
+    const ctx = canvas.getContext("2d");
 
-      // Get last 7 days data
-      const last7Days = [];
-      for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          last7Days.push(d);
-      }
+    if (window.dashboardChart instanceof Chart) {
+      window.dashboardChart.destroy();
+    }
 
-      const expenses = last7Days.map(date => {
-          const dateStr = date.toISOString().split('T')[0];
-          // Simple string match for date or more robust comparison
-          return this.transactions
-              .filter(t => t.type === 'expense' && new Date(t.date).toDateString() === date.toDateString())
-              .reduce((sum, t) => sum + t.amount, 0);
-      });
+    // Get last 7 days data
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      last7Days.push(d);
+    }
 
-      const incomes = last7Days.map(date => {
-        return this.transactions
-            .filter(t => t.type === 'income' && new Date(t.date).toDateString() === date.toDateString())
-            .reduce((sum, t) => sum + t.amount, 0);
-      });
+    const expenses = last7Days.map((date) => {
+      const dateStr = date.toISOString().split("T")[0];
+      // Simple string match for date or more robust comparison
+      return this.transactions
+        .filter(
+          (t) =>
+            t.type === "expense" &&
+            new Date(t.date).toDateString() === date.toDateString(),
+        )
+        .reduce((sum, t) => sum + t.amount, 0);
+    });
 
-      const labels = last7Days.map(d => d.toLocaleDateString('en-IN', { weekday: 'short' }));
+    const incomes = last7Days.map((date) => {
+      return this.transactions
+        .filter(
+          (t) =>
+            t.type === "income" &&
+            new Date(t.date).toDateString() === date.toDateString(),
+        )
+        .reduce((sum, t) => sum + t.amount, 0);
+    });
 
-      // Create gradient
-      const gradientExpense = ctx.createLinearGradient(0, 0, 0, 400);
-      gradientExpense.addColorStop(0, 'rgba(239, 68, 68, 0.5)');   
-      gradientExpense.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+    const labels = last7Days.map((d) =>
+      d.toLocaleDateString("en-IN", { weekday: "short" }),
+    );
 
-      const gradientIncome = ctx.createLinearGradient(0, 0, 0, 400);
-      gradientIncome.addColorStop(0, 'rgba(16, 185, 129, 0.5)');   
-      gradientIncome.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+    // Create gradient
+    const gradientExpense = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientExpense.addColorStop(0, "rgba(239, 68, 68, 0.5)");
+    gradientExpense.addColorStop(1, "rgba(239, 68, 68, 0.0)");
 
-      window.dashboardChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-              labels: labels,
-              datasets: [
-                  {
-                      label: 'Income',
-                      data: incomes,
-                      borderColor: '#10b981',
-                      backgroundColor: gradientIncome,
-                      borderWidth: 2,
-                      tension: 0.4,
-                      fill: true,
-                      pointBackgroundColor: '#ffffff',
-                      pointBorderColor: '#10b981',
-                      pointRadius: 4
-                  },
-                  {
-                      label: 'Expense',
-                      data: expenses,
-                      borderColor: '#ef4444',
-                      backgroundColor: gradientExpense,
-                      borderWidth: 2,
-                      tension: 0.4,
-                      fill: true,
-                      pointBackgroundColor: '#ffffff',
-                      pointBorderColor: '#ef4444',
-                      pointRadius: 4
-                  }
-              ]
+    const gradientIncome = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientIncome.addColorStop(0, "rgba(16, 185, 129, 0.5)");
+    gradientIncome.addColorStop(1, "rgba(16, 185, 129, 0.0)");
+
+    window.dashboardChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Income",
+            data: incomes,
+            borderColor: "#10b981",
+            backgroundColor: gradientIncome,
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#10b981",
+            pointRadius: 4,
           },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: {
-                      position: 'top',
-                      align: 'end',
-                      labels: {
-                          usePointStyle: true,
-                          boxWidth: 8
-                      }
-                  },
-                  tooltip: {
-                      mode: 'index',
-                      intersect: false,
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      titleColor: '#1e293b',
-                      bodyColor: '#475569',
-                      borderColor: '#e2e8f0',
-                      borderWidth: 1,
-                      padding: 10,
-                      displayColors: true
-                  }
-              },
-              scales: {
-                  y: {
-                      beginAtZero: true,
-                      grid: {
-                          display: true,
-                          color: '#f1f5f9',
-                          drawBorder: false
-                      },
-                      ticks: {
-                          display: false 
-                      }
-                  },
-                  x: {
-                      grid: {
-                          display: false
-                      }
-                  }
-              }
-          }
-      });
+          {
+            label: "Expense",
+            data: expenses,
+            borderColor: "#ef4444",
+            backgroundColor: gradientExpense,
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#ef4444",
+            pointRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "top",
+            align: "end",
+            labels: {
+              usePointStyle: true,
+              boxWidth: 8,
+            },
+          },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            titleColor: "#1e293b",
+            bodyColor: "#475569",
+            borderColor: "#e2e8f0",
+            borderWidth: 1,
+            padding: 10,
+            displayColors: true,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              display: true,
+              color: "#f1f5f9",
+              drawBorder: false,
+            },
+            ticks: {
+              display: false,
+            },
+          },
+          x: {
+            grid: {
+              display: false,
+            },
+          },
+        },
+      },
+    });
   },
 
   // Create charts
