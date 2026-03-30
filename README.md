@@ -101,19 +101,20 @@ If Z-Score > 2: Transaction flagged as anomaly
 
 3. **Configure the App**:
 
-   - Open `index.html`
-   - Replace the Firebase configuration (around line 2345) with your credentials:
+    - Copy `config.example.js` to `config.js`
+    - Fill in your Firebase credentials in `config.js`
+    - Do **not** commit `config.js` (it is ignored by `.gitignore`)
 
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "YOUR_API_KEY",
-     authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-     projectId: "YOUR_PROJECT_ID",
-     storageBucket: "YOUR_PROJECT_ID.appspot.com",
-     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-     appId: "YOUR_APP_ID",
-   };
-   ```
+    ```javascript
+    window.__APP_CONFIG__ = {
+       firebaseApiKey: "YOUR_API_KEY",
+       firebaseAuthDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+       firebaseProjectId: "YOUR_PROJECT_ID",
+       firebaseStorageBucket: "YOUR_PROJECT_ID.appspot.com",
+       firebaseMessagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+       firebaseAppId: "YOUR_APP_ID",
+    };
+    ```
 
 4. **Deploy**:
    - Host on any static web server (Firebase Hosting, Netlify, Vercel, GitHub Pages, etc.)
@@ -155,6 +156,7 @@ If Z-Score > 2: Transaction flagged as anomaly
 - Firebase Authentication ensures secure access
 - User data is isolated (each user can only access their own data)
 - Firestore security rules prevent unauthorized access
+- Never commit credentials in source files; keep runtime config in local `config.js`
 
 ## Browser Compatibility
 

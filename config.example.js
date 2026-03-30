@@ -1,0 +1,8 @@
+window.__APP_CONFIG__ = {
+  firebaseApiKey: "REPLACE_WITH_FIREBASE_API_KEY",
+  firebaseAuthDomain: "REPLACE_WITH_FIREBASE_AUTH_DOMAIN",
+  firebaseProjectId: "REPLACE_WITH_FIREBASE_PROJECT_ID",
+  firebaseStorageBucket: "REPLACE_WITH_FIREBASE_STORAGE_BUCKET",
+  firebaseMessagingSenderId: "REPLACE_WITH_FIREBASE_MESSAGING_SENDER_ID",
+  firebaseAppId: "REPLACE_WITH_FIREBASE_APP_ID",
+};

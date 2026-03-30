@@ -3947,14 +3947,25 @@ function triggerImportTransactions() {
 }
 
 // Firebase Configuration
+const appConfig = window.__APP_CONFIG__ || {};
 const firebaseConfig = {
-  apiKey: "AIzaSyCqRDG0wdaBrmIHZwIg8Y7Pgd4BIp2wj8U",
-  authDomain: "money-spending-tracker.firebaseapp.com",
-  projectId: "money-spending-tracker",
-  storageBucket: "money-spending-tracker.firebasestorage.app",
-  messagingSenderId: "259178922510",
-  appId: "1:259178922510:web:8c03f50cc2a8c40abc325f",
+  apiKey: appConfig.firebaseApiKey,
+  authDomain: appConfig.firebaseAuthDomain,
+  projectId: appConfig.firebaseProjectId,
+  storageBucket: appConfig.firebaseStorageBucket,
+  messagingSenderId: appConfig.firebaseMessagingSenderId,
+  appId: appConfig.firebaseAppId,
 };
+
+const missingFirebaseFields = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
+
+if (missingFirebaseFields.length > 0) {
+  throw new Error(
+    `Missing Firebase config values: ${missingFirebaseFields.join(", ")}. Create config.js from config.example.js and set your credentials.`,
+  );
+}
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
