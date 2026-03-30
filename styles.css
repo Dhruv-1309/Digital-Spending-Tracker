@@ -3149,6 +3149,29 @@ body {
     border-color: #e2e8f0;
 }
 
+.analytics-header {
+    margin-bottom: 0;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.analytics-section-gap {
+    margin-top: 24px;
+}
+
+.analytics-stats-box {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
 .analytics-filters {
     display: flex;
     align-items: center;
@@ -3248,6 +3271,12 @@ body {
 
 #analytics .custom-select-wrapper {
     width: 100%;
+}
+
+.chart-container canvas,
+.chart-wrapper canvas {
+    width: 100% !important;
+    max-width: 100%;
 }
 
 @media (max-width: 900px) {
@@ -3569,6 +3598,96 @@ body {
     * {
         animation: none !important;
         transition: none !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    body {
+        padding: 14px 0 20px;
+    }
+
+    .container {
+        padding: 0 14px 22px;
+    }
+
+    .tab-content {
+        padding: 20px;
+    }
+
+    .nav-tabs {
+        flex-wrap: wrap;
+    }
+
+    .nav-tab {
+        flex: 1 1 calc(33.333% - 8px);
+        min-width: 150px;
+    }
+
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .tab-content {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .nav-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .nav-tab {
+        min-width: 0;
+        padding: 10px 8px;
+        font-size: 0.82rem;
+    }
+
+    .transactions-header-area {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .actions-group {
+        width: 100%;
+    }
+
+    .actions-group .btn {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-text h1 {
+        font-size: 1.25rem;
+    }
+
+    .brand-text p {
+        font-size: 0.8rem;
+    }
+
+    .user-email-text {
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nav-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-filters {
+        padding: 4px;
+    }
+
+    .custom-select.analytics-select {
+        width: 100%;
     }
 }
 
