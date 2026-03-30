@@ -3963,7 +3963,7 @@ const missingFirebaseFields = Object.entries(firebaseConfig)
 
 if (missingFirebaseFields.length > 0) {
   throw new Error(
-    `Missing Firebase config values: ${missingFirebaseFields.join(", ")}. Create config.js from config.example.js and set your credentials.`,
+    `Missing Firebase config values: ${missingFirebaseFields.join(", ")}. Set values in config.public.js for hosted deployments or create local config.js from config.example.js.`,
   );
 }
 
@@ -4225,6 +4225,22 @@ document
         // Multiple popups, ignore
       } else if (error.code === "auth/popup-blocked") {
         showAuthError("Popup was blocked. Please allow popups for this site.");
+      } else if (error.code === "auth/unauthorized-domain") {
+        showAuthError(
+          `Google login is blocked for this domain (${window.location.hostname}). Add it in Firebase Console -> Authentication -> Settings -> Authorized domains.`,
+        );
+      } else if (error.code === "auth/operation-not-allowed") {
+        showAuthError(
+          "Google sign-in is disabled in Firebase. Enable Google provider in Firebase Console -> Authentication -> Sign-in method.",
+        );
+      } else if (error.code === "auth/invalid-api-key") {
+        showAuthError(
+          "Firebase API key is invalid or rotated. Update firebaseApiKey in config.js with the new key.",
+        );
+      } else if (error.code === "auth/network-request-failed") {
+        showAuthError(
+          "Network error while contacting Firebase. Check internet connection and try again.",
+        );
       } else if (
         error.code === "auth/account-exists-with-different-credential"
       ) {
