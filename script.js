@@ -486,7 +486,10 @@ const MoneyTracker = {
 
     let valid = true;
     if (!Number.isFinite(monthlyExpenseLimit) || monthlyExpenseLimit <= 0) {
-      this.showFieldError("budgetMonthlyLimit", "Enter a budget amount greater than 0.");
+      this.showFieldError(
+        "budgetMonthlyLimit",
+        "Enter a budget amount greater than 0.",
+      );
       valid = false;
     }
     if (
@@ -494,7 +497,10 @@ const MoneyTracker = {
       thresholdPercent <= 0 ||
       thresholdPercent > 100
     ) {
-      this.showFieldError("budgetAlertThreshold", "Threshold must be between 1 and 100.");
+      this.showFieldError(
+        "budgetAlertThreshold",
+        "Threshold must be between 1 and 100.",
+      );
       valid = false;
     }
 
@@ -555,7 +561,11 @@ const MoneyTracker = {
       );
     }
     if (level === "over" && previous !== "over") {
-      showToast("Budget exceeded: this month's expenses are over your set limit.", "error", 5200);
+      showToast(
+        "Budget exceeded: this month's expenses are over your set limit.",
+        "error",
+        5200,
+      );
     }
 
     this.budgetAlertState.level = level;
@@ -564,7 +574,7 @@ const MoneyTracker = {
   renderBudgetGoal(currentMonthExpenses = null) {
     const limitInput = document.getElementById("budgetMonthlyLimit");
     const thresholdInput = document.getElementById("budgetAlertThreshold");
-    
+
     // UI Elements
     const spentValEl = document.getElementById("budgetSpentVal");
     const totalValEl = document.getElementById("budgetTotalVal");
@@ -627,7 +637,7 @@ const MoneyTracker = {
 
     spentValEl.textContent = `₹${spent.toLocaleString("en-IN")}`;
     totalValEl.textContent = `₹${limit.toLocaleString("en-IN")}`;
-    
+
     chipEl.textContent = chipLabel;
     metaEl.textContent =
       remaining >= 0
@@ -1140,34 +1150,34 @@ const MoneyTracker = {
         this.addAutopay();
       });
 
-      ["autopayName", "autopayAmount", "autopayType", "autopayCategory", "autopayDay"].forEach(
-        (id) => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          const eventName =
-            id === "autopayName" ||
-            id === "autopayAmount" ||
-            id === "autopayDay"
-              ? "input"
-              : "change";
-          el.addEventListener(eventName, () => {
-            const form = document.getElementById("autopayForm");
-            if (!form) return;
-            const errorEl = form.querySelector(
-              `.field-error[data-for='${id}']`,
-            );
-            if (errorEl) errorEl.remove();
-            el.classList.remove("input-error");
-            el.setAttribute("aria-invalid", "false");
-            const wrapper = el.closest(".custom-select-wrapper");
-            if (wrapper) wrapper.classList.remove("has-error");
-            if (id === "autopayDay") {
-              const dayWrap = el.closest(".autopay-day-picker-wrapper");
-              if (dayWrap) dayWrap.classList.remove("has-error");
-            }
-          });
-        },
-      );
+      [
+        "autopayName",
+        "autopayAmount",
+        "autopayType",
+        "autopayCategory",
+        "autopayDay",
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const eventName =
+          id === "autopayName" || id === "autopayAmount" || id === "autopayDay"
+            ? "input"
+            : "change";
+        el.addEventListener(eventName, () => {
+          const form = document.getElementById("autopayForm");
+          if (!form) return;
+          const errorEl = form.querySelector(`.field-error[data-for='${id}']`);
+          if (errorEl) errorEl.remove();
+          el.classList.remove("input-error");
+          el.setAttribute("aria-invalid", "false");
+          const wrapper = el.closest(".custom-select-wrapper");
+          if (wrapper) wrapper.classList.remove("has-error");
+          if (id === "autopayDay") {
+            const dayWrap = el.closest(".autopay-day-picker-wrapper");
+            if (dayWrap) dayWrap.classList.remove("has-error");
+          }
+        });
+      });
 
       const autopayTypeSelect = document.getElementById("autopayType");
       if (autopayTypeSelect) {
@@ -1179,12 +1189,12 @@ const MoneyTracker = {
 
     const budgetGoalForm = document.getElementById("budgetGoalForm");
     const toggleBudgetFormBtn = document.getElementById("toggleBudgetFormBtn");
-    
+
     if (toggleBudgetFormBtn && budgetGoalForm) {
       toggleBudgetFormBtn.addEventListener("click", () => {
         budgetGoalForm.classList.toggle("hidden-form");
         toggleBudgetFormBtn.classList.toggle("active");
-        
+
         // Change icon based on state if needed or rotate it via CSS
         if (budgetGoalForm.classList.contains("hidden-form")) {
           toggleBudgetFormBtn.style.transform = "rotate(0deg)";
@@ -3667,14 +3677,19 @@ const MoneyTracker = {
       h.toLowerCase().replace(/\s+/g, " ").trim(),
     );
 
-    const getIndex = (names) => names.map((name) => headers.indexOf(name)).find((idx) => idx >= 0);
+    const getIndex = (names) =>
+      names.map((name) => headers.indexOf(name)).find((idx) => idx >= 0);
 
     const indexMap = {
       date: getIndex(["date"]),
       type: getIndex(["type"]),
       category: getIndex(["category"]),
       description: getIndex(["description"]),
-      paymentMethod: getIndex(["payment method", "paymentmethod", "payment_method"]),
+      paymentMethod: getIndex([
+        "payment method",
+        "paymentmethod",
+        "payment_method",
+      ]),
       amount: getIndex(["amount", "value"]),
     };
 
@@ -3711,14 +3726,16 @@ const MoneyTracker = {
       }
 
       const rawType = (cols[indexMap.type] || "").toLowerCase().trim();
-      const type = rawType === "income" || rawType === "expense"
-        ? rawType
-        : amount >= 0
-          ? "expense"
-          : "income";
+      const type =
+        rawType === "income" || rawType === "expense"
+          ? rawType
+          : amount >= 0
+            ? "expense"
+            : "income";
 
       const normalizedAmount = Math.abs(amount);
-      const category = (cols[indexMap.category] || "Imported").trim() || "Imported";
+      const category =
+        (cols[indexMap.category] || "Imported").trim() || "Imported";
       const description = (cols[indexMap.description] || "").trim();
       const paymentMethodRaw = (cols[indexMap.paymentMethod] || "cash").trim();
       const paymentMethod = paymentMethodRaw.toLowerCase().replace(/\s+/g, "_");
