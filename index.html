@@ -637,6 +637,41 @@
 
         <!-- Analytics Tab -->
         <div id="analytics" class="tab-content">
+            <div class="analytics-toolbar">
+                <div class="section-header" style="margin-bottom: 0;">
+                    <h3><i class="fas fa-chart-pie"></i> Analytics</h3>
+                </div>
+                <div class="analytics-filters">
+                    <div class="custom-select analytics-select">
+                        <select id="analyticsPeriod" data-custom-select="true">
+                            <option value="overall">Overall</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="custom-select analytics-select analytics-filter" id="analyticsMonthWrap">
+                        <select id="analyticsMonth" data-custom-select="true">
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="custom-select analytics-select analytics-filter" id="analyticsYearWrap">
+                        <select id="analyticsYear" data-custom-select="true">
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
                 <div class="chart-container">
                     <h3><i class="fas fa-chart-bar"></i> Daily Expenses</h3>

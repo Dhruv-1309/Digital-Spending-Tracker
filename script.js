@@ -770,6 +770,24 @@ const MoneyTracker = {
     if (txSortBy) {
       txSortBy.addEventListener("change", () => this.displayTransactions());
     }
+
+    const analyticsPeriod = document.getElementById("analyticsPeriod");
+    if (analyticsPeriod) {
+      analyticsPeriod.addEventListener("change", () => {
+        this.toggleAnalyticsFilterVisibility();
+        this.createCharts();
+      });
+    }
+
+    const analyticsMonth = document.getElementById("analyticsMonth");
+    if (analyticsMonth) {
+      analyticsMonth.addEventListener("change", () => this.createCharts());
+    }
+
+    const analyticsYear = document.getElementById("analyticsYear");
+    if (analyticsYear) {
+      analyticsYear.addEventListener("change", () => this.createCharts());
+    }
   },
 
   // Show specific tab
@@ -1287,14 +1305,128 @@ const MoneyTracker = {
 
   // Create charts
   createCharts() {
-    this.createDailyExpenseChart();
-    this.createExpensePieChart();
-    this.createTimeSeriesChart();
-    this.createDayOfWeekHeatmap();
+    const analyticsTransactions = this.getAnalyticsTransactions();
+    this.createDailyExpenseChart(analyticsTransactions);
+    this.createExpensePieChart(analyticsTransactions);
+    this.createTimeSeriesChart(analyticsTransactions);
+    this.createDayOfWeekHeatmap(analyticsTransactions);
+  },
+
+  updateAnalyticsFilterOptions() {
+    const yearSelect = document.getElementById("analyticsYear");
+    const monthSelect = document.getElementById("analyticsMonth");
+    if (!yearSelect || !monthSelect) return;
+
+    const now = new Date();
+    const currentYear = String(now.getFullYear());
+    const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+
+    const selectedYear = yearSelect.value || currentYear;
+    const selectedMonth = monthSelect.value || currentMonth;
+
+    const years = Array.from(
+      new Set(
+        this.transactions
+          .map((t) => new Date(t.date))
+          .filter((d) => !Number.isNaN(d.getTime()))
+          .map((d) => d.getFullYear()),
+      ),
+    ).sort((a, b) => b - a);
+
+    if (!years.includes(Number(currentYear))) {
+      years.unshift(Number(currentYear));
+    }
+
+    yearSelect.innerHTML = years
+      .map((year) => `<option value="${year}">${year}</option>`)
+      .join("");
+
+    yearSelect.value = years
+      .map(String)
+      .includes(selectedYear)
+      ? selectedYear
+      : currentYear;
+
+    monthSelect.value =
+      selectedMonth.length === 2 ? selectedMonth : currentMonth;
+
+    refreshCustomSelect("analyticsYear");
+    refreshCustomSelect("analyticsMonth");
+    refreshCustomSelect("analyticsPeriod");
+
+    this.toggleAnalyticsFilterVisibility();
+  },
+
+  toggleAnalyticsFilterVisibility() {
+    const periodSelect = document.getElementById("analyticsPeriod");
+    const monthWrap = document.getElementById("analyticsMonthWrap");
+    const yearWrap = document.getElementById("analyticsYearWrap");
+    if (!periodSelect || !monthWrap || !yearWrap) return;
+
+    const period = periodSelect.value;
+    monthWrap.classList.toggle("is-hidden", period !== "monthly");
+    yearWrap.classList.toggle("is-hidden", period === "overall");
+  },
+
+  getAnalyticsRange() {
+    const periodSelect = document.getElementById("analyticsPeriod");
+    const period = periodSelect ? periodSelect.value : "overall";
+    if (period === "overall") return null;
+
+    const monthSelect = document.getElementById("analyticsMonth");
+    const yearSelect = document.getElementById("analyticsYear");
+
+    const now = new Date();
+    const selectedYear = Number(yearSelect ? yearSelect.value : now.getFullYear());
+    const selectedMonth = Number(monthSelect ? monthSelect.value : now.getMonth() + 1);
+
+    if (period === "monthly") {
+      const monthIndex = Number.isNaN(selectedMonth)
+        ? now.getMonth()
+        : selectedMonth - 1;
+      const year = Number.isNaN(selectedYear) ? now.getFullYear() : selectedYear;
+
+      const start = new Date(year, monthIndex, 1);
+      const end = new Date(
+        year,
+        monthIndex + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
+      return { start, end };
+    }
+
+    if (period === "yearly") {
+      const year = Number.isNaN(selectedYear) ? now.getFullYear() : selectedYear;
+      const start = new Date(year, 0, 1);
+      const end = new Date(
+        year,
+        11,
+        31,
+        23,
+        59,
+        59,
+        999,
+      );
+      return { start, end };
+    }
+
+    return null;
+  },
+
+  getAnalyticsTransactions() {
+    const range = this.getAnalyticsRange();
+    if (!range) return this.transactions;
+    return this.transactions.filter((t) =>
+      this.isDateInRange(t.date, range.start, range.end),
+    );
   },
 
   // Create daily expense bar chart
-  createDailyExpenseChart() {
+  createDailyExpenseChart(transactions = this.transactions) {
     const ctx = document.getElementById("dailyExpenseChart").getContext("2d");
 
     if (window.dailyExpenseChart instanceof Chart) {
@@ -1302,7 +1434,7 @@ const MoneyTracker = {
     }
 
     const dailyExpenses = {};
-    this.transactions
+    transactions
       .filter((t) => t.type === "expense")
       .forEach((t) => {
         const date = t.date;
@@ -1375,7 +1507,7 @@ const MoneyTracker = {
   },
 
   // Create expense category pie chart
-  createExpensePieChart() {
+  createExpensePieChart(transactions = this.transactions) {
     const ctx = document.getElementById("expensePieChart").getContext("2d");
 
     if (window.expensePieChart instanceof Chart) {
@@ -1383,7 +1515,7 @@ const MoneyTracker = {
     }
 
     const expenseByCategory = {};
-    this.transactions
+    transactions
       .filter((t) => t.type === "expense")
       .forEach((t) => {
         expenseByCategory[t.category] =
@@ -1454,7 +1586,7 @@ const MoneyTracker = {
   },
 
   // Create Time Series Analysis Chart
-  createTimeSeriesChart() {
+  createTimeSeriesChart(transactions = this.transactions) {
     const ctx = document.getElementById("timeSeriesChart").getContext("2d");
 
     if (window.timeSeriesChart instanceof Chart) {
@@ -1462,7 +1594,7 @@ const MoneyTracker = {
     }
 
     // Perform time series analysis
-    const analysis = this.performTimeSeriesAnalysis();
+    const analysis = this.performTimeSeriesAnalysis(transactions);
 
     if (analysis.dates.length === 0) {
       ctx.font = "16px Inter";
@@ -1794,6 +1926,7 @@ const MoneyTracker = {
 
   // Refresh all displays
   refreshAll() {
+    this.updateAnalyticsFilterOptions();
     this.updateDashboard();
     if (this.currentTab === "transactions") {
       this.displayTransactions();
@@ -2080,14 +2213,14 @@ const MoneyTracker = {
   },
 
   // Heatmap Data Preparation - Aggregate Expenses by Day of Week
-  getExpensesByDayOfWeek() {
+  getExpensesByDayOfWeek(transactions = this.transactions) {
     /**
      * Aggregates expenses by day of the week for heatmap visualization
      * @returns {Object} Object containing day-wise spending data and statistics
      */
 
     // Filter only expense transactions
-    const expenseTransactions = this.transactions.filter(
+    const expenseTransactions = transactions.filter(
       (t) => t.type === "expense",
     );
 
@@ -2228,7 +2361,7 @@ const MoneyTracker = {
   },
 
   // Create Day of Week Heatmap Chart
-  createDayOfWeekHeatmap() {
+  createDayOfWeekHeatmap(transactions = this.transactions) {
     const ctx = document.getElementById("dayOfWeekChart").getContext("2d");
 
     if (window.dayOfWeekChart instanceof Chart) {
@@ -2236,7 +2369,7 @@ const MoneyTracker = {
     }
 
     // Get day of week data
-    const data = this.getExpensesByDayOfWeek();
+    const data = this.getExpensesByDayOfWeek(transactions);
 
     if (data.isEmpty) {
       ctx.font = "16px Inter";
@@ -2395,9 +2528,9 @@ const MoneyTracker = {
   },
 
   // Time Series Analysis for Expenses
-  performTimeSeriesAnalysis() {
+  performTimeSeriesAnalysis(transactions = this.transactions) {
     // Filter only expense transactions
-    const expenseTransactions = this.transactions.filter(
+    const expenseTransactions = transactions.filter(
       (t) => t.type === "expense",
     );
 
@@ -3281,6 +3414,10 @@ const dropdownIcons = {
   // Type dropdown
   income: '<i class="fas fa-arrow-up"></i>',
   expense: '<i class="fas fa-arrow-down"></i>',
+  // Analytics period dropdown
+  overall: '<i class="fas fa-chart-line"></i>',
+  monthly: '<i class="fas fa-calendar-alt"></i>',
+  yearly: '<i class="fas fa-calendar"></i>',
   // Payment method dropdown
   cash: '<i class="fas fa-money-bill-wave"></i>',
   card: '<i class="fas fa-credit-card"></i>',
@@ -3293,7 +3430,9 @@ const dropdownIcons = {
 };
 
 function initCustomSelects() {
-  const selects = document.querySelectorAll(".form-group select");
+  const selects = document.querySelectorAll(
+    ".form-group select, select[data-custom-select='true']",
+  );
 
   selects.forEach((select) => {
     // Skip if already initialized

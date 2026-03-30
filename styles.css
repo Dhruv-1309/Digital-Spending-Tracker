@@ -2846,6 +2846,30 @@ body {
     border: 1px solid #f1f5f9;
 }
 
+.analytics-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 10px 4px;
+}
+
+.analytics-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 6px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #f8fbff 0%, #f2f7ff 100%);
+    border: 1px solid #e2ecff;
+}
+
+.analytics-filter.is-hidden {
+    display: none;
+}
+
 .filter-group {
     display: flex;
     gap: 12px;
@@ -2891,8 +2915,12 @@ body {
 
 .custom-select select {
     width: 100%;
-    appearance: none;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: none;
     padding: 10px 14px;
+    padding-right: 36px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     font-family: inherit;
@@ -2900,6 +2928,10 @@ body {
     color: #334155;
     background: #ffffff;
     cursor: pointer;
+}
+
+.custom-select select::-ms-expand {
+    display: none;
 }
 
 .custom-select i {
@@ -2910,6 +2942,33 @@ body {
     color: #94a3b8;
     pointer-events: none;
     font-size: 0.8rem;
+}
+
+.custom-select.analytics-select {
+    width: 220px;
+}
+
+#analytics .custom-select {
+    min-width: 170px;
+}
+
+#analytics .custom-select-wrapper {
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .analytics-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .analytics-filters {
+        width: 100%;
+    }
+
+    .custom-select.analytics-select {
+        width: 100%;
+    }
 }
 
 /* Transaction Feed Items */
