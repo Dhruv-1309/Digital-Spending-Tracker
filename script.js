@@ -1341,9 +1341,7 @@ const MoneyTracker = {
       .map((year) => `<option value="${year}">${year}</option>`)
       .join("");
 
-    yearSelect.value = years
-      .map(String)
-      .includes(selectedYear)
+    yearSelect.value = years.map(String).includes(selectedYear)
       ? selectedYear
       : currentYear;
 
@@ -1377,40 +1375,32 @@ const MoneyTracker = {
     const yearSelect = document.getElementById("analyticsYear");
 
     const now = new Date();
-    const selectedYear = Number(yearSelect ? yearSelect.value : now.getFullYear());
-    const selectedMonth = Number(monthSelect ? monthSelect.value : now.getMonth() + 1);
+    const selectedYear = Number(
+      yearSelect ? yearSelect.value : now.getFullYear(),
+    );
+    const selectedMonth = Number(
+      monthSelect ? monthSelect.value : now.getMonth() + 1,
+    );
 
     if (period === "monthly") {
       const monthIndex = Number.isNaN(selectedMonth)
         ? now.getMonth()
         : selectedMonth - 1;
-      const year = Number.isNaN(selectedYear) ? now.getFullYear() : selectedYear;
+      const year = Number.isNaN(selectedYear)
+        ? now.getFullYear()
+        : selectedYear;
 
       const start = new Date(year, monthIndex, 1);
-      const end = new Date(
-        year,
-        monthIndex + 1,
-        0,
-        23,
-        59,
-        59,
-        999,
-      );
+      const end = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
       return { start, end };
     }
 
     if (period === "yearly") {
-      const year = Number.isNaN(selectedYear) ? now.getFullYear() : selectedYear;
+      const year = Number.isNaN(selectedYear)
+        ? now.getFullYear()
+        : selectedYear;
       const start = new Date(year, 0, 1);
-      const end = new Date(
-        year,
-        11,
-        31,
-        23,
-        59,
-        59,
-        999,
-      );
+      const end = new Date(year, 11, 31, 23, 59, 59, 999);
       return { start, end };
     }
 
