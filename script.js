@@ -4,6 +4,28 @@ const MoneyTracker = {
   currentTab: "dashboard",
   approvedAnomalies: [], // Track IDs of approved anomalies
   autopays: [], // Track recurring autopay items
+  txSearchDebounceTimer: null,
+  analyticsCache: new Map(),
+  transactionsRevision: 0,
+  selectedQuickPreset: null,
+  transactionPage: 1,
+  transactionPageSize: 20,
+  budgetGoal: {
+    monthlyExpenseLimit: 0,
+    thresholdPercent: 80,
+  },
+  budgetAlertState: {
+    monthKey: "",
+    level: "none",
+  },
+  pendingSync: {
+    transactions: false,
+    categories: false,
+    anomalies: false,
+    autopays: false,
+    budget: false,
+  },
+  networkListenersBound: false,
 
   // Default categories
   defaultCategories: {
@@ -51,9 +73,12 @@ const MoneyTracker = {
     await this.loadCustomCategories();
     await this.loadApprovedAnomalies();
     await this.loadAutopays();
+    await this.loadBudgetGoal();
     this.checkAndProcessAutopays();
+    this.bindNetworkListeners();
     this.setupEventListeners();
     this.loadCategories();
+    this.loadAutopayCategories();
     this.setDefaultDate();
     this.initAutopayDaySelector();
     this.refreshAll();
@@ -68,6 +93,7 @@ const MoneyTracker = {
     try {
       if (!window.db || !window.currentUser) {
         this.transactions = [];
+        this.invalidateAnalyticsCache();
         return;
       }
       const doc = await window.db
@@ -81,28 +107,144 @@ const MoneyTracker = {
       } else {
         this.transactions = [];
       }
+      this.invalidateAnalyticsCache();
     } catch (error) {
       console.error("Error loading transactions:", error);
       this.transactions = [];
+      this.invalidateAnalyticsCache();
     }
   },
 
-  // Save transactions to cloud storage
-  async saveTransactions() {
-    try {
-      if (!window.db || !window.currentUser) return;
-      await window.db
-        .collection("users")
-        .doc(window.currentUser.uid)
-        .collection("data")
-        .doc("transactions")
-        .set({
-          items: this.transactions,
-          updatedAt: new Date(),
-        });
-    } catch (error) {
-      console.error("Error saving transactions:", error);
+  invalidateAnalyticsCache() {
+    this.analyticsCache.clear();
+    this.transactionsRevision += 1;
+  },
+
+  getAnalyticsCacheKey() {
+    const periodSelect = document.getElementById("analyticsPeriod");
+    const monthSelect = document.getElementById("analyticsMonth");
+    const yearSelect = document.getElementById("analyticsYear");
+    const period = periodSelect ? periodSelect.value : "overall";
+    const month = monthSelect ? monthSelect.value : "all";
+    const year = yearSelect ? yearSelect.value : "all";
+    const preset = this.selectedQuickPreset || "none";
+    return `${this.transactionsRevision}|${preset}|${period}|${year}|${month}`;
+  },
+
+  isOffline() {
+    return typeof navigator !== "undefined" && navigator.onLine === false;
+  },
+
+  async persistDocWithRetry(docName, payload, options = {}) {
+    const {
+      retries = 2,
+      delayMs = 700,
+      markPendingKey = null,
+      silent = false,
+    } = options;
+
+    if (!window.db || !window.currentUser) return false;
+
+    let lastError = null;
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      try {
+        await window.db
+          .collection("users")
+          .doc(window.currentUser.uid)
+          .collection("data")
+          .doc(docName)
+          .set(payload);
+
+        if (markPendingKey) {
+          this.pendingSync[markPendingKey] = false;
+        }
+        return true;
+      } catch (error) {
+        lastError = error;
+        if (attempt < retries) {
+          const waitTime = delayMs * Math.pow(2, attempt);
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+        }
+      }
     }
+
+    if (markPendingKey) {
+      this.pendingSync[markPendingKey] = true;
+    }
+
+    if (!silent) {
+      const networkMsg = this.isOffline()
+        ? "You are offline. Changes are saved locally and will retry automatically when connection returns."
+        : "Could not sync to cloud right now. We will retry automatically.";
+      showToast(networkMsg, "warning", 5200);
+    }
+
+    if (lastError) {
+      console.error(`Error saving ${docName}:`, lastError);
+    }
+    return false;
+  },
+
+  async retryPendingSync() {
+    if (this.isOffline()) return;
+
+    const retryResults = [];
+    if (this.pendingSync.transactions) {
+      retryResults.push(await this.saveTransactions({ silent: true }));
+    }
+    if (this.pendingSync.categories) {
+      retryResults.push(await this.saveCustomCategories({ silent: true }));
+    }
+    if (this.pendingSync.anomalies) {
+      retryResults.push(await this.saveApprovedAnomalies({ silent: true }));
+    }
+    if (this.pendingSync.autopays) {
+      retryResults.push(await this.saveAutopays({ silent: true }));
+    }
+    if (this.pendingSync.budget) {
+      retryResults.push(await this.saveBudgetGoal({ silent: true }));
+    }
+
+    if (retryResults.length > 0 && retryResults.every(Boolean)) {
+      showToast("Back online. Pending cloud sync completed.", "success", 2600);
+    }
+  },
+
+  bindNetworkListeners() {
+    if (this.networkListenersBound) return;
+    this.networkListenersBound = true;
+
+    window.addEventListener("online", () => {
+      showToast(
+        "Connection restored. Syncing pending changes...",
+        "info",
+        2600,
+      );
+      this.retryPendingSync();
+    });
+
+    window.addEventListener("offline", () => {
+      showToast(
+        "You are offline. New changes will be stored locally and synced later.",
+        "warning",
+        4200,
+      );
+    });
+  },
+
+  // Save transactions to cloud storage
+  async saveTransactions(options = {}) {
+    return this.persistDocWithRetry(
+      "transactions",
+      {
+        items: this.transactions,
+        updatedAt: new Date(),
+      },
+      {
+        ...options,
+        markPendingKey: "transactions",
+      },
+    );
   },
 
   // Load custom categories from cloud storage
@@ -130,21 +272,18 @@ const MoneyTracker = {
   },
 
   // Save custom categories to cloud storage
-  async saveCustomCategories() {
-    try {
-      if (!window.db || !window.currentUser) return;
-      await window.db
-        .collection("users")
-        .doc(window.currentUser.uid)
-        .collection("data")
-        .doc("categories")
-        .set({
-          items: this.customCategories,
-          updatedAt: new Date(),
-        });
-    } catch (error) {
-      console.error("Error saving categories:", error);
-    }
+  async saveCustomCategories(options = {}) {
+    return this.persistDocWithRetry(
+      "categories",
+      {
+        items: this.customCategories,
+        updatedAt: new Date(),
+      },
+      {
+        ...options,
+        markPendingKey: "categories",
+      },
+    );
   },
 
   // Load approved anomalies from cloud storage
@@ -172,21 +311,18 @@ const MoneyTracker = {
   },
 
   // Save approved anomalies to cloud storage
-  async saveApprovedAnomalies() {
-    try {
-      if (!window.db || !window.currentUser) return;
-      await window.db
-        .collection("users")
-        .doc(window.currentUser.uid)
-        .collection("data")
-        .doc("anomalies")
-        .set({
-          items: this.approvedAnomalies,
-          updatedAt: new Date(),
-        });
-    } catch (error) {
-      console.error("Error saving anomalies:", error);
-    }
+  async saveApprovedAnomalies(options = {}) {
+    return this.persistDocWithRetry(
+      "anomalies",
+      {
+        items: this.approvedAnomalies,
+        updatedAt: new Date(),
+      },
+      {
+        ...options,
+        markPendingKey: "anomalies",
+      },
+    );
   },
 
   // Mark anomaly as approved
@@ -223,6 +359,7 @@ const MoneyTracker = {
 
     if (this.transactions.length < originalLength) {
       // Transaction was found and deleted
+      this.invalidateAnalyticsCache();
       this.saveTransactions();
       console.log("Transaction deleted");
 
@@ -278,21 +415,239 @@ const MoneyTracker = {
   },
 
   // Save autopays to cloud storage
-  async saveAutopays() {
+  async saveAutopays(options = {}) {
+    return this.persistDocWithRetry(
+      "autopays",
+      {
+        items: this.autopays,
+        updatedAt: new Date(),
+      },
+      {
+        ...options,
+        markPendingKey: "autopays",
+      },
+    );
+  },
+
+  async loadBudgetGoal() {
     try {
-      if (!window.db || !window.currentUser) return;
-      await window.db
+      if (!window.db || !window.currentUser) {
+        this.budgetGoal = { monthlyExpenseLimit: 0, thresholdPercent: 80 };
+        return;
+      }
+
+      const doc = await window.db
         .collection("users")
         .doc(window.currentUser.uid)
         .collection("data")
-        .doc("autopays")
-        .set({
-          items: this.autopays,
-          updatedAt: new Date(),
-        });
+        .doc("budgetGoal")
+        .get();
+
+      if (doc.exists) {
+        const data = doc.data() || {};
+        this.budgetGoal = {
+          monthlyExpenseLimit: Number(data.monthlyExpenseLimit) || 0,
+          thresholdPercent: Number(data.thresholdPercent) || 80,
+        };
+      } else {
+        this.budgetGoal = { monthlyExpenseLimit: 0, thresholdPercent: 80 };
+      }
     } catch (error) {
-      console.error("Error saving autopays:", error);
+      console.error("Error loading budget goal:", error);
+      this.budgetGoal = { monthlyExpenseLimit: 0, thresholdPercent: 80 };
     }
+  },
+
+  async saveBudgetGoal(options = {}) {
+    return this.persistDocWithRetry(
+      "budgetGoal",
+      {
+        monthlyExpenseLimit: this.budgetGoal.monthlyExpenseLimit,
+        thresholdPercent: this.budgetGoal.thresholdPercent,
+        updatedAt: new Date(),
+      },
+      {
+        ...options,
+        markPendingKey: "budget",
+      },
+    );
+  },
+
+  async updateBudgetGoalFromForm() {
+    const limitInput = document.getElementById("budgetMonthlyLimit");
+    const thresholdInput = document.getElementById("budgetAlertThreshold");
+    const form = document.getElementById("budgetGoalForm");
+    if (!limitInput || !thresholdInput || !form) return;
+
+    this.clearInlineErrors("budgetGoalForm");
+
+    const monthlyExpenseLimit = Number(limitInput.value);
+    const thresholdPercent = Number(thresholdInput.value || 80);
+
+    let valid = true;
+    if (!Number.isFinite(monthlyExpenseLimit) || monthlyExpenseLimit <= 0) {
+      this.showFieldError(
+        "budgetMonthlyLimit",
+        "Enter a budget amount greater than 0.",
+      );
+      valid = false;
+    }
+    if (
+      !Number.isFinite(thresholdPercent) ||
+      thresholdPercent <= 0 ||
+      thresholdPercent > 100
+    ) {
+      this.showFieldError(
+        "budgetAlertThreshold",
+        "Threshold must be between 1 and 100.",
+      );
+      valid = false;
+    }
+
+    if (!valid) {
+      showToast("Please fix the highlighted fields.", "warning");
+      return;
+    }
+
+    this.budgetGoal = {
+      monthlyExpenseLimit,
+      thresholdPercent,
+    };
+
+    this.setSubmitLoading("budgetGoalForm", "Saving budget...", true);
+    try {
+      const saved = await this.saveBudgetGoal({ silent: true });
+      this.renderBudgetGoal();
+      showToast(
+        saved
+          ? "Budget goal saved successfully."
+          : "Budget goal saved locally. Cloud sync will retry automatically.",
+        saved ? "success" : "warning",
+      );
+    } finally {
+      this.setSubmitLoading("budgetGoalForm", "Saving budget...", false);
+    }
+  },
+
+  getCurrentMonthExpenses() {
+    const { start, end } = this.getCurrentMonthRange();
+    return this.transactions
+      .filter(
+        (t) => t.type === "expense" && this.isDateInRange(t.date, start, end),
+      )
+      .reduce((sum, t) => sum + t.amount, 0);
+  },
+
+  checkBudgetThreshold(currentSpent, limit, thresholdPercent) {
+    if (!limit || limit <= 0) return;
+
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    if (this.budgetAlertState.monthKey !== monthKey) {
+      this.budgetAlertState = { monthKey, level: "none" };
+    }
+
+    const warningPoint = (limit * thresholdPercent) / 100;
+    let level = "safe";
+    if (currentSpent >= limit) level = "over";
+    else if (currentSpent >= warningPoint) level = "warning";
+
+    const previous = this.budgetAlertState.level;
+    if (level === "warning" && (previous === "none" || previous === "safe")) {
+      showToast(
+        `Budget alert: you've used ${Math.min(999, Math.round((currentSpent / limit) * 100))}% of this month's budget.`,
+        "warning",
+        4600,
+      );
+    }
+    if (level === "over" && previous !== "over") {
+      showToast(
+        "Budget exceeded: this month's expenses are over your set limit.",
+        "error",
+        5200,
+      );
+    }
+
+    this.budgetAlertState.level = level;
+  },
+
+  renderBudgetGoal(currentMonthExpenses = null) {
+    const limitInput = document.getElementById("budgetMonthlyLimit");
+    const thresholdInput = document.getElementById("budgetAlertThreshold");
+
+    // UI Elements
+    const spentValEl = document.getElementById("budgetSpentVal");
+    const totalValEl = document.getElementById("budgetTotalVal");
+    const chipEl = document.getElementById("budgetGoalChip");
+    const metaEl = document.getElementById("budgetGoalMeta");
+    const progressWrap = document.getElementById("budgetGoalProgress");
+    const progressFill = document.getElementById("budgetProgressFill");
+
+    if (
+      !limitInput ||
+      !thresholdInput ||
+      !spentValEl ||
+      !totalValEl ||
+      !chipEl ||
+      !metaEl ||
+      !progressWrap ||
+      !progressFill
+    ) {
+      return;
+    }
+
+    if (document.activeElement !== limitInput) {
+      limitInput.value = this.budgetGoal.monthlyExpenseLimit || "";
+    }
+    if (document.activeElement !== thresholdInput) {
+      thresholdInput.value = this.budgetGoal.thresholdPercent || 80;
+    }
+
+    const limit = Number(this.budgetGoal.monthlyExpenseLimit) || 0;
+    const threshold = Number(this.budgetGoal.thresholdPercent) || 80;
+    const spent = Number.isFinite(currentMonthExpenses)
+      ? currentMonthExpenses
+      : this.getCurrentMonthExpenses();
+
+    progressWrap.classList.remove("warning", "over");
+
+    if (!limit || limit <= 0) {
+      spentValEl.textContent = `₹${spent.toLocaleString("en-IN")}`;
+      totalValEl.textContent = "Not set";
+      chipEl.textContent = "Not set";
+      metaEl.textContent = "Set a budget goal to get threshold alerts.";
+      progressFill.style.width = "0%";
+      progressFill.setAttribute("aria-valuenow", "0");
+      return;
+    }
+
+    const percent = Math.max(0, (spent / limit) * 100);
+    const clamped = Math.min(percent, 100);
+    const remaining = limit - spent;
+    const warningPoint = (limit * threshold) / 100;
+
+    let chipLabel = "On track";
+    if (spent >= limit) {
+      chipLabel = "Over budget";
+      progressWrap.classList.add("over");
+    } else if (spent >= warningPoint) {
+      chipLabel = "Near limit";
+      progressWrap.classList.add("warning");
+    }
+
+    spentValEl.textContent = `₹${spent.toLocaleString("en-IN")}`;
+    totalValEl.textContent = `₹${limit.toLocaleString("en-IN")}`;
+
+    chipEl.textContent = chipLabel;
+    metaEl.textContent =
+      remaining >= 0
+        ? `Remaining: ₹${remaining.toLocaleString("en-IN")} • Alert at ${threshold}%`
+        : `Over by ₹${Math.abs(remaining).toLocaleString("en-IN")} • Alert at ${threshold}%`;
+
+    progressFill.style.width = `${clamped}%`;
+    progressFill.setAttribute("aria-valuenow", String(Math.round(clamped)));
+
+    this.checkBudgetThreshold(spent, limit, threshold);
   },
 
   // Initialize autopay day selector calendar
@@ -426,56 +781,65 @@ const MoneyTracker = {
   },
 
   // Add new autopay
-  addAutopay() {
-    const name = document.getElementById("autopayName").value.trim();
-    const amount = parseFloat(document.getElementById("autopayAmount").value);
-    const category = document.getElementById("autopayCategory").value;
-    const dayInput = document.getElementById("autopayDay");
-    const day = dayInput.dataset.lastDay === "true" ? "last" : dayInput.value;
-    const description = document
-      .getElementById("autopayDescription")
-      .value.trim();
-
-    if (
-      !name ||
-      !amount ||
-      !category ||
-      (!day && dayInput.dataset.lastDay !== "true")
-    ) {
-      showToast("Please fill in all required fields.", "warning");
+  async addAutopay() {
+    if (!this.validateAutopayForm()) {
+      showToast("Please fix the highlighted fields.", "warning");
       return;
     }
 
-    const autopay = {
-      id: Date.now() + Math.random(),
-      name: name,
-      amount: amount,
-      category: category,
-      day: day,
-      description: description,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastProcessed: null,
-    };
+    this.setSubmitLoading("autopayForm", "Saving autopay...", true);
 
-    this.autopays.push(autopay);
-    this.saveAutopays();
+    try {
+      const name = document.getElementById("autopayName").value.trim();
+      const amount = parseFloat(document.getElementById("autopayAmount").value);
+      const type = document.getElementById("autopayType").value || "expense";
+      const category = document.getElementById("autopayCategory").value;
+      const dayInput = document.getElementById("autopayDay");
+      const day = dayInput.dataset.lastDay === "true" ? "last" : dayInput.value;
+      const description = document
+        .getElementById("autopayDescription")
+        .value.trim();
 
-    // Reset form
-    document.getElementById("autopayForm").reset();
+      const autopay = {
+        id: Date.now() + Math.random(),
+        name: name,
+        type: type,
+        amount: amount,
+        category: category,
+        day: day,
+        description: description,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        lastProcessed: null,
+      };
 
-    // Reset the day picker state
-    dayInput.placeholder = "Select day (1-31)";
-    delete dayInput.dataset.lastDay;
-    this.updateDayGridSelection(null);
+      this.autopays.push(autopay);
+      const saved = await this.saveAutopays({ silent: true });
 
-    // Refresh custom dropdowns
-    if (typeof refreshCustomSelect === "function") {
-      refreshCustomSelect("autopayCategory");
+      // Reset form
+      document.getElementById("autopayForm").reset();
+
+      // Reset the day picker state
+      dayInput.placeholder = "Select day (1-31)";
+      delete dayInput.dataset.lastDay;
+      this.updateDayGridSelection(null);
+
+      // Refresh custom dropdowns
+      if (typeof refreshCustomSelect === "function") {
+        refreshCustomSelect("autopayType");
+        refreshCustomSelect("autopayCategory");
+      }
+
+      this.displayAutopays();
+      showToast(
+        saved
+          ? "Autopay added and synced successfully."
+          : "Autopay added locally. Cloud sync will retry automatically.",
+        saved ? "success" : "warning",
+      );
+    } finally {
+      this.setSubmitLoading("autopayForm", "Saving autopay...", false);
     }
-
-    this.displayAutopays();
-    showToast("Autopay added successfully.", "success");
   },
 
   // Delete autopay
@@ -492,17 +856,22 @@ const MoneyTracker = {
     if (!confirmed) return;
 
     this.autopays = this.autopays.filter((a) => a.id != id);
-    this.saveAutopays();
+    const saved = await this.saveAutopays({ silent: true });
     this.displayAutopays();
-    showToast("Autopay deleted successfully.", "success");
+    showToast(
+      saved
+        ? "Autopay deleted successfully."
+        : "Autopay deleted locally. Cloud sync will retry automatically.",
+      saved ? "success" : "warning",
+    );
   },
 
   // Toggle autopay active status
-  toggleAutopay(id) {
+  async toggleAutopay(id) {
     const autopay = this.autopays.find((a) => a.id == id);
     if (autopay) {
       autopay.isActive = !autopay.isActive;
-      this.saveAutopays();
+      await this.saveAutopays({ silent: true });
       this.displayAutopays();
     }
   },
@@ -544,14 +913,16 @@ const MoneyTracker = {
   processAutopay(autopay, year, month, day) {
     const transactionDate = new Date(year, month, day);
     const dateString = transactionDate.toISOString().split("T")[0];
+    const flowType = autopay.type === "income" ? "income" : "expense";
+    const tag = flowType === "income" ? "[Recurring Income]" : "[Autopay]";
 
     const transaction = {
       id: Date.now() + Math.random(),
-      type: "expense",
+      type: flowType,
       amount: autopay.amount,
       category: autopay.category,
       paymentMethod: "bank_transfer",
-      description: `[Autopay] ${autopay.name}${
+      description: `${tag} ${autopay.name}${
         autopay.description ? " - " + autopay.description : ""
       }`,
       date: dateString,
@@ -560,11 +931,12 @@ const MoneyTracker = {
     };
 
     this.transactions.unshift(transaction);
-    this.saveTransactions();
+    this.invalidateAnalyticsCache();
+    this.saveTransactions({ silent: true });
 
     // Update last processed date
     autopay.lastProcessed = new Date().toISOString();
-    this.saveAutopays();
+    this.saveAutopays({ silent: true });
   },
 
   // Display autopays in the list
@@ -591,9 +963,17 @@ const MoneyTracker = {
     // Calculate total
     const total = this.autopays
       .filter((a) => a.isActive)
-      .reduce((sum, a) => sum + a.amount, 0);
+      .reduce(
+        (sum, a) => {
+          const flowType = a.type === "income" ? "income" : "expense";
+          if (flowType === "income") sum.income += a.amount;
+          else sum.expense += a.amount;
+          return sum;
+        },
+        { income: 0, expense: 0 },
+      );
     if (totalElement) {
-      totalElement.textContent = `₹${total.toLocaleString("en-IN")}`;
+      totalElement.textContent = `+₹${total.income.toLocaleString("en-IN")} / -₹${total.expense.toLocaleString("en-IN")}`;
     }
 
     // Display all autopays
@@ -601,6 +981,8 @@ const MoneyTracker = {
     this.autopays.forEach((autopay) => {
       const statusClass = autopay.isActive ? "active" : "inactive";
       const statusText = autopay.isActive ? "Active" : "Paused";
+      const flowType = autopay.type === "income" ? "income" : "expense";
+      const flowTypeLabel = flowType === "income" ? "Income" : "Expense";
       const dayDisplay =
         autopay.day === "last"
           ? "Last day"
@@ -611,6 +993,7 @@ const MoneyTracker = {
           <div class="autopay-info">
             <div class="autopay-header">
               <h4>${autopay.name}</h4>
+              <span class="autopay-type-badge ${flowType}">${flowTypeLabel}</span>
               <span class="autopay-status ${statusClass}">${statusText}</span>
             </div>
             <div class="autopay-details">
@@ -631,12 +1014,12 @@ const MoneyTracker = {
           <div class="autopay-actions">
             <button class="autopay-btn toggle" onclick="MoneyTracker.toggleAutopay('${
               autopay.id
-            }')" title="${autopay.isActive ? "Pause" : "Activate"}">
+            }')" title="${autopay.isActive ? "Pause" : "Activate"}" aria-label="${autopay.isActive ? "Pause" : "Activate"} autopay ${autopay.name}">
               <i class="fas fa-${autopay.isActive ? "pause" : "play"}"></i>
             </button>
             <button class="autopay-btn delete" onclick="MoneyTracker.deleteAutopay('${
               autopay.id
-            }')" title="Delete">
+            }')" title="Delete" aria-label="Delete autopay ${autopay.name}">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -694,6 +1077,11 @@ const MoneyTracker = {
     upcoming.forEach((autopay) => {
       const dayDisplay = autopay.day === "last" ? lastDayOfMonth : autopay.day;
       const monthName = today.toLocaleString("default", { month: "short" });
+      const flowType = autopay.type === "income" ? "income" : "expense";
+      const signedAmount = `${flowType === "income" ? "+" : "-"}₹${autopay.amount.toLocaleString(
+        "en-IN",
+      )}`;
+      const amountColor = flowType === "income" ? "#166534" : "#dc2626";
 
       html += `
         <div class="upcoming-card">
@@ -705,9 +1093,7 @@ const MoneyTracker = {
             <h4>${autopay.name}</h4>
             <span class="upcoming-category">${autopay.category}</span>
           </div>
-          <div class="upcoming-amount">₹${autopay.amount.toLocaleString(
-            "en-IN",
-          )}</div>
+          <div class="upcoming-amount" style="color: ${amountColor};">${signedAmount}</div>
         </div>
       `;
     });
@@ -734,12 +1120,117 @@ const MoneyTracker = {
         this.addTransaction();
       });
 
+    ["amount", "type", "category", "paymentMethod", "date"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const eventName = id === "amount" || id === "date" ? "input" : "change";
+      el.addEventListener(eventName, () => {
+        const form = document.getElementById("transactionForm");
+        if (!form) return;
+        const errorEl = form.querySelector(`.field-error[data-for='${id}']`);
+        if (errorEl) errorEl.remove();
+        el.classList.remove("input-error");
+        el.setAttribute("aria-invalid", "false");
+        const wrapper = el.closest(".custom-select-wrapper");
+        if (wrapper) wrapper.classList.remove("has-error");
+        if (id === "date") {
+          const datePickerTrigger =
+            document.getElementById("datePickerTrigger");
+          if (datePickerTrigger)
+            datePickerTrigger.classList.remove("has-error");
+        }
+      });
+    });
+
     // Autopay form submission
     const autopayForm = document.getElementById("autopayForm");
     if (autopayForm) {
       autopayForm.addEventListener("submit", (e) => {
         e.preventDefault();
         this.addAutopay();
+      });
+
+      [
+        "autopayName",
+        "autopayAmount",
+        "autopayType",
+        "autopayCategory",
+        "autopayDay",
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const eventName =
+          id === "autopayName" || id === "autopayAmount" || id === "autopayDay"
+            ? "input"
+            : "change";
+        el.addEventListener(eventName, () => {
+          const form = document.getElementById("autopayForm");
+          if (!form) return;
+          const errorEl = form.querySelector(`.field-error[data-for='${id}']`);
+          if (errorEl) errorEl.remove();
+          el.classList.remove("input-error");
+          el.setAttribute("aria-invalid", "false");
+          const wrapper = el.closest(".custom-select-wrapper");
+          if (wrapper) wrapper.classList.remove("has-error");
+          if (id === "autopayDay") {
+            const dayWrap = el.closest(".autopay-day-picker-wrapper");
+            if (dayWrap) dayWrap.classList.remove("has-error");
+          }
+        });
+      });
+
+      const autopayTypeSelect = document.getElementById("autopayType");
+      if (autopayTypeSelect) {
+        autopayTypeSelect.addEventListener("change", () => {
+          this.loadAutopayCategories();
+        });
+      }
+    }
+
+    const budgetGoalForm = document.getElementById("budgetGoalForm");
+    const toggleBudgetFormBtn = document.getElementById("toggleBudgetFormBtn");
+
+    if (toggleBudgetFormBtn && budgetGoalForm) {
+      toggleBudgetFormBtn.addEventListener("click", () => {
+        budgetGoalForm.classList.toggle("hidden-form");
+        toggleBudgetFormBtn.classList.toggle("active");
+
+        // Change icon based on state if needed or rotate it via CSS
+        if (budgetGoalForm.classList.contains("hidden-form")) {
+          toggleBudgetFormBtn.style.transform = "rotate(0deg)";
+        } else {
+          toggleBudgetFormBtn.style.transform = "rotate(180deg)";
+        }
+      });
+    }
+
+    if (budgetGoalForm) {
+      budgetGoalForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.updateBudgetGoalFromForm();
+      });
+
+      ["budgetMonthlyLimit", "budgetAlertThreshold"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("input", () => {
+          const form = document.getElementById("budgetGoalForm");
+          if (!form) return;
+          const errorEl = form.querySelector(`.field-error[data-for='${id}']`);
+          if (errorEl) errorEl.remove();
+          el.classList.remove("input-error");
+          el.setAttribute("aria-invalid", "false");
+        });
+      });
+    }
+
+    const importCsvInput = document.getElementById("importCsvInput");
+    if (importCsvInput) {
+      importCsvInput.addEventListener("change", async (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        await this.importTransactionsFromCsvFile(file);
+        event.target.value = "";
       });
     }
 
@@ -751,43 +1242,248 @@ const MoneyTracker = {
     // Transaction Search & Filter Listeners
     const txSearch = document.getElementById("txSearch");
     if (txSearch) {
-      txSearch.addEventListener("input", () => this.displayTransactions());
+      txSearch.addEventListener("input", () => {
+        this.transactionPage = 1;
+        if (this.txSearchDebounceTimer) {
+          clearTimeout(this.txSearchDebounceTimer);
+        }
+        this.txSearchDebounceTimer = setTimeout(
+          () => this.displayTransactions(),
+          180,
+        );
+      });
     }
 
     const txFilter = document.getElementById("txFilterType");
     if (txFilter) {
-      txFilter.addEventListener("change", () => this.displayTransactions());
+      txFilter.addEventListener("change", () => {
+        this.transactionPage = 1;
+        this.displayTransactions();
+      });
     }
 
     const txMonthFilter = document.getElementById("txMonthFilter");
     if (txMonthFilter) {
-      txMonthFilter.addEventListener("change", () =>
-        this.displayTransactions(),
-      );
+      txMonthFilter.addEventListener("change", () => {
+        this.transactionPage = 1;
+        this.displayTransactions();
+      });
     }
 
     const txSortBy = document.getElementById("txSortBy");
     if (txSortBy) {
-      txSortBy.addEventListener("change", () => this.displayTransactions());
+      txSortBy.addEventListener("change", () => {
+        this.transactionPage = 1;
+        this.displayTransactions();
+      });
+    }
+
+    const prevPageBtn = document.getElementById("txPrevPage");
+    if (prevPageBtn) {
+      prevPageBtn.addEventListener("click", () => {
+        this.transactionPage = Math.max(1, this.transactionPage - 1);
+        this.displayTransactions();
+      });
+    }
+
+    const nextPageBtn = document.getElementById("txNextPage");
+    if (nextPageBtn) {
+      nextPageBtn.addEventListener("click", () => {
+        this.transactionPage += 1;
+        this.displayTransactions();
+      });
     }
 
     const analyticsPeriod = document.getElementById("analyticsPeriod");
     if (analyticsPeriod) {
       analyticsPeriod.addEventListener("change", () => {
+        this.selectedQuickPreset = null;
         this.toggleAnalyticsFilterVisibility();
+        this.updateQuickPresetButtons();
         this.createCharts();
       });
     }
 
     const analyticsMonth = document.getElementById("analyticsMonth");
     if (analyticsMonth) {
-      analyticsMonth.addEventListener("change", () => this.createCharts());
+      analyticsMonth.addEventListener("change", () => {
+        this.selectedQuickPreset = null;
+        this.updateQuickPresetButtons();
+        this.createCharts();
+      });
     }
 
     const analyticsYear = document.getElementById("analyticsYear");
     if (analyticsYear) {
-      analyticsYear.addEventListener("change", () => this.createCharts());
+      analyticsYear.addEventListener("change", () => {
+        this.selectedQuickPreset = null;
+        this.updateQuickPresetButtons();
+        this.createCharts();
+      });
     }
+
+    document.querySelectorAll(".analytics-preset-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.selectedQuickPreset = btn.dataset.preset;
+        this.updateQuickPresetButtons();
+        this.createCharts();
+      });
+    });
+
+    this.updateQuickPresetButtons();
+  },
+
+  updateQuickPresetButtons() {
+    document.querySelectorAll(".analytics-preset-btn").forEach((btn) => {
+      btn.classList.toggle(
+        "active",
+        btn.dataset.preset === this.selectedQuickPreset,
+      );
+    });
+  },
+
+  clearInlineErrors(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    form
+      .querySelectorAll(".field-error")
+      .forEach((errorEl) => errorEl.remove());
+    form
+      .querySelectorAll(".has-error, .input-error")
+      .forEach((el) => el.classList.remove("has-error", "input-error"));
+    form
+      .querySelectorAll("[aria-invalid='true']")
+      .forEach((el) => el.setAttribute("aria-invalid", "false"));
+  },
+
+  showFieldError(fieldId, message, options = {}) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+
+    const container =
+      options.container ||
+      field.closest(".form-group") ||
+      field.parentElement ||
+      field;
+
+    let errorEl = container.querySelector(
+      `.field-error[data-for='${fieldId}']`,
+    );
+    if (!errorEl) {
+      errorEl = document.createElement("div");
+      errorEl.className = "field-error";
+      errorEl.dataset.for = fieldId;
+      container.appendChild(errorEl);
+    }
+    errorEl.textContent = message;
+
+    field.classList.add("input-error");
+    field.setAttribute("aria-invalid", "true");
+
+    const customWrapper = field.closest(".custom-select-wrapper");
+    if (customWrapper) customWrapper.classList.add("has-error");
+
+    const datePickerTrigger =
+      options.markDatePicker && document.getElementById("datePickerTrigger");
+    if (datePickerTrigger) datePickerTrigger.classList.add("has-error");
+
+    const autopayDayWrap =
+      options.markAutopayDay && field.closest(".autopay-day-picker-wrapper");
+    if (autopayDayWrap) autopayDayWrap.classList.add("has-error");
+  },
+
+  validateTransactionForm() {
+    this.clearInlineErrors("transactionForm");
+
+    const amount = parseFloat(document.getElementById("amount").value);
+    const type = document.getElementById("type").value;
+    const category = document.getElementById("category").value;
+    const paymentMethod = document.getElementById("paymentMethod").value;
+    const date = document.getElementById("date").value;
+
+    let valid = true;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.showFieldError("amount", "Enter an amount greater than 0.");
+      valid = false;
+    }
+    if (!type) {
+      this.showFieldError("type", "Select transaction type.");
+      valid = false;
+    }
+    if (!category) {
+      this.showFieldError("category", "Select a category.");
+      valid = false;
+    }
+    if (!paymentMethod) {
+      this.showFieldError("paymentMethod", "Select payment method.");
+      valid = false;
+    }
+    if (!date) {
+      this.showFieldError("date", "Choose a transaction date.", {
+        container: document.getElementById("datePickerWrapper"),
+        markDatePicker: true,
+      });
+      valid = false;
+    }
+
+    return valid;
+  },
+
+  validateAutopayForm() {
+    this.clearInlineErrors("autopayForm");
+
+    const name = document.getElementById("autopayName").value.trim();
+    const amount = parseFloat(document.getElementById("autopayAmount").value);
+    const type = document.getElementById("autopayType").value;
+    const category = document.getElementById("autopayCategory").value;
+    const dayInput = document.getElementById("autopayDay");
+    const day =
+      dayInput.dataset.lastDay === "true" ? "last" : dayInput.value.trim();
+
+    let valid = true;
+    if (!name) {
+      this.showFieldError("autopayName", "Enter a payment name.");
+      valid = false;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.showFieldError("autopayAmount", "Enter an amount greater than 0.");
+      valid = false;
+    }
+    if (!category) {
+      this.showFieldError("autopayCategory", "Select a category.");
+      valid = false;
+    }
+    if (!type) {
+      this.showFieldError("autopayType", "Select recurring type.");
+      valid = false;
+    }
+    if (!day) {
+      this.showFieldError("autopayDay", "Select deduction day.", {
+        markAutopayDay: true,
+      });
+      valid = false;
+    }
+
+    return valid;
+  },
+
+  setSubmitLoading(formId, loadingText, isLoading) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    const submitBtn = form.querySelector("button[type='submit']");
+    if (!submitBtn) return;
+
+    if (!submitBtn.dataset.defaultText) {
+      submitBtn.dataset.defaultText = submitBtn.innerHTML;
+    }
+
+    submitBtn.disabled = isLoading;
+    submitBtn.classList.toggle("is-loading", isLoading);
+    submitBtn.innerHTML = isLoading
+      ? `<i class='fas fa-spinner fa-spin'></i> ${loadingText}`
+      : submitBtn.dataset.defaultText;
   },
 
   // Show specific tab
@@ -822,6 +1518,29 @@ const MoneyTracker = {
     this.loadCategoriesForType("");
   },
 
+  loadAutopayCategories() {
+    const typeSelect = document.getElementById("autopayType");
+    const categorySelect = document.getElementById("autopayCategory");
+    if (!typeSelect || !categorySelect) return;
+
+    const flowType = typeSelect.value === "income" ? "income" : "expense";
+    const categories = this.getAllCategories(flowType);
+    const previous = categorySelect.value;
+
+    categorySelect.innerHTML = '<option value="">Select Category</option>';
+    categories.forEach((cat) => {
+      categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+    });
+
+    if (categories.includes(previous)) {
+      categorySelect.value = previous;
+    }
+
+    if (typeof refreshCustomSelect === "function") {
+      refreshCustomSelect("autopayCategory");
+    }
+  },
+
   // Load categories for specific type
   loadCategoriesForType(type) {
     const categorySelect = document.getElementById("category");
@@ -854,33 +1573,49 @@ const MoneyTracker = {
   },
 
   // Add new transaction
-  addTransaction() {
-    const transaction = {
-      id: Date.now() + Math.random(),
-      type: document.getElementById("type").value,
-      amount: parseFloat(document.getElementById("amount").value),
-      category: document.getElementById("category").value,
-      paymentMethod: document.getElementById("paymentMethod").value,
-      description: document.getElementById("description").value || "",
-      date: document.getElementById("date").value,
-    };
-
-    this.transactions.unshift(transaction);
-    this.saveTransactions();
-
-    document.getElementById("transactionForm").reset();
-    this.setDefaultDate();
-
-    // Refresh all custom dropdowns after form reset
-    if (typeof refreshCustomSelect === "function") {
-      refreshCustomSelect("type");
-      refreshCustomSelect("category");
-      refreshCustomSelect("paymentMethod");
+  async addTransaction() {
+    if (!this.validateTransactionForm()) {
+      showToast("Please fix the highlighted fields.", "warning");
+      return;
     }
 
-    this.refreshAll();
+    this.setSubmitLoading("transactionForm", "Saving transaction...", true);
 
-    showToast("Transaction added successfully.", "success");
+    try {
+      const transaction = {
+        id: Date.now() + Math.random(),
+        type: document.getElementById("type").value,
+        amount: parseFloat(document.getElementById("amount").value),
+        category: document.getElementById("category").value,
+        paymentMethod: document.getElementById("paymentMethod").value,
+        description: document.getElementById("description").value || "",
+        date: document.getElementById("date").value,
+      };
+
+      this.transactions.unshift(transaction);
+      this.invalidateAnalyticsCache();
+      const saved = await this.saveTransactions({ silent: true });
+
+      document.getElementById("transactionForm").reset();
+      this.setDefaultDate();
+
+      // Refresh all custom dropdowns after form reset
+      if (typeof refreshCustomSelect === "function") {
+        refreshCustomSelect("type");
+        refreshCustomSelect("category");
+        refreshCustomSelect("paymentMethod");
+      }
+
+      this.refreshAll();
+      showToast(
+        saved
+          ? "Transaction saved successfully."
+          : "Transaction saved locally. Cloud sync will retry automatically.",
+        saved ? "success" : "warning",
+      );
+    } finally {
+      this.setSubmitLoading("transactionForm", "Saving transaction...", false);
+    }
   },
 
   // Delete transaction
@@ -900,9 +1635,15 @@ const MoneyTracker = {
     this.transactions = this.transactions.filter((t) => t.id != id);
 
     if (this.transactions.length < originalLength) {
-      this.saveTransactions();
+      this.invalidateAnalyticsCache();
+      const saved = await this.saveTransactions({ silent: true });
       this.refreshAll();
-      showToast("Transaction deleted successfully.", "success");
+      showToast(
+        saved
+          ? "Transaction deleted successfully."
+          : "Transaction deleted locally. Cloud sync will retry automatically.",
+        saved ? "success" : "warning",
+      );
     } else {
       showToast("Error: transaction not found.", "error");
     }
@@ -985,6 +1726,8 @@ const MoneyTracker = {
             <p>No transactions found matching your criteria.</p>
         </div>
       `;
+      const pagination = document.getElementById("txPagination");
+      if (pagination) pagination.style.display = "none";
       return;
     }
 
@@ -1008,7 +1751,20 @@ const MoneyTracker = {
       return timeB - timeA;
     });
 
-    sorted.forEach((transaction) => {
+    const totalPages = Math.max(
+      1,
+      Math.ceil(sorted.length / this.transactionPageSize),
+    );
+    this.transactionPage = Math.min(this.transactionPage, totalPages);
+    this.transactionPage = Math.max(1, this.transactionPage);
+
+    const startIndex = (this.transactionPage - 1) * this.transactionPageSize;
+    const pageItems = sorted.slice(
+      startIndex,
+      startIndex + this.transactionPageSize,
+    );
+
+    pageItems.forEach((transaction) => {
       const isIncome = transaction.type === "income";
       const amountPrefix = isIncome ? "+" : "-";
       // Using arrow icons based on type
@@ -1049,7 +1805,7 @@ const MoneyTracker = {
             </div>
 
             <div class="tx-actions">
-                <button class="btn-icon-only" onclick="MoneyTracker.deleteTransaction('${transaction.id}')" title="Delete">
+                <button class="btn-icon-only" onclick="MoneyTracker.deleteTransaction('${transaction.id}')" title="Delete" aria-label="Delete transaction ${transaction.category} on ${dateStr}">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
@@ -1058,10 +1814,26 @@ const MoneyTracker = {
     });
 
     listContainer.innerHTML = html;
+
+    const pagination = document.getElementById("txPagination");
+    const pageInfo = document.getElementById("txPageInfo");
+    const prevBtn = document.getElementById("txPrevPage");
+    const nextBtn = document.getElementById("txNextPage");
+
+    if (pagination) {
+      pagination.style.display =
+        sorted.length > this.transactionPageSize ? "flex" : "none";
+    }
+    if (pageInfo) {
+      pageInfo.textContent = `Page ${this.transactionPage} of ${totalPages}`;
+    }
+    if (prevBtn) prevBtn.disabled = this.transactionPage <= 1;
+    if (nextBtn) nextBtn.disabled = this.transactionPage >= totalPages;
   },
 
   // Update dashboard statistics
-  updateDashboard() {
+  updateDashboard(options = {}) {
+    const { skipHeavy = false } = options;
     const { start, end } = this.getCurrentMonthRange();
     const monthTransactions = this.transactions.filter((t) =>
       this.isDateInRange(t.date, start, end),
@@ -1098,6 +1870,10 @@ const MoneyTracker = {
     if (balanceHero) {
       balanceHero.style.color = balance >= 0 ? "#22c55e" : "#ef4444";
     }
+
+    this.renderBudgetGoal(totalExpenses);
+
+    if (skipHeavy) return;
 
     this.displayAnomalyAlerts();
     this.displayRecentTransactions();
@@ -1173,15 +1949,27 @@ const MoneyTracker = {
     recentContainer.innerHTML = html;
   },
 
+  clearChartWithMessage(chartKey, canvas, message) {
+    if (!canvas) return;
+
+    if (window[chartKey] instanceof Chart) {
+      window[chartKey].destroy();
+      window[chartKey] = null;
+    }
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "16px Inter";
+    ctx.fillStyle = "#64748b";
+    ctx.textAlign = "center";
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+  },
+
   createDashboardChart() {
     const canvas = document.getElementById("dashboardChart");
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
-
-    if (window.dashboardChart instanceof Chart) {
-      window.dashboardChart.destroy();
-    }
 
     // Get last 7 days data
     const last7Days = [];
@@ -1225,6 +2013,16 @@ const MoneyTracker = {
     const gradientIncome = ctx.createLinearGradient(0, 0, 0, 400);
     gradientIncome.addColorStop(0, "rgba(16, 185, 129, 0.5)");
     gradientIncome.addColorStop(1, "rgba(16, 185, 129, 0.0)");
+
+    if (window.dashboardChart instanceof Chart) {
+      window.dashboardChart.data.labels = labels;
+      window.dashboardChart.data.datasets[0].data = incomes;
+      window.dashboardChart.data.datasets[0].backgroundColor = gradientIncome;
+      window.dashboardChart.data.datasets[1].data = expenses;
+      window.dashboardChart.data.datasets[1].backgroundColor = gradientExpense;
+      window.dashboardChart.update("none");
+      return;
+    }
 
     window.dashboardChart = new Chart(ctx, {
       type: "line",
@@ -1306,10 +2104,35 @@ const MoneyTracker = {
   // Create charts
   createCharts() {
     const analyticsTransactions = this.getAnalyticsTransactions();
+    this.updateAnalyticsSummary(analyticsTransactions);
     this.createDailyExpenseChart(analyticsTransactions);
     this.createExpensePieChart(analyticsTransactions);
     this.createTimeSeriesChart(analyticsTransactions);
     this.createDayOfWeekHeatmap(analyticsTransactions);
+  },
+
+  updateAnalyticsSummary(transactions = []) {
+    const income = transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const expenses = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const net = income - expenses;
+
+    const incomeEl = document.getElementById("analyticsIncome");
+    const expensesEl = document.getElementById("analyticsExpenses");
+    const netEl = document.getElementById("analyticsNet");
+    const countEl = document.getElementById("analyticsCount");
+
+    if (incomeEl) incomeEl.textContent = `₹${income.toLocaleString("en-IN")}`;
+    if (expensesEl)
+      expensesEl.textContent = `₹${expenses.toLocaleString("en-IN")}`;
+    if (netEl) {
+      netEl.textContent = `₹${net.toLocaleString("en-IN")}`;
+      netEl.style.color = net >= 0 ? "#16a34a" : "#dc2626";
+    }
+    if (countEl) countEl.textContent = String(transactions.length);
   },
 
   updateAnalyticsFilterOptions() {
@@ -1367,6 +2190,46 @@ const MoneyTracker = {
   },
 
   getAnalyticsRange() {
+    if (this.selectedQuickPreset) {
+      const now = new Date();
+
+      if (this.selectedQuickPreset === "this-week") {
+        const day = now.getDay();
+        const mondayOffset = day === 0 ? -6 : 1 - day;
+        const start = new Date(now);
+        start.setDate(now.getDate() + mondayOffset);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(now);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+      }
+
+      if (this.selectedQuickPreset === "this-month") {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        );
+        return { start, end };
+      }
+
+      if (this.selectedQuickPreset === "last-30-days") {
+        const end = new Date(now);
+        end.setHours(23, 59, 59, 999);
+
+        const start = new Date(now);
+        start.setDate(now.getDate() - 29);
+        start.setHours(0, 0, 0, 0);
+        return { start, end };
+      }
+    }
+
     const periodSelect = document.getElementById("analyticsPeriod");
     const period = periodSelect ? periodSelect.value : "overall";
     if (period === "overall") return null;
@@ -1408,20 +2271,28 @@ const MoneyTracker = {
   },
 
   getAnalyticsTransactions() {
+    const cacheKey = this.getAnalyticsCacheKey();
+    const cached = this.analyticsCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const range = this.getAnalyticsRange();
-    if (!range) return this.transactions;
-    return this.transactions.filter((t) =>
-      this.isDateInRange(t.date, range.start, range.end),
-    );
+    const analyticsTransactions = !range
+      ? this.transactions
+      : this.transactions.filter((t) =>
+          this.isDateInRange(t.date, range.start, range.end),
+        );
+
+    this.analyticsCache.set(cacheKey, analyticsTransactions);
+    return analyticsTransactions;
   },
 
   // Create daily expense bar chart
   createDailyExpenseChart(transactions = this.transactions) {
-    const ctx = document.getElementById("dailyExpenseChart").getContext("2d");
-
-    if (window.dailyExpenseChart instanceof Chart) {
-      window.dailyExpenseChart.destroy();
-    }
+    const canvas = document.getElementById("dailyExpenseChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
 
     const dailyExpenses = {};
     transactions
@@ -1443,14 +2314,18 @@ const MoneyTracker = {
     });
 
     if (labels.length === 0) {
-      ctx.font = "16px Inter";
-      ctx.fillStyle = "#64748b";
-      ctx.textAlign = "center";
-      ctx.fillText(
+      this.clearChartWithMessage(
+        "dailyExpenseChart",
+        canvas,
         "No expense data available",
-        ctx.canvas.width / 2,
-        ctx.canvas.height / 2,
       );
+      return;
+    }
+
+    if (window.dailyExpenseChart instanceof Chart) {
+      window.dailyExpenseChart.data.labels = formattedLabels;
+      window.dailyExpenseChart.data.datasets[0].data = data;
+      window.dailyExpenseChart.update("none");
       return;
     }
 
@@ -1498,11 +2373,9 @@ const MoneyTracker = {
 
   // Create expense category pie chart
   createExpensePieChart(transactions = this.transactions) {
-    const ctx = document.getElementById("expensePieChart").getContext("2d");
-
-    if (window.expensePieChart instanceof Chart) {
-      window.expensePieChart.destroy();
-    }
+    const canvas = document.getElementById("expensePieChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
 
     const expenseByCategory = {};
     transactions
@@ -1516,13 +2389,10 @@ const MoneyTracker = {
     const data = Object.values(expenseByCategory);
 
     if (labels.length === 0) {
-      ctx.font = "16px Inter";
-      ctx.fillStyle = "#64748b";
-      ctx.textAlign = "center";
-      ctx.fillText(
+      this.clearChartWithMessage(
+        "expensePieChart",
+        canvas,
         "No expense data available",
-        ctx.canvas.width / 2,
-        ctx.canvas.height / 2,
       );
       return;
     }
@@ -1539,6 +2409,17 @@ const MoneyTracker = {
       "#f97316",
       "#6366f1",
     ];
+
+    if (window.expensePieChart instanceof Chart) {
+      window.expensePieChart.data.labels = labels;
+      window.expensePieChart.data.datasets[0].data = data;
+      window.expensePieChart.data.datasets[0].backgroundColor = colors.slice(
+        0,
+        labels.length,
+      );
+      window.expensePieChart.update("none");
+      return;
+    }
 
     window.expensePieChart = new Chart(ctx, {
       type: "doughnut",
@@ -1577,23 +2458,18 @@ const MoneyTracker = {
 
   // Create Time Series Analysis Chart
   createTimeSeriesChart(transactions = this.transactions) {
-    const ctx = document.getElementById("timeSeriesChart").getContext("2d");
-
-    if (window.timeSeriesChart instanceof Chart) {
-      window.timeSeriesChart.destroy();
-    }
+    const canvas = document.getElementById("timeSeriesChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
 
     // Perform time series analysis
     const analysis = this.performTimeSeriesAnalysis(transactions);
 
     if (analysis.dates.length === 0) {
-      ctx.font = "16px Inter";
-      ctx.fillStyle = "#64748b";
-      ctx.textAlign = "center";
-      ctx.fillText(
+      this.clearChartWithMessage(
+        "timeSeriesChart",
+        canvas,
         "No expense data available for time series analysis",
-        ctx.canvas.width / 2,
-        ctx.canvas.height / 2,
       );
 
       document.getElementById("timeSeriesStats").innerHTML =
@@ -1657,83 +2533,91 @@ const MoneyTracker = {
       });
     }
 
-    // Create the line chart
-    window.timeSeriesChart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: allLabels,
-        datasets: datasets,
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: "top",
-            labels: {
-              font: { weight: "bold" },
-              usePointStyle: true,
-              padding: 15,
+    if (window.timeSeriesChart instanceof Chart) {
+      window.timeSeriesChart.data.labels = allLabels;
+      window.timeSeriesChart.data.datasets = datasets;
+      window.timeSeriesChart.update("none");
+    } else {
+      // Create the line chart
+      window.timeSeriesChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: allLabels,
+          datasets: datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                font: { weight: "bold" },
+                usePointStyle: true,
+                padding: 15,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                title: function (context) {
+                  const index = context[0].dataIndex;
+                  if (index < analysis.rawDates.length) {
+                    return analysis.rawDates[index];
+                  } else {
+                    // For forecast dates, calculate the actual date
+                    const lastDate = new Date(
+                      analysis.rawDates[analysis.rawDates.length - 1],
+                    );
+                    const daysAhead = index - analysis.rawDates.length + 1;
+                    lastDate.setDate(lastDate.getDate() + daysAhead);
+                    return (
+                      lastDate.toISOString().split("T")[0] + " (Predicted)"
+                    );
+                  }
+                },
+                label: function (context) {
+                  const value = context.parsed.y;
+                  if (value === null) return null;
+                  if (value === 0) {
+                    return "No spending";
+                  }
+                  const prefix =
+                    context.datasetIndex === 0 ? "Spent: " : "Predicted: ";
+                  return `${prefix}₹${value.toLocaleString()}`;
+                },
+              },
             },
           },
-          tooltip: {
-            callbacks: {
-              title: function (context) {
-                const index = context[0].dataIndex;
-                if (index < analysis.rawDates.length) {
-                  return analysis.rawDates[index];
-                } else {
-                  // For forecast dates, calculate the actual date
-                  const lastDate = new Date(
-                    analysis.rawDates[analysis.rawDates.length - 1],
-                  );
-                  const daysAhead = index - analysis.rawDates.length + 1;
-                  lastDate.setDate(lastDate.getDate() + daysAhead);
-                  return lastDate.toISOString().split("T")[0] + " (Predicted)";
-                }
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Date",
+                font: { weight: "bold" },
               },
-              label: function (context) {
-                const value = context.parsed.y;
-                if (value === null) return null;
-                if (value === 0) {
-                  return "No spending";
-                }
-                const prefix =
-                  context.datasetIndex === 0 ? "Spent: " : "Predicted: ";
-                return `${prefix}₹${value.toLocaleString()}`;
+              ticks: {
+                maxRotation: 45,
+                minRotation: 45,
+              },
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: "Amount (₹)",
+                font: { weight: "bold" },
+              },
+              ticks: {
+                callback: function (value) {
+                  return "₹" + value.toLocaleString();
+                },
               },
             },
           },
         },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: "Date",
-              font: { weight: "bold" },
-            },
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45,
-            },
-          },
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: "Amount (₹)",
-              font: { weight: "bold" },
-            },
-            ticks: {
-              callback: function (value) {
-                return "₹" + value.toLocaleString();
-              },
-            },
-          },
-        },
-      },
-    });
+      });
+    }
 
     // Display statistics with forecast information
     const stats = analysis.stats;
@@ -1917,12 +2801,15 @@ const MoneyTracker = {
   // Refresh all displays
   refreshAll() {
     this.updateAnalyticsFilterOptions();
-    this.updateDashboard();
+    this.updateDashboard({ skipHeavy: this.currentTab !== "dashboard" });
     if (this.currentTab === "transactions") {
       this.displayTransactions();
     }
     if (this.currentTab === "autopay") {
       this.displayAutopays();
+    }
+    if (this.currentTab === "analytics") {
+      this.createCharts();
     }
   },
 
@@ -2352,23 +3239,18 @@ const MoneyTracker = {
 
   // Create Day of Week Heatmap Chart
   createDayOfWeekHeatmap(transactions = this.transactions) {
-    const ctx = document.getElementById("dayOfWeekChart").getContext("2d");
-
-    if (window.dayOfWeekChart instanceof Chart) {
-      window.dayOfWeekChart.destroy();
-    }
+    const canvas = document.getElementById("dayOfWeekChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
 
     // Get day of week data
     const data = this.getExpensesByDayOfWeek(transactions);
 
     if (data.isEmpty) {
-      ctx.font = "16px Inter";
-      ctx.fillStyle = "#64748b";
-      ctx.textAlign = "center";
-      ctx.fillText(
+      this.clearChartWithMessage(
+        "dayOfWeekChart",
+        canvas,
         "No expense data available for day of week analysis",
-        ctx.canvas.width / 2,
-        ctx.canvas.height / 2,
       );
 
       document.getElementById("dayOfWeekStats").innerHTML =
@@ -2391,78 +3273,88 @@ const MoneyTracker = {
       return `rgb(${red}, ${green}, ${blue})`;
     });
 
-    // Create the bar chart
-    window.dayOfWeekChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: days,
-        datasets: [
-          {
-            label: "Total Spending (₹)",
-            data: totals,
-            backgroundColor: colors,
-            borderColor: colors.map((color) =>
-              color.replace("rgb", "rgba").replace(")", ", 0.8)"),
-            ),
-            borderWidth: 2,
-            borderRadius: 8,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: "top",
-            labels: {
-              font: { weight: "bold" },
+    if (window.dayOfWeekChart instanceof Chart) {
+      window.dayOfWeekChart.data.labels = days;
+      window.dayOfWeekChart.data.datasets[0].data = totals;
+      window.dayOfWeekChart.data.datasets[0].backgroundColor = colors;
+      window.dayOfWeekChart.data.datasets[0].borderColor = colors.map((color) =>
+        color.replace("rgb", "rgba").replace(")", ", 0.8)"),
+      );
+      window.dayOfWeekChart.update("none");
+    } else {
+      // Create the bar chart
+      window.dayOfWeekChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: days,
+          datasets: [
+            {
+              label: "Total Spending (₹)",
+              data: totals,
+              backgroundColor: colors,
+              borderColor: colors.map((color) =>
+                color.replace("rgb", "rgba").replace(")", ", 0.8)"),
+              ),
+              borderWidth: 2,
+              borderRadius: 8,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                font: { weight: "bold" },
+              },
+            },
+            tooltip: {
+              callbacks: {
+                title: function (context) {
+                  const day = context[0].label;
+                  const count = data.dayCounts[day];
+                  return `${day} (${count} transaction${count !== 1 ? "s" : ""})`;
+                },
+                label: function (context) {
+                  const day = context.label;
+                  const total = context.parsed.y;
+                  const avg = data.dayAverages[day];
+                  return [
+                    `Total: ₹${total.toLocaleString()}`,
+                    `Average: ₹${avg.toLocaleString()} per transaction`,
+                  ];
+                },
+              },
             },
           },
-          tooltip: {
-            callbacks: {
-              title: function (context) {
-                const day = context[0].label;
-                const count = data.dayCounts[day];
-                return `${day} (${count} transaction${count !== 1 ? "s" : ""})`;
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Day of Week",
+                font: { weight: "bold" },
               },
-              label: function (context) {
-                const day = context.label;
-                const total = context.parsed.y;
-                const avg = data.dayAverages[day];
-                return [
-                  `Total: ₹${total.toLocaleString()}`,
-                  `Average: ₹${avg.toLocaleString()} per transaction`,
-                ];
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: "Total Spending (₹)",
+                font: { weight: "bold" },
+              },
+              ticks: {
+                callback: function (value) {
+                  return "₹" + value.toLocaleString();
+                },
               },
             },
           },
         },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: "Day of Week",
-              font: { weight: "bold" },
-            },
-          },
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: "Total Spending (₹)",
-              font: { weight: "bold" },
-            },
-            ticks: {
-              callback: function (value) {
-                return "₹" + value.toLocaleString();
-              },
-            },
-          },
-        },
-      },
-    });
+      });
+    }
 
     // Display statistics
     const statsHtml = `
@@ -2605,25 +3497,285 @@ const MoneyTracker = {
     };
   },
 
-  // Export to Excel
-  exportToExcel() {
+  parseCsvLine(line) {
+    const values = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === "," && !inQuotes) {
+        values.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+
+    values.push(current.trim());
+    return values;
+  },
+
+  toCsvSafeValue(value) {
+    const text = value == null ? "" : String(value);
+    return `"${text.replace(/"/g, '""')}"`;
+  },
+
+  downloadBlobFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  },
+
+  exportTransactions() {
     if (this.transactions.length === 0) {
       showToast("No transactions to export.", "info");
       return;
     }
 
-    let csv = "Date,Type,Category,Description,Payment Method,Amount\n";
+    const formatSelect = document.getElementById("exportFormat");
+    const format = formatSelect ? formatSelect.value : "csv-detailed";
+    const datePart = new Date().toISOString().split("T")[0];
+
+    if (format === "csv-basic") {
+      const header = [
+        "Date",
+        "Type",
+        "Category",
+        "Description",
+        "Payment Method",
+        "Amount",
+      ];
+      const lines = [header.join(",")];
+
+      this.transactions.forEach((t) => {
+        lines.push(
+          [
+            t.date,
+            t.type,
+            this.toCsvSafeValue(t.category),
+            this.toCsvSafeValue(t.description || ""),
+            t.paymentMethod || "cash",
+            t.amount,
+          ].join(","),
+        );
+      });
+
+      this.downloadBlobFile(
+        `${lines.join("\n")}\n`,
+        `transactions_basic_${datePart}.csv`,
+        "text/csv;charset=utf-8",
+      );
+      return;
+    }
+
+    if (format === "json-backup") {
+      const totalIncome = this.transactions
+        .filter((t) => t.type === "income")
+        .reduce((sum, t) => sum + t.amount, 0);
+      const totalExpense = this.transactions
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        summary: {
+          transactionCount: this.transactions.length,
+          recurringCount: this.autopays.length,
+          totalIncome,
+          totalExpense,
+          balance: totalIncome - totalExpense,
+        },
+        budgetGoal: this.budgetGoal,
+        recurringPlans: this.autopays,
+        transactions: this.transactions,
+      };
+
+      this.downloadBlobFile(
+        `${JSON.stringify(payload, null, 2)}\n`,
+        `moneytracker_backup_${datePart}.json`,
+        "application/json;charset=utf-8",
+      );
+      return;
+    }
+
+    const detailedHeader = [
+      "Date",
+      "Type",
+      "Category",
+      "Description",
+      "Payment Method",
+      "Amount",
+      "Source",
+      "Recurring Plan ID",
+      "Created At",
+    ];
+    const lines = [detailedHeader.join(",")];
+
     this.transactions.forEach((t) => {
-      csv += `${t.date},${t.type},${t.category},"${t.description}",${t.paymentMethod},${t.amount}\n`;
+      lines.push(
+        [
+          t.date,
+          t.type,
+          this.toCsvSafeValue(t.category),
+          this.toCsvSafeValue(t.description || ""),
+          t.paymentMethod || "cash",
+          t.amount,
+          t.isAutopay ? "Recurring" : "Manual",
+          t.autopayId || "",
+          t.createdAt || "",
+        ].join(","),
+      );
     });
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    this.downloadBlobFile(
+      `${lines.join("\n")}\n`,
+      `transactions_detailed_${datePart}.csv`,
+      "text/csv;charset=utf-8",
+    );
+  },
+
+  exportToExcel() {
+    this.exportTransactions();
+  },
+
+  async importTransactionsFromCsvFile(file) {
+    if (!file) return;
+
+    const isCsv =
+      file.type.includes("csv") || file.name.toLowerCase().endsWith(".csv");
+    if (!isCsv) {
+      showToast("Please choose a CSV file.", "warning");
+      return;
+    }
+
+    const content = await file.text();
+    const lines = content
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    if (lines.length < 2) {
+      showToast("CSV file is empty or missing data rows.", "warning");
+      return;
+    }
+
+    const headers = this.parseCsvLine(lines[0]).map((h) =>
+      h.toLowerCase().replace(/\s+/g, " ").trim(),
+    );
+
+    const getIndex = (names) =>
+      names.map((name) => headers.indexOf(name)).find((idx) => idx >= 0);
+
+    const indexMap = {
+      date: getIndex(["date"]),
+      type: getIndex(["type"]),
+      category: getIndex(["category"]),
+      description: getIndex(["description"]),
+      paymentMethod: getIndex([
+        "payment method",
+        "paymentmethod",
+        "payment_method",
+      ]),
+      amount: getIndex(["amount", "value"]),
+    };
+
+    if (indexMap.amount < 0 || indexMap.date < 0) {
+      showToast("CSV must include at least Date and Amount columns.", "error");
+      return;
+    }
+
+    const existingSignatures = new Set(
+      this.transactions.map(
+        (t) =>
+          `${t.date}|${t.type}|${Number(t.amount).toFixed(2)}|${t.category}|${(t.description || "").trim()}`,
+      ),
+    );
+
+    const imported = [];
+    let skipped = 0;
+
+    for (let i = 1; i < lines.length; i += 1) {
+      const cols = this.parseCsvLine(lines[i]);
+
+      const dateRaw = cols[indexMap.date] || "";
+      const parsedDate = new Date(dateRaw);
+      const date = Number.isNaN(parsedDate.getTime())
+        ? null
+        : parsedDate.toISOString().split("T")[0];
+
+      const amountRaw = (cols[indexMap.amount] || "").replace(/[^0-9.-]/g, "");
+      const amount = Number(amountRaw);
+
+      if (!date || !Number.isFinite(amount) || amount === 0) {
+        skipped += 1;
+        continue;
+      }
+
+      const rawType = (cols[indexMap.type] || "").toLowerCase().trim();
+      const type =
+        rawType === "income" || rawType === "expense"
+          ? rawType
+          : amount >= 0
+            ? "expense"
+            : "income";
+
+      const normalizedAmount = Math.abs(amount);
+      const category =
+        (cols[indexMap.category] || "Imported").trim() || "Imported";
+      const description = (cols[indexMap.description] || "").trim();
+      const paymentMethodRaw = (cols[indexMap.paymentMethod] || "cash").trim();
+      const paymentMethod = paymentMethodRaw.toLowerCase().replace(/\s+/g, "_");
+
+      const signature = `${date}|${type}|${normalizedAmount.toFixed(2)}|${category}|${description}`;
+      if (existingSignatures.has(signature)) {
+        skipped += 1;
+        continue;
+      }
+
+      existingSignatures.add(signature);
+      imported.push({
+        id: Date.now() + Math.random() + i,
+        type,
+        amount: normalizedAmount,
+        category,
+        description,
+        paymentMethod,
+        date,
+        createdAt: new Date().toISOString(),
+        isAutopay: false,
+      });
+    }
+
+    if (imported.length === 0) {
+      showToast("No new valid transactions found in CSV.", "warning");
+      return;
+    }
+
+    this.transactions = [...imported, ...this.transactions];
+    this.invalidateAnalyticsCache();
+    const saved = await this.saveTransactions({ silent: true });
+    this.refreshAll();
+
+    const syncNote = saved ? "" : " Saved locally; cloud sync will retry.";
+    showToast(
+      `Imported ${imported.length} transaction${imported.length === 1 ? "" : "s"}${skipped > 0 ? `, skipped ${skipped}` : ""}.${syncNote}`,
+      saved ? "success" : "warning",
+      5200,
+    );
   },
 };
 
@@ -2782,7 +3934,16 @@ function addCustomCategory() {
 }
 
 function exportToExcel() {
-  MoneyTracker.exportToExcel();
+  MoneyTracker.exportTransactions();
+}
+
+function triggerImportTransactions() {
+  const input = document.getElementById("importCsvInput");
+  if (!input) {
+    showToast("Import input not found.", "error");
+    return;
+  }
+  input.click();
 }
 
 // Firebase Configuration
@@ -2812,10 +3973,12 @@ document
       passwordInput.type = "text";
       eyeIcon.classList.remove("fa-eye");
       eyeIcon.classList.add("fa-eye-slash");
+      this.setAttribute("aria-label", "Hide password");
     } else {
       passwordInput.type = "password";
       eyeIcon.classList.remove("fa-eye-slash");
       eyeIcon.classList.add("fa-eye");
+      this.setAttribute("aria-label", "Show password");
     }
   });
 
@@ -3165,10 +4328,14 @@ document.querySelectorAll(".toggle-password").forEach((btn) => {
       input.type = "text";
       icon.classList.remove("fa-eye");
       icon.classList.add("fa-eye-slash");
+      const fieldLabel = targetId === "newPassword" ? "new" : "confirm";
+      btn.setAttribute("aria-label", `Hide ${fieldLabel} password`);
     } else {
       input.type = "password";
       icon.classList.remove("fa-eye-slash");
       icon.classList.add("fa-eye");
+      const fieldLabel = targetId === "newPassword" ? "new" : "confirm";
+      btn.setAttribute("aria-label", `Show ${fieldLabel} password`);
     }
   });
 });
@@ -3672,6 +4839,13 @@ const CustomDatePicker = {
       this.toggle();
     });
 
+    trigger.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggle();
+    });
+
     // Navigation
     prevBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -3723,6 +4897,7 @@ const CustomDatePicker = {
     const dropdown = document.getElementById("datePickerDropdown");
 
     trigger.classList.add("active");
+    trigger.setAttribute("aria-expanded", "true");
     dropdown.classList.add("open");
     this.isOpen = true;
 
@@ -3738,6 +4913,7 @@ const CustomDatePicker = {
     const dropdown = document.getElementById("datePickerDropdown");
 
     trigger.classList.remove("active");
+    trigger.setAttribute("aria-expanded", "false");
     dropdown.classList.remove("open");
     this.isOpen = false;
   },
