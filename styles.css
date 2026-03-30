@@ -355,6 +355,28 @@ body {
     background: #ffffff;
 }
 
+.input-error {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+    background: #fff7f7 !important;
+}
+
+.custom-select-wrapper.has-error .custom-select-trigger,
+.datepicker-trigger.has-error,
+.autopay-day-picker-wrapper.has-error .autopay-day-input-container {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+    background: #fff7f7 !important;
+}
+
+.field-error {
+    margin-top: 6px;
+    color: #b91c1c;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
 .btn {
     padding: 12px 18px;
     border: none;
@@ -2278,12 +2300,12 @@ body {
 
 .autopay-status.active {
     background: #dcfce7;
-    color: #15803d;
+    color: #166534;
 }
 
 .autopay-status.inactive {
     background: #fef3c7;
-    color: #b45309;
+    color: #92400e;
 }
 
 .autopay-details {
@@ -2302,7 +2324,7 @@ body {
 .autopay-category,
 .autopay-day {
     font-size: 0.8rem;
-    color: #64748b;
+    color: #475569;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -2316,7 +2338,7 @@ body {
 
 .autopay-desc {
     font-size: 0.8rem;
-    color: #64748b;
+    color: #475569;
     margin: 8px 0 0;
     font-style: italic;
 }
@@ -2496,6 +2518,7 @@ body {
     font-size: 1rem;
     color: #1e293b;
     outline: none;
+    appearance: textfield;
     -moz-appearance: textfield;
 }
 
@@ -2824,7 +2847,7 @@ body {
 
 .badge-count {
     background: #e2e8f0;
-    color: #475569;
+    color: #334155;
     padding: 2px 10px;
     border-radius: 99px;
     font-size: 0.8rem;
@@ -2834,6 +2857,197 @@ body {
 .actions-group {
     display: flex;
     gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.export-format-select {
+    min-width: 170px;
+}
+
+.budget-goal-card {
+    margin-bottom: 24px;
+}
+
+.align-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+    padding: 6px;
+    border-radius: 50%;
+}
+
+.icon-btn:hover {
+    color: #4361ee;
+    background: #f1f5f9;
+}
+
+.hidden-form {
+    display: none !important;
+}
+
+.budget-goal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+    animation: fadeInDown 0.3s ease-out forwards;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 8px 0;
+}
+
+.budget-goal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.budget-save-btn {
+    width: fit-content;
+}
+
+.currency-input {
+    position: relative;
+    width: 100%;
+}
+
+.currency-input .currency-symbol-small {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-weight: 600;
+    pointer-events: none;
+    font-size: 1rem;
+}
+
+.currency-input input {
+    padding-left: 32px !important;
+    width: 100%;
+}
+
+.budget-goal-progress {
+    margin-top: 0;
+    padding: 0;
+}
+
+.budget-amounts-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.budget-amount-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.budget-amount-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.budget-amount-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.budget-amount-value.text-muted {
+    color: #94a3b8;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.budget-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.budget-goal-chip {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: #e2e8f0;
+    color: #334155;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.budget-progress-track {
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.budget-progress-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.6s ease;
+}
+
+.budget-goal-meta {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.budget-goal-progress.warning .budget-goal-chip {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.budget-goal-progress.warning .budget-progress-fill {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.budget-goal-progress.over .budget-goal-chip {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.budget-goal-progress.over .budget-progress-fill {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
 }
 
 .filters-toolbar {
@@ -2853,6 +3067,82 @@ body {
     gap: 16px;
     margin-bottom: 20px;
     padding: 10px 4px;
+}
+
+.analytics-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.analytics-preset-btn {
+    border: 1px solid #dbe5f1;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.analytics-preset-btn:hover {
+    border-color: #93c5fd;
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+
+.analytics-preset-btn.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 6px 16px -12px rgba(37, 99, 235, 0.6);
+}
+
+.analytics-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.analytics-summary-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 14px 16px;
+}
+
+.analytics-summary-card .label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.analytics-summary-card .value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.analytics-summary-card.income {
+    border-color: #bbf7d0;
+}
+
+.analytics-summary-card.expense {
+    border-color: #fecdd3;
+}
+
+.analytics-summary-card.balance {
+    border-color: #bfdbfe;
+}
+
+.analytics-summary-card.count {
+    border-color: #e2e8f0;
 }
 
 .analytics-filters {
@@ -2978,6 +3268,26 @@ body {
     gap: 12px;
 }
 
+.tx-pagination {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn-pagination {
+    min-width: 92px;
+}
+
+.tx-page-info {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    min-width: 120px;
+    text-align: center;
+}
+
 .tx-card {
     display: grid;
     grid-template-columns: auto 1fr auto auto;
@@ -3089,6 +3399,25 @@ body {
     .tx-actions {
         grid-column: 2;
         justify-content: flex-end;
+    }
+
+    .analytics-presets {
+        width: 100%;
+    }
+
+    .analytics-preset-btn {
+        flex: 1 1 calc(33.333% - 8px);
+        text-align: center;
+        padding: 10px 8px;
+    }
+
+    .analytics-summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tx-pagination {
+        flex-wrap: wrap;
+        gap: 8px;
     }
 }
 
@@ -3358,4 +3687,181 @@ body {
         flex: 1;
         justify-content: space-between;
     }
+}
+
+/* Mobile UX Enhancements */
+@media (max-width: 768px) {
+    body {
+        padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .container {
+        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .tab-content {
+        margin-bottom: 10px;
+    }
+
+    .nav-tabs {
+        position: fixed !important;
+        left: 10px;
+        right: 10px;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+        z-index: 1200;
+        margin: 0;
+        padding: 6px;
+        border-radius: 18px;
+        box-shadow: 0 10px 34px -16px rgba(15, 23, 42, 0.55);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(6px);
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .nav-tab {
+        min-height: 56px;
+        padding: 8px 4px;
+        border-radius: 12px;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 0.62rem;
+        line-height: 1.05;
+        white-space: normal;
+    }
+
+    .nav-tab i {
+        font-size: 0.95rem;
+    }
+
+    .nav-tab.active {
+        transform: none;
+    }
+
+    .form-group input,
+    .form-group select,
+    .custom-select-trigger,
+    .search-box input,
+    .btn,
+    .btn-submit-transaction,
+    .btn-secondary-action,
+    .btn-action,
+    .view-all-btn,
+    .h-btn,
+    .autopay-day-toggle,
+    .datepicker-trigger {
+        min-height: 46px;
+    }
+
+    .modern-form {
+        gap: 20px;
+    }
+
+    .filters-toolbar {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .filter-group {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .tab-content {
+        padding: 14px;
+    }
+
+    .empty-message {
+        padding: 20px 14px;
+        border-radius: 14px;
+        font-size: 0.86rem;
+        line-height: 1.5;
+    }
+
+    #transactionsList .empty-message,
+    #autopayList .empty-message,
+    #upcomingAutopays .empty-message,
+    #recentTransactions .empty-message {
+        margin-top: 10px;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        border-color: #dbe5f0;
+    }
+
+    .empty-message::before {
+        content: "No data yet";
+        display: block;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 6px;
+        letter-spacing: 0.01em;
+    }
+}
+
+@media (max-width: 420px) {
+    .nav-tabs {
+        left: 8px;
+        right: 8px;
+        bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .nav-tab {
+        font-size: 0.58rem;
+        min-height: 54px;
+        padding: 7px 2px;
+    }
+}
+
+.btn.is-loading,
+.btn-submit-transaction.is-loading {
+    opacity: 0.85;
+    cursor: not-allowed;
+}
+
+/* Accessibility: visible keyboard focus across controls */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+.custom-select-trigger:focus-visible,
+.datepicker-trigger:focus-visible,
+.autopay-day-input-container:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px rgba(37, 99, 235, 0.55);
+}
+
+.nav-tab:focus-visible,
+.btn-icon-only:focus-visible,
+.h-btn:focus-visible,
+.autopay-btn:focus-visible,
+.profile-close-btn:focus-visible,
+.toggle-password:focus-visible,
+.datepicker-nav:focus-visible,
+.analytics-preset-btn:focus-visible,
+.view-all-btn:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px rgba(37, 99, 235, 0.55);
+}
+
+.autopay-type-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.autopay-type-badge.expense {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.autopay-type-badge.income {
+    background: #dcfce7;
+    color: #166534;
 }

@@ -109,7 +109,7 @@
                         <input type="password" id="authPassword" autocomplete="current-password"
                             class="w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all duration-200"
                             placeholder="••••••••">
-                        <button type="button" id="togglePassword"
+                        <button type="button" id="togglePassword" aria-label="Show password"
                             class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
                             <i class="fas fa-eye text-sm" id="eyeIcon"></i>
                         </button>
@@ -261,10 +261,10 @@
                     <div class="user-badge">
                         <span id="userEmail" class="user-email-text"></span>
                         <div class="header-actions">
-                            <button id="profileBtn" class="h-btn" title="Profile">
+                            <button id="profileBtn" class="h-btn" title="Profile" aria-label="Open profile settings">
                                 <i class="fas fa-user"></i>
                             </button>
-                            <button id="signOutBtn" class="h-btn logout" title="Sign Out">
+                            <button id="signOutBtn" class="h-btn logout" title="Sign Out" aria-label="Sign out">
                                 <i class="fas fa-sign-out-alt"></i>
                             </button>
                         </div>
@@ -325,6 +325,59 @@
                         </div>
                     </div>
 
+                    <div class="budget-goal-card dashboard-card" id="budgetGoalCard">
+                        <div class="card-header align-between">
+                            <h3><i class="fas fa-bullseye"></i> Monthly Budget Goal</h3>
+                            <button type="button" class="icon-btn" id="toggleBudgetFormBtn" title="Budget Settings">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="budget-goal-progress" id="budgetGoalProgress">
+                            <div class="budget-amounts-row">
+                                <div class="budget-amount-box">
+                                    <span class="budget-amount-label">Spent this month</span>
+                                    <span class="budget-amount-value" id="budgetSpentVal">₹0</span>
+                                </div>
+                                <div class="budget-amount-box" style="text-align: right;">
+                                    <span class="budget-amount-label">Monthly Limit</span>
+                                    <span class="budget-amount-value text-muted" id="budgetTotalVal">Not set</span>
+                                </div>
+                            </div>
+                            
+                            <div class="budget-progress-track" aria-hidden="true">
+                                <div class="budget-progress-fill" id="budgetProgressFill"></div>
+                            </div>
+                            
+                            <div class="budget-footer-row">
+                                <p class="budget-goal-meta" id="budgetGoalMeta">Set a budget goal to get threshold alerts.</p>
+                                <span class="budget-goal-chip" id="budgetGoalChip">Not set</span>
+                            </div>
+                        </div>
+
+                        <form id="budgetGoalForm" class="budget-goal-form hidden-form">
+                            <hr class="divider">
+                            <div class="budget-goal-grid">
+                                <div class="form-group">
+                                    <label for="budgetMonthlyLimit">Monthly Expense Limit</label>
+                                    <div class="currency-input">
+                                        <span class="currency-symbol-small">₹</span>
+                                        <input type="number" id="budgetMonthlyLimit" min="0" step="0.01"
+                                            placeholder="Set your monthly cap">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="budgetAlertThreshold">Alert Threshold (%)</label>
+                                    <input type="number" id="budgetAlertThreshold" min="1" max="100" step="1"
+                                        value="80">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary budget-save-btn">
+                                <i class="fas fa-save"></i> Save Budget Goal
+                            </button>
+                        </form>
+                    </div>
+
                     <div class="chart-section dashboard-card">
                         <div class="card-header">
                             <h3><i class="fas fa-chart-area"></i> Weekly Activity</h3>
@@ -382,7 +435,8 @@
                         <div class="form-group">
                             <label for="date">Date</label>
                             <div class="custom-datepicker-wrapper" id="datePickerWrapper">
-                                <div class="datepicker-trigger" id="datePickerTrigger">
+                                <div class="datepicker-trigger" id="datePickerTrigger" role="button" tabindex="0"
+                                    aria-label="Open date picker" aria-haspopup="dialog" aria-expanded="false">
                                     <i class="fas fa-calendar-alt"></i>
                                     <span class="datepicker-display" id="dateDisplay">Select Date</span>
                                     <i class="fas fa-chevron-down datepicker-arrow"></i>
@@ -390,14 +444,16 @@
                                 <input type="hidden" id="date" required>
                                 <div class="datepicker-dropdown" id="datePickerDropdown">
                                     <div class="datepicker-header">
-                                        <button type="button" class="datepicker-nav prev" id="prevMonth">
+                                        <button type="button" class="datepicker-nav prev" id="prevMonth"
+                                            aria-label="Previous month">
                                             <i class="fas fa-chevron-left"></i>
                                         </button>
                                         <div class="datepicker-month-year">
                                             <span id="currentMonth">December</span>
                                             <span id="currentYear">2025</span>
                                         </div>
-                                        <button type="button" class="datepicker-nav next" id="nextMonth">
+                                        <button type="button" class="datepicker-nav next" id="nextMonth"
+                                            aria-label="Next month">
                                             <i class="fas fa-chevron-right"></i>
                                         </button>
                                     </div>
@@ -469,6 +525,18 @@
                     <span class="badge-count" id="txCount">0</span>
                 </div>
                 <div class="actions-group">
+                    <div class="custom-select export-format-select">
+                        <select id="exportFormat">
+                            <option value="csv-detailed">CSV Detailed</option>
+                            <option value="csv-basic">CSV Basic</option>
+                            <option value="json-backup">JSON Backup</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <input type="file" id="importCsvInput" accept=".csv,text/csv" style="display: none;">
+                    <button class="btn" type="button" onclick="triggerImportTransactions()">
+                        <i class="fas fa-file-import"></i> Import CSV
+                    </button>
                     <button class="btn btn-export" onclick="exportToExcel()">
                         <i class="fas fa-download"></i> Export
                     </button>
@@ -514,6 +582,15 @@
             <div id="transactionsList" class="transaction-feed">
                 <!-- Transactions will be injected here -->
             </div>
+            <div id="txPagination" class="tx-pagination" style="display: none;">
+                <button id="txPrevPage" class="btn btn-pagination" type="button">
+                    <i class="fas fa-chevron-left"></i> Prev
+                </button>
+                <div id="txPageInfo" class="tx-page-info">Page 1 of 1</div>
+                <button id="txNextPage" class="btn btn-pagination" type="button">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Autopay Tab -->
@@ -522,8 +599,8 @@
                 <!-- Add New Autopay Section -->
                 <div class="add-autopay-section">
                     <div class="form-header">
-                        <h3><i class="fas fa-plus-circle"></i> Add Autopay</h3>
-                        <p>Set up recurring payments that will be automatically deducted each month</p>
+                        <h3><i class="fas fa-plus-circle"></i> Add Recurring Plan</h3>
+                        <p>Set up recurring income or expenses that will post automatically each month</p>
                     </div>
                     <form id="autopayForm" class="modern-form">
                         <div class="form-grid-2">
@@ -545,6 +622,13 @@
                             </div>
                         </div>
                         <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="autopayType">Recurring Type</label>
+                                <select id="autopayType" required>
+                                    <option value="expense">Expense</option>
+                                    <option value="income">Income</option>
+                                </select>
+                            </div>
                             <div class="form-group">
                                 <label for="autopayCategory">Category</label>
                                 <select id="autopayCategory" required>
@@ -604,7 +688,7 @@
                             </div>
                         </div>
                         <button type="submit" class="btn-submit-transaction">
-                            <i class="fas fa-plus"></i> Add Autopay
+                            <i class="fas fa-plus"></i> Add Recurring Plan
                         </button>
                     </form>
                 </div>
@@ -612,9 +696,9 @@
                 <!-- Autopay List Section -->
                 <div class="autopay-list-section">
                     <div class="section-header">
-                        <h3><i class="fas fa-list-check"></i> Your Autopays</h3>
+                        <h3><i class="fas fa-list-check"></i> Your Recurring Plans</h3>
                         <div class="autopay-summary">
-                            <span class="autopay-total-label">Monthly Total:</span>
+                            <span class="autopay-total-label">Monthly Flow:</span>
                             <span class="autopay-total-amount" id="autopayTotalAmount">₹0</span>
                         </div>
                     </div>
@@ -640,6 +724,11 @@
             <div class="analytics-toolbar">
                 <div class="section-header" style="margin-bottom: 0;">
                     <h3><i class="fas fa-chart-pie"></i> Analytics</h3>
+                </div>
+                <div class="analytics-presets" id="analyticsPresets">
+                    <button type="button" class="analytics-preset-btn" data-preset="this-week">This Week</button>
+                    <button type="button" class="analytics-preset-btn" data-preset="this-month">This Month</button>
+                    <button type="button" class="analytics-preset-btn" data-preset="last-30-days">Last 30 Days</button>
                 </div>
                 <div class="analytics-filters">
                     <div class="custom-select analytics-select">
@@ -670,6 +759,24 @@
                             <option value="2026">2026</option>
                         </select>
                     </div>
+                </div>
+            </div>
+            <div class="analytics-summary-grid" id="analyticsSummaryGrid">
+                <div class="analytics-summary-card income">
+                    <div class="label">Income</div>
+                    <div class="value" id="analyticsIncome">₹0</div>
+                </div>
+                <div class="analytics-summary-card expense">
+                    <div class="label">Expenses</div>
+                    <div class="value" id="analyticsExpenses">₹0</div>
+                </div>
+                <div class="analytics-summary-card balance">
+                    <div class="label">Net</div>
+                    <div class="value" id="analyticsNet">₹0</div>
+                </div>
+                <div class="analytics-summary-card count">
+                    <div class="label">Transactions</div>
+                    <div class="value" id="analyticsCount">0</div>
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
@@ -711,7 +818,7 @@
                 <div class="profile-avatar">
                     <i class="fas fa-user"></i>
                 </div>
-                <button id="closeProfileModal" class="profile-close-btn">
+                <button id="closeProfileModal" class="profile-close-btn" aria-label="Close profile settings">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -774,7 +881,8 @@
                                 <div class="password-input-container">
                                     <input type="password" id="newPassword" placeholder="Enter new password"
                                         minlength="6">
-                                    <button type="button" class="toggle-password" data-target="newPassword">
+                                    <button type="button" class="toggle-password" data-target="newPassword"
+                                        aria-label="Show new password">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
@@ -784,7 +892,8 @@
                                 <div class="password-input-container">
                                     <input type="password" id="confirmPassword" placeholder="Confirm new password"
                                         minlength="6">
-                                    <button type="button" class="toggle-password" data-target="confirmPassword">
+                                    <button type="button" class="toggle-password" data-target="confirmPassword"
+                                        aria-label="Show confirm password">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
