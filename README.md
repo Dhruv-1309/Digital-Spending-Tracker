@@ -93,28 +93,26 @@ If Z-Score > 2: Transaction flagged as anomaly
 1. **Clone or Download** the repository
 
 2. **Set up Firebase**:
-
    - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
    - Enable Email/Password Authentication
    - Create a Firestore Database
    - Get your Firebase configuration
 
 3. **Configure the App**:
+   - Copy `config.example.js` to `config.js`
+   - Fill in your Firebase credentials in `config.js`
+   - Do **not** commit `config.js` (it is ignored by `.gitignore`)
 
-    - Copy `config.example.js` to `config.js`
-    - Fill in your Firebase credentials in `config.js`
-    - Do **not** commit `config.js` (it is ignored by `.gitignore`)
-
-    ```javascript
-    window.__APP_CONFIG__ = {
-       firebaseApiKey: "YOUR_API_KEY",
-       firebaseAuthDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-       firebaseProjectId: "YOUR_PROJECT_ID",
-       firebaseStorageBucket: "YOUR_PROJECT_ID.appspot.com",
-       firebaseMessagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-       firebaseAppId: "YOUR_APP_ID",
-    };
-    ```
+   ```javascript
+   window.__APP_CONFIG__ = {
+     firebaseApiKey: "YOUR_API_KEY",
+     firebaseAuthDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+     firebaseProjectId: "YOUR_PROJECT_ID",
+     firebaseStorageBucket: "YOUR_PROJECT_ID.appspot.com",
+     firebaseMessagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+     firebaseAppId: "YOUR_APP_ID",
+   };
+   ```
 
 4. **Deploy**:
    - Host on any static web server (Firebase Hosting, Netlify, Vercel, GitHub Pages, etc.)
