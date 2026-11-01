@@ -5,6 +5,26 @@ import type {
   AnalyticsPeriod,
 } from '../types';
 
+export function extractUniqueYears(
+  transactions: Transaction[],
+  currentYear: number = new Date().getFullYear(),
+): string[] {
+  const years = Array.from(
+    new Set(
+      transactions
+        .map((t) => new Date(t.date))
+        .filter((d) => !Number.isNaN(d.getTime()))
+        .map((d) => d.getFullYear()),
+    ),
+  ).sort((a, b) => b - a);
+
+  if (!years.includes(currentYear)) {
+    years.unshift(currentYear);
+  }
+
+  return years.map(String);
+}
+
 export function getAnalyticsDateRange(
   preset: AnalyticsPreset,
   period: AnalyticsPeriod,

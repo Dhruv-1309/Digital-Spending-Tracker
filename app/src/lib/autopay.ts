@@ -8,6 +8,35 @@ export function calculateMonthlyFlow(autopays: AutopayPlan[]): number {
     }, 0);
 }
 
+export interface AutopayFlows {
+  income: number;
+  expense: number;
+  text: string;
+}
+
+export function calculateAutopayFlows(autopays: AutopayPlan[]): AutopayFlows {
+  if (autopays.length === 0) {
+    return { income: 0, expense: 0, text: '₹0' };
+  }
+
+  const totals = autopays
+    .filter((a) => a.active !== false)
+    .reduce(
+      (sum, a) => {
+        if (a.type === 'income') sum.income += a.amount;
+        else sum.expense += a.amount;
+        return sum;
+      },
+      { income: 0, expense: 0 },
+    );
+
+  return {
+    income: totals.income,
+    expense: totals.expense,
+    text: `+₹${totals.income.toLocaleString('en-IN')} / -₹${totals.expense.toLocaleString('en-IN')}`,
+  };
+}
+
 export interface UpcomingAutopayItem {
   autopay: AutopayPlan;
   dueDateStr: string;

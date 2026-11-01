@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   calculateMonthlyFlow,
+  calculateAutopayFlows,
   getUpcomingAutopays,
   processScheduledAutopays,
 } from '../lib/autopay';
@@ -52,6 +53,16 @@ describe('autopay', () => {
     // 60,000 - 649 - 2,000 = 57,351 (auto_4 is paused)
     const flow = calculateMonthlyFlow(sampleAutopays);
     expect(flow).toBe(57351);
+  });
+
+  it('calculateAutopayFlows returns separate totals and formatted string', () => {
+    const flows = calculateAutopayFlows(sampleAutopays);
+    expect(flows.income).toBe(60000);
+    expect(flows.expense).toBe(2649);
+    expect(flows.text).toBe('+₹60,000 / -₹2,649');
+
+    const empty = calculateAutopayFlows([]);
+    expect(empty.text).toBe('₹0');
   });
 
   it('getUpcomingAutopays returns only future occurrences in current month', () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  extractUniqueYears,
   getAnalyticsDateRange,
   filterAnalyticsTransactions,
   calculateAnalyticsSummary,
@@ -101,5 +102,10 @@ describe('analytics', () => {
     expect(dow.dayTotals['Monday']).toBe(300); // Oct 12 is Monday
     expect(dow.dayTotals['Wednesday']).toBe(1200); // Oct 14 is Wednesday
     expect(dow.dayTotals['Thursday']).toBe(500); // Oct 15 is Thursday
+  });
+
+  it('extractUniqueYears extracts unique sorted years including current year', () => {
+    const years = extractUniqueYears(sampleTransactions, 2026);
+    expect(years).toContain('2026');
   });
 });
