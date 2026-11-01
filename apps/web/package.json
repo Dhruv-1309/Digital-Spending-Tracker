@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "@moneytracker/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@moneytracker/shared": "*",
     "chart.js": "^4.5.1",
     "firebase": "^13.0.0",
     "react": "^19.2.0",

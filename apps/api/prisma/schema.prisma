@@ -1,0 +1,140 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TxnType {
+  income
+  expense
+  @@map("txn_type")
+}
+
+enum PayMethod {
+  cash
+  credit_card
+  debit_card
+  upi
+  net_banking
+  bank_transfer
+  @@map("pay_method")
+}
+
+enum AnomalyState {
+  none
+  flagged
+  approved
+  @@map("anomaly_state")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  firebaseUid  String    @unique @map("firebase_uid")
+  email        String?
+  displayName  String?   @map("display_name")
+  authMethod   String    @map("auth_method")
+  timezone     String    @default("Asia/Kolkata")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSignIn   DateTime? @map("last_sign_in") @db.Timestamptz(6)
+
+  categories       Category[]
+  autopayPlans     AutopayPlan[]
+  transactions     Transaction[]
+  budgetGoal       BudgetGoal?
+  idempotencyKeys  IdempotencyKey[]
+
+  @@map("users")
+}
+
+model Category {
+  id     String  @id @default(uuid()) @db.Uuid
+  userId String  @map("user_id") @db.Uuid
+  type   TxnType
+  name   String
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, name])
+  @@map("categories")
+}
+
+model AutopayPlan {
+  id                 String       @id @default(uuid()) @db.Uuid
+  userId             String       @map("user_id") @db.Uuid
+  name               String
+  type               TxnType
+  amountPaise        BigInt       @map("amount_paise")
+  currency           String       @default("INR") @db.Char(3)
+  category           String
+  day                Int          @db.SmallInt
+  description        String?
+  active             Boolean      @default(true)
+  lastProcessedMonth String?      @map("last_processed_month") @db.Char(7)
+  legacyId           String?      @map("legacy_id")
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?    @map("deleted_at") @db.Timestamptz(6)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("autopay_plans")
+}
+
+model Transaction {
+  id            String       @id @default(uuid()) @db.Uuid
+  userId        String       @map("user_id") @db.Uuid
+  type          TxnType
+  amountPaise   BigInt       @map("amount_paise")
+  currency      String       @default("INR") @db.Char(3)
+  category      String
+  paymentMethod PayMethod    @map("payment_method")
+  description   String?
+  txnDate       DateTime     @map("txn_date") @db.Date
+  anomaly       AnomalyState @default(none)
+  anomalyZ      Decimal?     @map("anomaly_z") @db.Decimal(6, 2)
+  autopayId     String?      @map("autopay_id") @db.Uuid
+  autopayPeriod String?      @map("autopay_period") @db.Char(7)
+  importHash    String?      @map("import_hash")
+  legacyId      String?      @map("legacy_id")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?    @map("deleted_at") @db.Timestamptz(6)
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  autopay AutopayPlan? @relation(fields: [autopayId], references: [id], onDelete: SetNull)
+
+  @@unique([autopayId, autopayPeriod], map: "uq_txn_autopay_period")
+  @@index([userId, txnDate(sort: Desc)], map: "ix_txn_user_date")
+  @@index([userId, type, category], map: "ix_txn_user_cat")
+  @@index([userId, updatedAt], map: "ix_txn_user_updated")
+  @@map("transactions")
+}
+
+model BudgetGoal {
+  userId                   String   @id @map("user_id") @db.Uuid
+  monthlyExpenseLimitPaise BigInt   @map("monthly_expense_limit_paise")
+  thresholdPercent         Int      @default(80) @map("threshold_percent") @db.SmallInt
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("budget_goals")
+}
+
+model IdempotencyKey {
+  userId         String   @map("user_id") @db.Uuid
+  key            String
+  requestHash    String   @map("request_hash")
+  responseStatus Int      @map("response_status") @db.SmallInt
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, key])
+  @@map("idempotency_keys")
+}
