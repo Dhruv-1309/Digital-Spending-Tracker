@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { TrackerContext } from '../../context/trackerContextDef';
 
 export interface HeaderProps {
   onOpenProfile: () => void;
@@ -6,6 +8,9 @@ export interface HeaderProps {
 
 export function Header({ onOpenProfile }: HeaderProps) {
   const { user, signOut } = useAuth();
+  const tracker = useContext(TrackerContext);
+  const isOnline = tracker?.isOnline ?? true;
+  const pendingSyncCount = tracker?.pendingSyncCount ?? 0;
 
   return (
     <div className="header">
@@ -23,6 +28,47 @@ export function Header({ onOpenProfile }: HeaderProps) {
         </div>
 
         <div className="header-right">
+          <div
+            className="sync-status-indicator"
+            data-testid="sync-status-indicator"
+            title={
+              !isOnline
+                ? 'Offline'
+                : pendingSyncCount > 0
+                  ? `${pendingSyncCount} changes pending sync`
+                  : 'Synced'
+            }
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.8rem',
+              marginRight: '12px',
+              color: 'var(--text-secondary, #94a3b8)',
+            }}
+          >
+            <span
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: !isOnline
+                  ? '#ef4444'
+                  : pendingSyncCount > 0
+                    ? '#eab308'
+                    : '#22c55e',
+                display: 'inline-block',
+              }}
+            />
+            <span style={{ fontWeight: 500 }}>
+              {!isOnline
+                ? 'Offline'
+                : pendingSyncCount > 0
+                  ? `${pendingSyncCount} pending`
+                  : 'Synced'}
+            </span>
+          </div>
+
           <div className="user-badge">
             <span id="userEmail" className="user-email-text">
               {user?.email || ''}

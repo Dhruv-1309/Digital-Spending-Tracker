@@ -16,6 +16,7 @@ export interface Transaction {
   paymentMethod: PaymentMethod | string;
   description: string;
   date: string; // YYYY-MM-DD
+  currency?: string;
   timestamp?: number;
   createdAt?: string;
   source?: 'manual' | 'autopay' | 'csv_import';
@@ -35,6 +36,7 @@ export interface AutopayPlan {
   type: TransactionType;
   category: string;
   day: number; // 1-31
+  paymentMethod?: PaymentMethod | string;
   description?: string;
   createdAt?: string;
   lastProcessedMonth?: string; // YYYY-MM

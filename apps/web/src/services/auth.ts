@@ -12,7 +12,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { getFirebaseAuth } from './firebase';
-import { deleteUserData } from './firestore';
+import { apiClient } from './apiClient';
 import type { UserProfile } from '../types';
 
 export function mapFirebaseUser(user: User): UserProfile {
@@ -189,6 +189,8 @@ export async function deleteUserAccount(): Promise<void> {
   const user = getFirebaseAuth().currentUser;
   if (!user) throw new Error('No user is currently signed in.');
 
-  await deleteUserData(user.uid);
+  await apiClient.deleteMe().catch((e) => {
+    console.warn('Backend user delete warning:', e);
+  });
   await deleteUser(user);
 }
