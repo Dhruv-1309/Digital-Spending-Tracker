@@ -72,14 +72,16 @@ export function exportTransactionsCsv(
     const lines = [header.join(',')];
 
     transactions.forEach((t) => {
+      const dateStr = t.date || (t.txnDate instanceof Date ? t.txnDate.toISOString().slice(0, 10) : typeof t.txnDate === 'string' ? t.txnDate.slice(0, 10) : '');
+      const amountVal = t.amount ?? (t.amountPaise != null ? Number(t.amountPaise) / 100 : 0);
       lines.push(
         [
-          t.date,
+          dateStr,
           t.type,
           toCsvSafeValue(t.category),
           toCsvSafeValue(t.description || ''),
           t.paymentMethod || 'cash',
-          t.amount ?? (t.amountPaise != null ? t.amountPaise / 100 : 0),
+          amountVal,
         ].join(','),
       );
     });
@@ -103,13 +105,15 @@ export function exportTransactionsCsv(
   const lines = [header.join(',')];
 
   transactions.forEach((t) => {
+    const dateStr = t.date || (t.txnDate instanceof Date ? t.txnDate.toISOString().slice(0, 10) : typeof t.txnDate === 'string' ? t.txnDate.slice(0, 10) : '');
+    const amountVal = t.amount ?? (t.amountPaise != null ? Number(t.amountPaise) / 100 : 0);
     lines.push(
       [
         t.id,
-        t.date,
+        dateStr,
         t.type,
         toCsvSafeValue(t.category),
-        t.amount ?? (t.amountPaise != null ? t.amountPaise / 100 : 0),
+        amountVal,
         t.paymentMethod || 'cash',
         toCsvSafeValue(t.description || ''),
         t.source || 'manual',
@@ -129,11 +133,11 @@ export function exportTransactionsJson(data: {
 }): string {
   const totalIncome = data.transactions
     .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise ? t.amountPaise / 100 : 0)), 0);
+    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise != null ? Number(t.amountPaise) / 100 : 0)), 0);
 
   const totalExpense = data.transactions
     .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise ? t.amountPaise / 100 : 0)), 0);
+    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise != null ? Number(t.amountPaise) / 100 : 0)), 0);
 
   const payload = {
     exportedAt: new Date().toISOString(),

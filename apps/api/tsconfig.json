@@ -14,5 +14,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node"]
   },
-  "include": ["src/**/*", "test/**/*", "prisma/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["test/**/*", "dist"]
 }

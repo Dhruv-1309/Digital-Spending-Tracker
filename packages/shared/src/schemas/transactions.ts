@@ -48,6 +48,7 @@ export const TransactionQuerySchema = z.object({
   sort: z.enum(['date-desc', 'date-asc', 'amount-desc', 'amount-asc', 'category-asc']).default('date-desc'),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
+  format: z.enum(['csv-basic', 'csv-detailed', 'json-backup']).optional(),
 });
 
 export const ImportRowSchema = z.object({
