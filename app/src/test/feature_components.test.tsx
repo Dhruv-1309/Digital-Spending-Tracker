@@ -10,7 +10,7 @@ import { NavigationTabs } from '../components/layout/NavigationTabs';
 import { AutopayTab } from '../components/autopay/AutopayTab';
 import { AnalyticsTab } from '../components/analytics/AnalyticsTab';
 import type { TrackerContextValue } from '../context/trackerContextDef';
-import type { User } from 'firebase/auth';
+import type { UserProfile } from '../types';
 
 vi.mock('react-chartjs-2', () => ({
   Bar: () => <div data-testid="mock-bar-chart" />,
@@ -18,24 +18,14 @@ vi.mock('react-chartjs-2', () => ({
   Line: () => <div data-testid="mock-line-chart" />,
 }));
 
-const mockUser: User = {
+const mockUser: UserProfile = {
   uid: 'test_user_123',
   email: 'test@example.com',
   displayName: 'Test User',
-  emailVerified: true,
-  isAnonymous: false,
-  metadata: {},
-  providerData: [],
-  refreshToken: '',
-  tenantId: null,
-  delete: vi.fn(),
-  getIdToken: vi.fn(),
-  getIdTokenResult: vi.fn(),
-  reload: vi.fn(),
-  toJSON: vi.fn(),
-  phoneNumber: null,
-  photoURL: null,
-  providerId: 'firebase',
+  authMethod: 'password',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  lastSignIn: '2026-10-15T10:00:00.000Z',
+  hasPassword: true,
 };
 
 const defaultTrackerValue: TrackerContextValue = {
@@ -97,7 +87,7 @@ const defaultTrackerValue: TrackerContextValue = {
 
 function renderWithProviders(
   ui: React.ReactNode,
-  user: User | null = mockUser,
+  user: UserProfile | null = mockUser,
   trackerOverrides: Partial<TrackerContextValue> = {},
 ) {
   const authValue = {
@@ -127,7 +117,7 @@ function renderWithProviders(
       title: 'Confirm',
       confirmText: 'Confirm',
       cancelText: 'Cancel',
-      variant: 'default' as const,
+      variant: 'warning' as const,
     },
     showConfirm: vi.fn().mockResolvedValue(true),
     handleConfirm: vi.fn(),
