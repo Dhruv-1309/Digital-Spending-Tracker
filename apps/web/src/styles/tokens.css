@@ -1,0 +1,113 @@
+/**
+ * MoneyTracker Design Tokens (SPEC sections 3 and 4)
+ * Source of truth: docs/redesign/SPEC.md
+ */
+
+:root {
+  /* ==========================================================================
+     Colors (SPEC Section 3)
+     ========================================================================== */
+  --bg: #FAF7F2;
+  --surface: #FFFFFF;
+  --surface-2: #F3EEE6;
+  --line: #E6DFD3;
+  --line-strong: #D3C9B9;
+  --ink: #1F1B16;
+  --ink-2: #5C554B;
+  --ink-3: #766E62;
+  --accent: #2A4FD6;
+  --accent-tint: #E6EBFB;
+  --income: #2E7D5B;
+  --income-tint: #E4F2EA;
+  --warning: #9A6700;
+  --warning-tint: #F6E8C8;
+  --danger: #B3261E;
+  --danger-tint: #F8E1DE;
+
+  /* Category Badge Color Pairs (SPEC Section 3) */
+  --cat-terracotta-tint: #F3DCD2;
+  --cat-terracotta-ink: #8A3A1F;
+  --cat-olive-tint: #E8EBCF;
+  --cat-olive-ink: #55601A;
+  --cat-teal-tint: #D7ECE9;
+  --cat-teal-ink: #1E5F58;
+  --cat-rose-tint: #F5DCE3;
+  --cat-rose-ink: #8A2A47;
+  --cat-sand-tint: #EFE3CB;
+  --cat-sand-ink: #7A5A12;
+  --cat-sky-tint: #DCE8F5;
+  --cat-sky-ink: #245A8C;
+  --cat-moss-tint: #DDEBD9;
+  --cat-moss-ink: #2F6A32;
+  --cat-slate-tint: #E3E6EA;
+  --cat-slate-ink: #3C4654;
+
+  /* ==========================================================================
+     Typography (SPEC Section 3)
+     ========================================================================== */
+  --font-display: 'Bricolage Grotesque', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Instrument Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Type Scale: size / line-height */
+  --text-caption: 0.75rem;          /* 12px */
+  --leading-caption: 1rem;          /* 16px */
+  --text-body-sm: 0.875rem;         /* 14px */
+  --leading-body-sm: 1.25rem;       /* 20px */
+  --text-body: 1rem;                /* 16px */
+  --leading-body: 1.5rem;           /* 24px */
+  --text-section-title: 1.25rem;    /* 20px */
+  --leading-section-title: 1.75rem; /* 28px */
+  --text-page-title: 1.75rem;       /* 28px */
+  --leading-page-title: 2.25rem;    /* 36px */
+  --text-hero: 3rem;                /* 48px (desktop) */
+  --leading-hero: 3.25rem;          /* 52px */
+  --text-hero-mobile: 2.25rem;      /* 36px (phones) */
+  --leading-hero-mobile: 2.5rem;    /* 40px */
+
+  /* ==========================================================================
+     Shape, Space & Depth (SPEC Section 3)
+     ========================================================================== */
+  /* Spacing: 4px base (4, 8, 12, 16, 24, 32, 48, 64) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius (6 chips, 10 buttons/inputs, 16 cards/modals, 999 pills) */
+  --radius-chip: 6px;
+  --radius-input: 10px;
+  --radius-btn: 10px;
+  --radius-card: 16px;
+  --radius-modal: 16px;
+  --radius-pill: 999px;
+
+  /* Shadows (warm-tinted) */
+  --shadow-1: 0 1px 2px rgba(60, 40, 20, 0.06), 0 1px 1px rgba(60, 40, 20, 0.04);
+  --shadow-2: 0 4px 12px rgba(60, 40, 20, 0.08), 0 1px 2px rgba(60, 40, 20, 0.06);
+  --shadow-3: 0 16px 40px rgba(60, 40, 20, 0.14), 0 2px 6px rgba(60, 40, 20, 0.08);
+
+  /* Focus Ring: 2px --accent with 2px --surface gap */
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+
+  /* Layout */
+  --content-max-width: 1200px;
+  --gutter-desktop: 24px;
+  --gutter-mobile: 16px;
+  --nav-rail-width: 232px;
+
+  /* ==========================================================================
+     Motion System (SPEC Section 4)
+     ========================================================================== */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --dur-chart: 600ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
