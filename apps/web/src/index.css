@@ -139,3 +139,22 @@
     opacity: 1 !important;
   }
 }
+
+/* Row hover actions (SPEC Section 4 & 5):
+   fade in on hover with @media (hover: hover), always visible on touch */
+@media (hover: hover) {
+  .row-action-btn {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-standard);
+  }
+  .group:hover .row-action-btn,
+  .group:focus-within .row-action-btn {
+    opacity: 1;
+  }
+}
+@media (hover: none) {
+  .row-action-btn {
+    opacity: 1;
+  }
+}
+

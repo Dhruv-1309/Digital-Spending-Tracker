@@ -1,8 +1,15 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { m, AnimatePresence } from 'motion/react';
 import { useTracker } from '../../hooks/useTracker';
-import { useConfirm } from '../../hooks/useConfirm';
 import { useToast } from '../../hooks/useToast';
-import { CustomSelect } from '../common/CustomSelect';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Dropdown } from '../ui/Dropdown';
+import { SegmentedControl } from '../ui/SegmentedControl';
+import { TextInput } from '../ui/TextInput';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
+import { TransactionSlideOver } from './TransactionSlideOver';
 import {
   filterTransactions,
   paginateTransactions,
@@ -12,7 +19,22 @@ import {
   importTransactionsFromCsv,
 } from '../../lib/transactions';
 import { formatCurrency } from '../../lib/formatters';
-import type { TransactionSortOption } from '../../types';
+import {
+  SearchIcon,
+  PlusIcon,
+  TrashIcon,
+  EditIcon,
+  DownloadIcon,
+  UploadIcon,
+  MoreHorizontalIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  XIcon,
+  RefreshCwIcon,
+  AlertCircleIcon,
+} from '../icons';
+import { EASING } from '../../ui/motion';
+import type { Transaction, TransactionSortOption } from '../../types';
 
 export function TransactionsTab() {
   const {
@@ -21,59 +43,226 @@ export function TransactionsTab() {
     budgetGoal,
     deleteTransaction,
     importTransactions,
-    setCurrentTab,
+    isLoading,
+    loadError,
+    refreshData,
   } = useTracker();
-  const { showConfirm } = useConfirm();
   const { showToast } = useToast();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const listTopRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
+  // Filters & Pagination State
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('all');
   const [sortBy, setSortBy] = useState<TransactionSortOption>('date-desc');
-  const [exportFormat, setExportFormat] = useState('csv-detailed');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
-  // Extract unique months from transactions
+  // Slide-over modal state (Add / Edit)
+  const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [slideOverTrigger, setSlideOverTrigger] = useState<HTMLElement | null>(null);
+
+  // Undo delete pending state
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+  const pendingTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  // Close more menu on click outside or Escape
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMoreMenuOpen(false);
+      }
+    };
+
+    if (isMoreMenuOpen) {
+      document.addEventListener('mousedown', handleDocumentClick);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMoreMenuOpen]);
+
+  // Commit all pending deletes when navigating away / component unmounts
+  useEffect(() => {
+    const activeTimers = pendingTimersRef.current;
+    return () => {
+      activeTimers.forEach((timer, id) => {
+        clearTimeout(timer);
+        deleteTransaction(id);
+      });
+      activeTimers.clear();
+    };
+  }, [deleteTransaction]);
+
+  // Commit pending deletes on window pagehide
+  useEffect(() => {
+    const handlePageHide = () => {
+      const activeTimers = pendingTimersRef.current;
+      activeTimers.forEach((timer, id) => {
+        clearTimeout(timer);
+        deleteTransaction(id);
+      });
+      activeTimers.clear();
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [deleteTransaction]);
+
+  // Month options from transactions
   const monthOptions = useMemo(() => {
     const list = extractUniqueMonths(transactions);
     return [{ value: 'all', label: 'All Months' }, ...list];
   }, [transactions]);
 
-  // Filter transactions
+  // Filter out pending deleted transactions immediately
+  const activeTransactions = useMemo(() => {
+    if (pendingDeleteIds.length === 0) return transactions;
+    const pendingSet = new Set(pendingDeleteIds);
+    return transactions.filter((t) => !pendingSet.has(t.id));
+  }, [transactions, pendingDeleteIds]);
+
+  // Filter transactions using existing FR-3 logic
   const filtered = useMemo(() => {
     return filterTransactions(
-      transactions,
+      activeTransactions,
       searchQuery,
       typeFilter,
       monthFilter,
       sortBy,
     );
-  }, [transactions, searchQuery, typeFilter, monthFilter, sortBy]);
+  }, [activeTransactions, searchQuery, typeFilter, monthFilter, sortBy]);
 
-  // Paginate filtered transactions
+  // 10-per-page pagination
   const { paginatedItems, totalPages, totalItems } = useMemo(() => {
-    return paginateTransactions(filtered, currentPage, 20);
+    return paginateTransactions(filtered, currentPage, 10);
   }, [filtered, currentPage]);
 
-  const handleDelete = async (id: string, category: string, date: string) => {
-    const confirmed = await showConfirm(
-      `Are you sure you want to delete this ${category} transaction from ${date}?`,
-      {
-        title: 'Delete Transaction',
-        confirmText: 'Delete',
-        variant: 'danger',
-      },
-    );
+  // Group paginated items under date headers
+  const groupedTransactions = useMemo(() => {
+    const groups: {
+      date: string;
+      formattedDate: string;
+      dayTotal: number;
+      items: Transaction[];
+    }[] = [];
+    const groupMap = new Map<string, Transaction[]>();
 
-    if (confirmed) {
-      await deleteTransaction(id);
-      showToast('Transaction deleted successfully.', 'success');
-    }
+    paginatedItems.forEach((tx) => {
+      const dateKey = tx.date;
+      if (!groupMap.has(dateKey)) {
+        groupMap.set(dateKey, []);
+      }
+      groupMap.get(dateKey)!.push(tx);
+    });
+
+    groupMap.forEach((items, dateKey) => {
+      const dayTotal = items.reduce(
+        (sum, item) => sum + (item.type === 'income' ? item.amount : -item.amount),
+        0,
+      );
+
+      const dateObj = new Date(dateKey);
+      const formattedDate = isNaN(dateObj.getTime())
+        ? dateKey
+        : dateObj.toLocaleDateString('en-IN', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          });
+
+      groups.push({
+        date: dateKey,
+        formattedDate,
+        dayTotal,
+        items,
+      });
+    });
+
+    return groups;
+  }, [paginatedItems]);
+
+  // Handle Undo Delete
+  const handleDeleteWithUndo = useCallback(
+    (tx: Transaction) => {
+      const id = tx.id;
+      setPendingDeleteIds((prev) => [...prev, id]);
+
+      const timer = setTimeout(async () => {
+        pendingTimersRef.current.delete(id);
+        setPendingDeleteIds((prev) => prev.filter((item) => item !== id));
+        await deleteTransaction(id);
+      }, 5000);
+
+      pendingTimersRef.current.set(id, timer);
+
+      showToast(
+        `Deleted ${tx.category} transaction`,
+        'info',
+        5000,
+        {
+          label: 'Undo',
+          onClick: () => {
+            const activeTimer = pendingTimersRef.current.get(id);
+            if (activeTimer) {
+              clearTimeout(activeTimer);
+              pendingTimersRef.current.delete(id);
+            }
+            setPendingDeleteIds((prev) => prev.filter((item) => item !== id));
+            showToast('Transaction restored.', 'info', 2400);
+          },
+        },
+      );
+    },
+    [deleteTransaction, showToast],
+  );
+
+  // Pagination page change: cross-fades and scrolls list top into view
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  // Open Add slide-over
+  const handleOpenAdd = (e: React.MouseEvent<HTMLElement>) => {
+    setEditingTransaction(null);
+    setSlideOverTrigger(e.currentTarget);
+    setIsSlideOverOpen(true);
   };
 
-  const handleExport = () => {
+  // Open Edit slide-over
+  const handleOpenEdit = (tx: Transaction, e: React.MouseEvent<HTMLElement>) => {
+    setEditingTransaction(tx);
+    setSlideOverTrigger(e.currentTarget);
+    setIsSlideOverOpen(true);
+  };
+
+  // Clear all filters
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setTypeFilter('all');
+    setMonthFilter('all');
+    setCurrentPage(1);
+  }, []);
+
+  // Export handlers
+  const handleExport = (format: 'csv-detailed' | 'csv-basic' | 'json-backup') => {
+    setIsMoreMenuOpen(false);
+
     if (transactions.length === 0) {
       showToast('No transactions to export.', 'info');
       return;
@@ -84,11 +273,11 @@ export function TransactionsTab() {
     let filename = '';
     let mimeType = '';
 
-    if (exportFormat === 'csv-basic') {
+    if (format === 'csv-basic') {
       content = exportTransactionsCsv(transactions, 'csv-basic');
       filename = `transactions_basic_${datePart}.csv`;
       mimeType = 'text/csv;charset=utf-8';
-    } else if (exportFormat === 'json-backup') {
+    } else if (format === 'json-backup') {
       content = exportTransactionsJson({ transactions, autopays, budgetGoal });
       filename = `moneytracker_backup_${datePart}.json`;
       mimeType = 'application/json;charset=utf-8';
@@ -109,6 +298,7 @@ export function TransactionsTab() {
     showToast(`Exported ${transactions.length} transactions as ${filename}.`, 'success');
   };
 
+  // Import handler
   const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -125,9 +315,7 @@ export function TransactionsTab() {
       if (result.newTransactions.length > 0) {
         await importTransactions(result.newTransactions);
         showToast(
-          `Imported ${result.newTransactions.length} transactions${
-            result.skippedCount > 0 ? ` (${result.skippedCount} duplicates skipped)` : ''
-          }.`,
+          `Imported ${result.newTransactions.length} transactions (${result.skippedCount} duplicates skipped).`,
           'success',
         );
       } else {
@@ -145,230 +333,602 @@ export function TransactionsTab() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      setIsMoreMenuOpen(false);
     }
   };
 
+  // Check active filter chips
+  const hasActiveFilters = searchQuery.trim() !== '' || typeFilter !== 'all' || monthFilter !== 'all';
+  const selectedMonthOption = monthOptions.find((m) => m.value === monthFilter);
+
   return (
-    <div id="transactions" className="tab-content active">
-      <div className="transactions-header-area">
-        <div className="header-title">
-          <h3>All Transactions</h3>
-          <span className="badge-count" id="txCount">
+    <div id="transactions" className="tab-content active space-y-6 pb-12">
+      {/* Scroll anchor for pagination */}
+      <div ref={listTopRef} />
+
+      {/* Header Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink tracking-tight">
+            Transactions
+          </h1>
+          <span
+            id="txCount"
+            className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-2 text-ink-2 border border-line tabular-nums"
+          >
             {totalItems}
           </span>
         </div>
-        <div className="actions-group">
-          <div className="custom-select export-format-select">
-            <CustomSelect
-              id="exportFormat"
-              value={exportFormat}
-              onChange={setExportFormat}
-              options={[
-                { value: 'csv-detailed', label: 'CSV Detailed' },
-                { value: 'csv-basic', label: 'CSV Basic' },
-                { value: 'json-backup', label: 'JSON Backup' },
-              ]}
-            />
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            id="importCsvInput"
-            accept=".csv,text/csv"
-            style={{ display: 'none' }}
-            onChange={handleImportFileChange}
-          />
-          <button
-            className="btn"
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <i className="fas fa-file-import" /> Import CSV
-          </button>
-          <button className="btn btn-export" type="button" onClick={handleExport}>
-            <i className="fas fa-download" /> Export
-          </button>
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={() => setCurrentTab('add-transaction')}
-          >
-            <i className="fas fa-plus" /> New
-          </button>
-        </div>
-      </div>
 
-      <div className="filters-toolbar">
-        <div className="search-box">
-          <i className="fas fa-search" />
-          <input
-            type="text"
-            id="txSearch"
-            placeholder="Search transactions..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-        <div className="filter-group">
-          <div className="custom-select">
-            <CustomSelect
-              id="txFilterType"
-              value={typeFilter}
-              onChange={(val) => {
-                setTypeFilter(val);
-                setCurrentPage(1);
-              }}
-              options={[
-                { value: 'all', label: 'All Types' },
-                { value: 'income', label: 'Income', icon: 'fa-arrow-up' },
-                { value: 'expense', label: 'Expense', icon: 'fa-arrow-down' },
-              ]}
-            />
-          </div>
-          <div className="custom-select">
-            <CustomSelect
-              id="txMonthFilter"
-              value={monthFilter}
-              onChange={(val) => {
-                setMonthFilter(val);
-                setCurrentPage(1);
-              }}
-              options={monthOptions}
-            />
-          </div>
-          <div className="custom-select">
-            <CustomSelect
-              id="txSortBy"
-              value={sortBy}
-              onChange={(val) => {
-                setSortBy(val as TransactionSortOption);
-                setCurrentPage(1);
-              }}
-              options={[
-                { value: 'date-desc', label: 'Date: Newest' },
-                { value: 'date-asc', label: 'Date: Oldest' },
-                { value: 'month-desc', label: 'Month: Newest' },
-                { value: 'month-asc', label: 'Month: Oldest' },
-              ]}
-            />
-          </div>
-        </div>
-      </div>
+        {/* Actions Group: More Menu + New Button */}
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* More Menu (Portability: Import & Export) */}
+          <div className="relative" ref={moreMenuRef}>
+            <Button
+              id="txMoreMenuBtn"
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+              aria-label="More options"
+              aria-expanded={isMoreMenuOpen}
+              className="gap-1.5"
+            >
+              <MoreHorizontalIcon size={18} />
+              <span>More</span>
+            </Button>
 
-      <div id="transactionsList" className="transaction-feed">
-        {paginatedItems.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-            <i
-              className="fas fa-search"
-              style={{ fontSize: '2rem', marginBottom: '16px', opacity: 0.5 }}
+            {/* Hidden CSV file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              id="importCsvInput"
+              accept=".csv,text/csv"
+              style={{ display: 'none' }}
+              onChange={handleImportFileChange}
             />
-            <p>No transactions found matching your criteria.</p>
-          </div>
-        ) : (
-          paginatedItems.map((tx) => {
-            const isIncome = tx.type === 'income';
-            const amountPrefix = isIncome ? '+' : '-';
-            const icon = isIncome ? 'fa-arrow-down' : 'fa-arrow-up';
-            const iconBg = isIncome ? '#dcfce7' : '#fee2e2';
-            const iconColor = isIncome ? '#16a34a' : '#dc2626';
-            const amountColor = isIncome ? '#16a34a' : '#1e293b';
 
-            const dateStr = new Date(tx.date).toLocaleDateString('en-IN', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            });
-            const methodDisplay = tx.paymentMethod
-              ? tx.paymentMethod.replace('_', ' ')
-              : '-';
-            const isAuto =
-              tx.source === 'autopay' || Boolean(tx.autopayId) || tx.isAnomaly === false;
-
-            return (
-              <div key={tx.id} className="tx-card">
-                <div
-                  className="tx-icon-wrapper"
-                  style={{ background: iconBg, color: iconColor }}
+            {/* More Menu Dropdown Panel */}
+            <AnimatePresence>
+              {isMoreMenuOpen && (
+                <m.div
+                  initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.11, ease: EASING.in } }}
+                  transition={{ duration: 0.16, ease: EASING.out }}
+                  className="absolute right-0 top-full mt-1.5 w-56 rounded-card bg-surface border border-line shadow-2 p-1.5 z-30"
+                  role="menu"
                 >
-                  <i className={`fas ${icon}`} />
-                </div>
-
-                <div className="tx-details">
-                  <div className="tx-category">{tx.category}</div>
-                  <div className="tx-meta">
-                    <span>
-                      <i className="far fa-calendar" /> {dateStr}
-                    </span>
-                    <span>•</span>
-                    <span style={{ textTransform: 'capitalize' }}>{methodDisplay}</span>
-                    {tx.description && <span>• {tx.description}</span>}
-                    {isAuto && tx.source === 'autopay' && (
-                      <span
-                        style={{
-                          color: '#3b82f6',
-                          background: '#eff6ff',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        AUTO
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="tx-amount" style={{ color: amountColor }}>
-                  {amountPrefix}
-                  {formatCurrency(tx.amount)}
-                </div>
-
-                <div className="tx-actions">
                   <button
-                    className="btn-icon-only"
                     type="button"
-                    title="Delete"
-                    aria-label={`Delete transaction ${tx.category} on ${dateStr}`}
-                    onClick={() => handleDelete(tx.id, tx.category, dateStr)}
+                    role="menuitem"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
                   >
-                    <i className="fas fa-trash-alt" />
+                    <UploadIcon size={16} className="text-ink-2" />
+                    <span>Import CSV</span>
                   </button>
-                </div>
-              </div>
-            );
-          })
+
+                  <div className="my-1 border-t border-line" />
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => handleExport('csv-detailed')}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <DownloadIcon size={16} className="text-ink-2" />
+                    <span>Export CSV Detailed</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => handleExport('csv-basic')}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <DownloadIcon size={16} className="text-ink-2" />
+                    <span>Export CSV Basic</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => handleExport('json-backup')}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <DownloadIcon size={16} className="text-ink-2" />
+                    <span>Export JSON Backup</span>
+                  </button>
+                </m.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* New Transaction Button */}
+          <Button
+            id="txNewBtn"
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={handleOpenAdd}
+            className="gap-1.5"
+          >
+            <PlusIcon size={18} />
+            <span>New</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Sticky Filter Bar (Under top bar) */}
+      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-bg/95 backdrop-blur-sm border-y border-line space-y-3">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px]">
+            <TextInput
+              id="txSearch"
+              placeholder="Search transactions..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              leftAddon={<SearchIcon size={16} className="text-ink-3" />}
+              rightAddon={
+                searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCurrentPage(1);
+                    }}
+                    aria-label="Clear search"
+                    className="p-1 rounded-chip text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors duration-fast"
+                  >
+                    <XIcon size={14} />
+                  </button>
+                ) : undefined
+              }
+            />
+          </div>
+
+          {/* Filter Group: Type SegmentedControl, Month Dropdown, Sort Dropdown */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+            {/* Type Filter */}
+            <div className="shrink-0 w-full sm:w-auto">
+              <SegmentedControl
+                id="txFilterType"
+                size="sm"
+                value={typeFilter}
+                onChange={(val) => {
+                  setTypeFilter(val);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { value: 'all', label: 'All' },
+                  { value: 'income', label: 'Income' },
+                  { value: 'expense', label: 'Expenses' },
+                ]}
+              />
+            </div>
+
+            {/* Month Dropdown */}
+            <div className="w-full sm:w-44">
+              <Dropdown
+                id="txMonthFilter"
+                value={monthFilter}
+                onChange={(val) => {
+                  setMonthFilter(val);
+                  setCurrentPage(1);
+                }}
+                options={monthOptions}
+                placeholder="All Months"
+              />
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="w-full sm:w-44">
+              <Dropdown
+                id="txSortBy"
+                value={sortBy}
+                onChange={(val) => {
+                  setSortBy(val as TransactionSortOption);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { value: 'date-desc', label: 'Date: Newest' },
+                  { value: 'date-asc', label: 'Date: Oldest' },
+                  { value: 'month-desc', label: 'Month: Newest' },
+                  { value: 'month-asc', label: 'Month: Oldest' },
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Active Filters Chips & Live Result Count */}
+        {hasActiveFilters && (
+          <div className="flex items-center flex-wrap gap-2 pt-1 border-t border-line/60">
+            <span className="text-xs text-ink-3 font-medium">Filters:</span>
+
+            {searchQuery.trim() !== '' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface border border-line text-ink">
+                <span>Search: &ldquo;{searchQuery}&rdquo;</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
+                  aria-label="Remove search filter"
+                  className="hover:text-danger focus-visible:outline-none"
+                >
+                  <XIcon size={12} />
+                </button>
+              </span>
+            )}
+
+            {typeFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface border border-line text-ink">
+                <span>Type: {typeFilter === 'income' ? 'Income' : 'Expenses'}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTypeFilter('all');
+                    setCurrentPage(1);
+                  }}
+                  aria-label="Remove type filter"
+                  className="hover:text-danger focus-visible:outline-none"
+                >
+                  <XIcon size={12} />
+                </button>
+              </span>
+            )}
+
+            {monthFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface border border-line text-ink">
+                <span>Month: {selectedMonthOption?.label || monthFilter}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMonthFilter('all');
+                    setCurrentPage(1);
+                  }}
+                  aria-label="Remove month filter"
+                  className="hover:text-danger focus-visible:outline-none"
+                >
+                  <XIcon size={12} />
+                </button>
+              </span>
+            )}
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="md"
+              onClick={handleClearFilters}
+              className="text-xs text-accent hover:text-accent font-semibold p-1 h-auto"
+            >
+              Clear all
+            </Button>
+
+            <span className="text-xs text-ink-3 ml-auto font-medium tabular-nums">
+              {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
+            </span>
+          </div>
         )}
       </div>
 
-      {totalItems > 20 && (
-        <div id="txPagination" className="tx-pagination" style={{ display: 'flex' }}>
-          <button
-            id="txPrevPage"
-            className="btn btn-pagination"
-            type="button"
-            disabled={currentPage <= 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          >
-            <i className="fas fa-chevron-left" /> Prev
-          </button>
-          <div id="txPageInfo" className="tx-page-info">
-            Page {currentPage} of {totalPages}
+      {/* Error State */}
+      {loadError && (
+        <div className="p-4 rounded-card bg-danger-tint border border-danger/20 flex items-center justify-between gap-3 text-ink">
+          <div className="flex items-center gap-3">
+            <AlertCircleIcon size={20} className="text-danger shrink-0" />
+            <div className="text-sm">
+              <span className="font-semibold block">Failed to load transactions</span>
+              <span className="text-ink-2">{loadError}</span>
+            </div>
           </div>
-          <button
-            id="txNextPage"
-            className="btn btn-pagination"
-            type="button"
-            disabled={currentPage >= totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          >
-            Next <i className="fas fa-chevron-right" />
-          </button>
+          {refreshData && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => refreshData()}
+              className="gap-1.5 shrink-0"
+            >
+              <RefreshCwIcon size={14} />
+              <span>Retry</span>
+            </Button>
+          )}
         </div>
       )}
+
+      {/* Loading Skeleton State */}
+      {isLoading && transactions.length === 0 ? (
+        <div className="space-y-6">
+          {[1, 2].map((group) => (
+            <div key={group} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton width={160} height={20} />
+                <Skeleton width={80} height={20} />
+              </div>
+              <div className="bg-surface rounded-card border border-line divide-y divide-line overflow-hidden">
+                {[1, 2, 3].map((row) => (
+                  <div key={row} className="p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Skeleton width={70} height={24} className="rounded-chip" />
+                      <div className="space-y-1.5 flex-1 max-w-sm">
+                        <Skeleton height={16} width="80%" />
+                        <Skeleton height={12} width="40%" />
+                      </div>
+                    </div>
+                    <Skeleton width={90} height={20} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : transactions.length === 0 ? (
+        /* Empty State: No Transactions recorded */
+        <EmptyState
+          title="No transactions yet"
+          description="Add your first transaction to start tracking your income and expenses."
+          action={
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              onClick={handleOpenAdd}
+              className="gap-1.5"
+            >
+              <PlusIcon size={16} />
+              <span>Add your first transaction</span>
+            </Button>
+          }
+        />
+      ) : filtered.length === 0 ? (
+        /* Empty State: No search/filter results */
+        <EmptyState
+          title="No matching transactions"
+          description="No transactions found matching your current search or filter criteria."
+          action={
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={handleClearFilters}
+            >
+              Clear filters
+            </Button>
+          }
+        />
+      ) : (
+        /* Transactions List grouped by Date with Page Change Cross-Fade */
+        <AnimatePresence mode="wait">
+          <m.div
+            key={currentPage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16, ease: EASING.standard }}
+            id="transactionsList"
+            className="space-y-6"
+          >
+            {groupedTransactions.map((group) => (
+              <div key={group.date} className="space-y-2">
+                {/* Date Header with Day's Total */}
+                <div className="flex items-center justify-between px-1 text-xs font-semibold uppercase tracking-wider text-ink-3">
+                  <span>{group.formattedDate}</span>
+                  <span
+                    className={`tabular-nums ${
+                      group.dayTotal > 0
+                        ? 'text-income'
+                        : group.dayTotal < 0
+                          ? 'text-ink'
+                          : 'text-ink-3'
+                    }`}
+                  >
+                    Day Total: {group.dayTotal > 0 ? '+' : ''}
+                    {formatCurrency(group.dayTotal)}
+                  </span>
+                </div>
+
+                {/* Group Rows Container */}
+                <div className="bg-surface rounded-card border border-line shadow-1 divide-y divide-line overflow-hidden">
+                  {group.items.map((tx) => {
+                    const isIncome = tx.type === 'income';
+                    const amountPrefix = isIncome ? '+' : '-';
+                    const isAuto =
+                      tx.source === 'autopay' || Boolean(tx.autopayId) || tx.isAnomaly === false;
+                    const methodDisplay = tx.paymentMethod
+                      ? tx.paymentMethod.replace(/_/g, ' ')
+                      : 'cash';
+
+                    return (
+                      <m.div
+                        layout
+                        transition={{ layout: { duration: 0.24, ease: [0.2, 0, 0, 1] } }}
+                        key={tx.id}
+                        className="group relative p-3.5 sm:px-5 hover:bg-surface-2/60 transition-colors duration-fast"
+                      >
+                        {/* ====================================================================
+                            Desktop Layout (>= 641px): Single-Line Row
+                            ==================================================================== */}
+                        <div className="hidden sm:flex items-center justify-between gap-4">
+                          {/* Left: Badge, Description, Payment Method, Auto Tag */}
+                          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                            <Badge category={tx.category}>{tx.category}</Badge>
+                            <span className="text-sm font-medium text-ink truncate max-w-xs md:max-w-md">
+                              {tx.description || tx.category}
+                            </span>
+                            <span className="text-xs text-ink-3 capitalize shrink-0">
+                              {methodDisplay}
+                            </span>
+                            {isAuto && tx.source === 'autopay' && (
+                              <span className="px-1.5 py-0.5 rounded-chip text-[10px] font-semibold bg-accent-tint text-accent shrink-0 uppercase tracking-wide">
+                                Auto
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Right: Tabular Amount & Row Actions (Hover on Desktop) */}
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span
+                              className={`text-sm font-semibold tabular-nums ${
+                                isIncome ? 'text-income' : 'text-ink'
+                              }`}
+                            >
+                              {amountPrefix}
+                              {formatCurrency(tx.amount)}
+                            </span>
+
+                            {/* Row Action Buttons: Fade in on hover via @media (hover: hover) */}
+                            <div className="row-action-btn flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => handleOpenEdit(tx, e)}
+                                title="Edit transaction"
+                                aria-label={`Edit ${tx.category} transaction`}
+                                className="p-1.5 rounded-chip text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                              >
+                                <EditIcon size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteWithUndo(tx)}
+                                title="Delete transaction"
+                                aria-label={`Delete ${tx.category} transaction`}
+                                className="p-1.5 rounded-chip text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
+                              >
+                                <TrashIcon size={15} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ====================================================================
+                            Mobile Layout (< 641px): Two-Line Card
+                            Line 1: Category Badge + Description (left), Tabular Amount (right)
+                            Line 2: Payment Method + Auto tag (left), Edit & Delete buttons (right)
+                            ==================================================================== */}
+                        <div className="flex sm:hidden flex-col gap-2">
+                          {/* Line 1 */}
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <Badge category={tx.category}>{tx.category}</Badge>
+                              <span className="text-sm font-medium text-ink truncate">
+                                {tx.description || tx.category}
+                              </span>
+                            </div>
+                            <span
+                              className={`text-sm font-semibold tabular-nums shrink-0 ${
+                                isIncome ? 'text-income' : 'text-ink'
+                              }`}
+                            >
+                              {amountPrefix}
+                              {formatCurrency(tx.amount)}
+                            </span>
+                          </div>
+
+                          {/* Line 2 */}
+                          <div className="flex items-center justify-between gap-2 text-xs text-ink-3 pt-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="capitalize">{methodDisplay}</span>
+                              {isAuto && tx.source === 'autopay' && (
+                                <span className="px-1.5 py-0.5 rounded-chip text-[10px] font-semibold bg-accent-tint text-accent uppercase tracking-wide">
+                                  Auto
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Mobile action buttons (always visible on touch) */}
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={(e) => handleOpenEdit(tx, e)}
+                                title="Edit transaction"
+                                aria-label={`Edit ${tx.category} transaction`}
+                                className="p-1 rounded-chip text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors duration-fast"
+                              >
+                                <EditIcon size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteWithUndo(tx)}
+                                title="Delete transaction"
+                                aria-label={`Delete ${tx.category} transaction`}
+                                className="p-1 rounded-chip text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors duration-fast"
+                              >
+                                <TrashIcon size={15} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </m.div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </m.div>
+        </AnimatePresence>
+      )}
+
+      {/* Pagination Controls */}
+      {totalItems > 10 && (
+        <div
+          id="txPagination"
+          className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-line text-sm"
+        >
+          {/* Range label per SPEC section 5: e.g. 11–20 of 87 */}
+          <div id="txPageInfo" className="text-ink-3 text-xs sm:text-sm tabular-nums">
+            {(currentPage - 1) * 10 + 1}–{Math.min(currentPage * 10, totalItems)} of {totalItems}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              id="txPrevPage"
+              type="button"
+              variant="secondary"
+              size="md"
+              disabled={currentPage <= 1}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              className="gap-1"
+            >
+              <ChevronLeftIcon size={16} />
+              <span>Previous</span>
+            </Button>
+
+            <Button
+              id="txNextPage"
+              type="button"
+              variant="secondary"
+              size="md"
+              disabled={currentPage >= totalPages}
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+              className="gap-1"
+            >
+              <span>Next</span>
+              <ChevronRightIcon size={16} />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Slide-Over & Bottom Sheet */}
+      <TransactionSlideOver
+        isOpen={isSlideOverOpen}
+        onClose={() => {
+          setIsSlideOverOpen(false);
+          setEditingTransaction(null);
+        }}
+        initialData={editingTransaction}
+        triggerElement={slideOverTrigger}
+      />
     </div>
   );
 }
+
+export default TransactionsTab;

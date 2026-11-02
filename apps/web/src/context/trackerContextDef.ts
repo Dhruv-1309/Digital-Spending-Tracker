@@ -22,6 +22,10 @@ export interface TrackerContextValue {
   refreshData?: () => Promise<void>;
   pendingSyncCount?: number;
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt'>) => Promise<boolean>;
+  updateTransaction?: (
+    id: string,
+    tx: Partial<Omit<Transaction, 'id' | 'createdAt'>>,
+  ) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
   importTransactions: (newTxs: Transaction[]) => Promise<boolean>;
   addCustomCategory: (type: TransactionType, name: string) => Promise<boolean>;

@@ -1,8 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
-import { CustomSelect } from '../common/CustomSelect';
-import { CustomDatePicker } from '../common/CustomDatePicker';
+import { AmountInput } from '../ui/AmountInput';
+import { SegmentedControl } from '../ui/SegmentedControl';
+import { Dropdown } from '../ui/Dropdown';
+import { DatePicker } from '../ui/DatePicker';
+import { TextInput } from '../ui/TextInput';
+import { Button } from '../ui/Button';
+import { PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
 import type { TransactionType, PaymentMethod } from '../../types';
@@ -16,40 +21,98 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-export function AddTransactionTab() {
-  const { categories, addTransaction, addCustomCategory } = useTracker();
+const LAST_CAT_EXPENSE = 'moneytracker_last_cat_expense';
+const LAST_CAT_INCOME = 'moneytracker_last_cat_income';
+const LAST_METHOD_EXPENSE = 'moneytracker_last_method_expense';
+const LAST_METHOD_INCOME = 'moneytracker_last_method_income';
+
+export interface AddTransactionTabProps {
+  onSuccess?: () => void;
+}
+
+export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
+  const { categories, addTransaction, addCustomCategory, setCurrentTab } = useTracker();
   const { showToast } = useToast();
 
+  const amountRef = useRef<HTMLInputElement>(null);
   const getTodayString = () => new Date().toISOString().split('T')[0];
 
-  const [amount, setAmount] = useState<string>('');
-  const [type, setType] = useState<TransactionType | ''>('expense');
+  const [type, setType] = useState<TransactionType>('expense');
+  const [amountStr, setAmountStr] = useState<string>('');
+  const [numericAmount, setNumericAmount] = useState<number>(0);
   const [date, setDate] = useState<string>(getTodayString);
-  const [category, setCategory] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<string>('card');
+  const [category, setCategory] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem(LAST_CAT_EXPENSE) || '';
+    } catch {
+      return '';
+    }
+  });
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem(LAST_METHOD_EXPENSE) || 'card';
+    } catch {
+      return 'card';
+    }
+  });
   const [description, setDescription] = useState<string>('');
   const [customCatInput, setCustomCatInput] = useState<string>('');
+  const [showCustomCat, setShowCustomCat] = useState<boolean>(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Dynamic categories for selected type
+  useEffect(() => {
+    amountRef.current?.focus();
+  }, []);
+
+  // Available categories for selected type
   const availableCategories = useMemo(() => {
     if (!type) return [];
     const list = getAllCategories(categories, type);
-    return list.map((cat) => ({ value: cat, label: cat }));
+    const unique = Array.from(new Set(list));
+    return unique.map((cat) => ({ value: cat, label: cat }));
   }, [categories, type]);
 
-  const handleTypeChange = (newType: string) => {
-    setType(newType as TransactionType);
-    setCategory('');
+  const handleTypeChange = (newTypeStr: string) => {
+    const newType = newTypeStr as TransactionType;
+    setType(newType);
+
+    try {
+      const catKey = newType === 'income' ? LAST_CAT_INCOME : LAST_CAT_EXPENSE;
+      const methodKey = newType === 'income' ? LAST_METHOD_INCOME : LAST_METHOD_EXPENSE;
+      const rememberedCat = sessionStorage.getItem(catKey) || '';
+      const rememberedMethod =
+        sessionStorage.getItem(methodKey) || (newType === 'income' ? 'bank_transfer' : 'card');
+      setCategory(rememberedCat);
+      setPaymentMethod(rememberedMethod);
+    } catch {
+      setCategory('');
+    }
+
     setErrors((prev) => ({ ...prev, type: '', category: '' }));
   };
 
+  const validateField = (field: 'amount' | 'category' | 'date' | 'paymentMethod', val?: unknown) => {
+    const amt = field === 'amount' ? (typeof val === 'number' ? val : numericAmount) : numericAmount;
+    const cat = field === 'category' ? String(val ?? category) : category;
+    const dt = field === 'date' ? String(val ?? date) : date;
+    const pm = field === 'paymentMethod' ? String(val ?? paymentMethod) : paymentMethod;
+
+    const validation = validateTransactionForm({
+      amount: amt > 0 ? String(amt) : '',
+      type,
+      date: dt,
+      category: cat,
+      paymentMethod: pm,
+    });
+
+    setErrors((prev) => ({
+      ...prev,
+      [field]: validation.errors[field] || '',
+    }));
+  };
+
   const handleAddCustomCategory = async () => {
-    if (!type) {
-      showToast('Please select a transaction type first.', 'warning');
-      return;
-    }
     const trimmed = customCatInput.trim();
     if (!trimmed) {
       showToast('Please enter a category name.', 'warning');
@@ -60,17 +123,20 @@ export function AddTransactionTab() {
     if (success) {
       setCategory(trimmed);
       setCustomCatInput('');
+      setShowCustomCat(false);
+      setErrors((prev) => ({ ...prev, category: '' }));
       showToast(`Category "${trimmed}" added successfully.`, 'success');
     } else {
       showToast(`Category "${trimmed}" already exists.`, 'info');
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
+    const amtStr = numericAmount > 0 ? String(numericAmount) : amountStr.trim();
     const validation = validateTransactionForm({
-      amount,
+      amount: amtStr,
       type,
       date,
       category,
@@ -83,11 +149,20 @@ export function AddTransactionTab() {
     }
 
     try {
-      setErrors({});
       setIsSubmitting(true);
+
+      try {
+        const catKey = type === 'income' ? LAST_CAT_INCOME : LAST_CAT_EXPENSE;
+        const methodKey = type === 'income' ? LAST_METHOD_INCOME : LAST_METHOD_EXPENSE;
+        sessionStorage.setItem(catKey, category);
+        sessionStorage.setItem(methodKey, paymentMethod);
+      } catch {
+        // sessionStorage unavailable
+      }
+
       await addTransaction({
-        amount: parseFloat(amount),
-        type: type as TransactionType,
+        amount: numericAmount,
+        type,
         date,
         category,
         paymentMethod,
@@ -97,166 +172,205 @@ export function AddTransactionTab() {
 
       showToast('Transaction saved successfully.', 'success');
 
-      // Reset form fields
-      setAmount('');
+      // Reset
+      setAmountStr('');
+      setNumericAmount(0);
       setDescription('');
       setDate(getTodayString());
-      setCategory('');
+
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        setCurrentTab('transactions');
+      }
     } catch (err: unknown) {
-      const e = err as { message?: string };
-      showToast(e.message || 'Failed to save transaction.', 'error');
+      const error = err as { message?: string };
+      showToast(error.message || 'Failed to save transaction.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div id="add-transaction" className="tab-content active">
-      <div className="add-transaction-container">
-        <div className="form-header">
-          <h3>
-            <i className="fas fa-plus-circle" /> New Transaction
-          </h3>
-          <p>Enter the details of your transaction below</p>
+    <div id="add-transaction" className="tab-content active max-w-xl mx-auto py-4">
+      <div className="bg-surface rounded-card border border-line p-6 shadow-1">
+        <div className="mb-6">
+          <h2 className="font-display text-2xl font-semibold text-ink">Add Transaction</h2>
+          <p className="text-sm text-ink-3 mt-1">Enter the details of your transaction below</p>
         </div>
 
-        <form id="transactionForm" className="modern-form" onSubmit={handleSubmit}>
-          {/* Amount Section - Prominent */}
-          <div className="amount-input-group">
-            <label htmlFor="amount">Amount</label>
-            <div className={`amount-wrapper ${errors.amount ? 'has-error' : ''}`}>
-              <span className="currency-symbol">₹</span>
-              <input
-                type="number"
-                id="amount"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setErrors((prev) => ({ ...prev, amount: '' }));
-                }}
-                required
-              />
-            </div>
-            {errors.amount && <span className="field-error">{errors.amount}</span>}
+        <form
+          id="transactionForm"
+          onSubmit={handleSubmit}
+          className="space-y-5"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              const target = e.target as HTMLElement;
+              if (target.tagName !== 'BUTTON' && !showCustomCat) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }
+          }}
+        >
+          {/* Type Toggle */}
+          <div>
+            <SegmentedControl
+              id="type"
+              value={type}
+              onChange={handleTypeChange}
+              options={[
+                { value: 'expense', label: 'Expense' },
+                { value: 'income', label: 'Income' },
+              ]}
+            />
           </div>
 
-          <div className="form-grid-2">
-            <div className="form-group">
-              <label htmlFor="type">Transaction Type</label>
-              <CustomSelect
-                id="type"
-                value={type}
-                onChange={handleTypeChange}
-                options={[
-                  { value: 'income', label: 'Income', icon: 'fa-arrow-up' },
-                  { value: 'expense', label: 'Expense', icon: 'fa-arrow-down' },
-                ]}
-                placeholder="Select Type"
-                hasError={Boolean(errors.type)}
-              />
-              {errors.type && <span className="field-error">{errors.type}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="date">Date</label>
-              <CustomDatePicker
-                id="date"
-                value={date}
-                onChange={(newDate) => {
-                  setDate(newDate);
-                  setErrors((prev) => ({ ...prev, date: '' }));
-                }}
-                hasError={Boolean(errors.date)}
-              />
-              {errors.date && <span className="field-error">{errors.date}</span>}
-            </div>
+          {/* Amount Section */}
+          <div>
+            <AmountInput
+              ref={amountRef}
+              id="amount"
+              label="Amount"
+              value={amountStr}
+              onChange={(formatted, num) => {
+                setAmountStr(formatted);
+                setNumericAmount(num);
+                if (errors.amount) validateField('amount', num);
+              }}
+              onBlur={() => validateField('amount', numericAmount)}
+              error={errors.amount}
+              placeholder="0.00"
+              required
+            />
           </div>
 
-          <div className="form-grid-2">
-            <div className="form-group">
-              <label htmlFor="category">Category</label>
-              <CustomSelect
-                id="category"
-                value={category}
-                onChange={(newCat) => {
-                  setCategory(newCat);
-                  setErrors((prev) => ({ ...prev, category: '' }));
-                }}
-                options={availableCategories}
-                placeholder="Select Category"
-                hasError={Boolean(errors.category)}
-              />
-              {errors.category && <span className="field-error">{errors.category}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="paymentMethod">Payment Method</label>
-              <CustomSelect
-                id="paymentMethod"
-                value={paymentMethod}
-                onChange={(newMethod) => {
-                  setPaymentMethod(newMethod);
-                  setErrors((prev) => ({ ...prev, paymentMethod: '' }));
-                }}
-                options={PAYMENT_METHODS}
-                placeholder="Select Method"
-                hasError={Boolean(errors.paymentMethod)}
-              />
-              {errors.paymentMethod && (
-                <span className="field-error">{errors.paymentMethod}</span>
-              )}
-            </div>
+          {/* Date Picker */}
+          <div>
+            <DatePicker
+              id="date"
+              label="Date"
+              value={date}
+              onChange={(newDate) => {
+                setDate(newDate);
+                if (errors.date) validateField('date', newDate);
+              }}
+              hasError={Boolean(errors.date)}
+              errorMessage={errors.date}
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <div className="input-with-icon">
-              <i className="fas fa-align-left" />
-              <input
-                type="text"
-                id="description"
-                placeholder="What was this for?"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-          </div>
+          {/* Category Dropdown & Custom Category */}
+          <div className="space-y-2">
+            <Dropdown
+              id="category"
+              label="Category"
+              value={category}
+              options={availableCategories}
+              placeholder="Select Category"
+              onChange={(val) => {
+                setCategory(val);
+                if (errors.category) validateField('category', val);
+              }}
+              hasError={Boolean(errors.category)}
+              errorMessage={errors.category}
+            />
 
-          {/* Custom Category Section */}
-          <div className="custom-category-section">
-            <div className="divider">
-              <span>or add new category</span>
-            </div>
-            <div className="custom-category-input-group">
-              <input
-                type="text"
-                id="customCategory"
-                placeholder="New category name"
-                value={customCatInput}
-                onChange={(e) => setCustomCatInput(e.target.value)}
-              />
+            {!showCustomCat ? (
               <button
                 type="button"
-                className="btn-secondary-action"
-                onClick={handleAddCustomCategory}
+                onClick={() => setShowCustomCat(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline focus-visible:outline-none"
               >
-                <i className="fas fa-plus" /> Add
+                <PlusIcon size={13} />
+                <span>Add custom category</span>
               </button>
-            </div>
+            ) : (
+              <div className="p-3 bg-surface-2/60 rounded-btn border border-line space-y-2">
+                <span className="text-caption font-medium text-ink-2 block">
+                  New {type} category:
+                </span>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    id="customCategory"
+                    placeholder="New category name"
+                    value={customCatInput}
+                    onChange={(e) => setCustomCatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomCategory();
+                      }
+                    }}
+                    className="flex-1 h-9 px-3 text-sm bg-surface rounded-btn border border-line focus:outline-none focus:border-accent"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    onClick={handleAddCustomCategory}
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    onClick={() => setShowCustomCat(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
-          <button
-            type="submit"
-            className="btn-submit-transaction"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Saving Transaction...' : 'Save Transaction'}
-          </button>
+          {/* Payment Method Dropdown */}
+          <div>
+            <Dropdown
+              id="paymentMethod"
+              label="Payment Method"
+              value={paymentMethod}
+              options={PAYMENT_METHODS}
+              placeholder="Select Method"
+              onChange={(val) => {
+                setPaymentMethod(val);
+                if (errors.paymentMethod) validateField('paymentMethod', val);
+              }}
+              hasError={Boolean(errors.paymentMethod)}
+              errorMessage={errors.paymentMethod}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <TextInput
+              id="description"
+              label="Description (Optional)"
+              placeholder="What was this for?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <div className="pt-2">
+            <Button
+              id="submitTransactionBtn"
+              type="submit"
+              variant="primary"
+              size="lg"
+              loading={isSubmitting}
+              className="w-full justify-center"
+            >
+              Save Transaction
+            </Button>
+          </div>
         </form>
       </div>
     </div>
   );
 }
+
+export default AddTransactionTab;

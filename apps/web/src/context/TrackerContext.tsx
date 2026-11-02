@@ -340,6 +340,56 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     [user, transactions, refreshQueueCount, triggerDrain, showToast],
   );
 
+  // Transactions: Update
+  const updateTransaction = useCallback(
+    async (
+      id: string,
+      updates: Partial<Omit<Transaction, 'id' | 'createdAt'>>,
+    ): Promise<boolean> => {
+      if (!user) return false;
+
+      const existingIndex = transactions.findIndex((t) => t.id === id);
+      if (existingIndex === -1) return false;
+
+      const existing = transactions[existingIndex];
+      const updatedTx: Transaction = {
+        ...existing,
+        ...updates,
+      };
+
+      const updated = transactions.map((t) => (t.id === id ? updatedTx : t));
+      setTransactions(updated);
+      syncQueue.setCachedData('transactions', updated);
+
+      const opId = generateClientId();
+      const body: Record<string, unknown> = {};
+      if (updates.type !== undefined) body.type = updates.type;
+      if (updates.amount !== undefined) body.amountPaise = rupeesToPaise(updates.amount);
+      if (updates.currency !== undefined) body.currency = updates.currency || 'INR';
+      if (updates.category !== undefined) body.category = updates.category;
+      if (updates.paymentMethod !== undefined) body.paymentMethod = updates.paymentMethod;
+      if (updates.description !== undefined) body.description = updates.description;
+      if (updates.date !== undefined) body.date = updates.date;
+
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: `/transactions/${id}`,
+        method: 'PATCH',
+        body,
+        entityType: 'transaction',
+        entityId: id,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return true;
+    },
+    [user, transactions, refreshQueueCount, triggerDrain],
+  );
+
   // Transactions: Delete
   const deleteTransaction = useCallback(
     async (id: string): Promise<boolean> => {
@@ -661,6 +711,7 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         refreshData: fetchData,
         pendingSyncCount,
         addTransaction,
+        updateTransaction,
         deleteTransaction,
         importTransactions,
         addCustomCategory,
