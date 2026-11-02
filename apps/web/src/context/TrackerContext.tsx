@@ -43,6 +43,7 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
   });
   const [isOnline, setIsOnline] = useState<boolean>(checkOnline());
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
 
   const lastSyncCursorRef = useRef<string | null>(null);
@@ -159,99 +160,88 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   // Load user data when user changes
-  useEffect(() => {
-    let isMounted = true;
+  const fetchData = useCallback(async () => {
+    if (!user) {
+      setTransactions([]);
+      setCategories(DEFAULT_CATEGORIES);
+      setApprovedAnomalies([]);
+      setAutopays([]);
+      setBudgetGoal({ monthlyExpenseLimit: 0, thresholdPercent: 80 });
+      setIsLoading(false);
+      setLoadError(null);
+      setPendingSyncCount(0);
+      return;
+    }
 
-    async function fetchData() {
-      if (!user) {
-        if (isMounted) {
-          setTransactions([]);
-          setCategories(DEFAULT_CATEGORIES);
-          setApprovedAnomalies([]);
-          setAutopays([]);
-          setBudgetGoal({ monthlyExpenseLimit: 0, thresholdPercent: 80 });
-          setIsLoading(false);
-          setPendingSyncCount(0);
-        }
-        return;
-      }
+    setIsLoading(true);
+    setLoadError(null);
 
-      setIsLoading(true);
+    // 1. First load from local offline cache for instant rendering
+    try {
+      const [cachedTxs, cachedCats, cachedAutopays, cachedBudget, cachedCursor] = await Promise.all([
+        syncQueue.getCachedData<Transaction[]>('transactions'),
+        syncQueue.getCachedData<CategoriesMap>('categories'),
+        syncQueue.getCachedData<AutopayPlan[]>('autopays'),
+        syncQueue.getCachedData<BudgetGoal>('budgetGoal'),
+        syncQueue.getCachedData<string>('lastSyncCursor'),
+      ]);
 
-      // 1. First load from local offline cache for instant rendering
+      if (cachedTxs) setTransactions(cachedTxs);
+      if (cachedCats) setCategories(cachedCats);
+      if (cachedAutopays) setAutopays(cachedAutopays);
+      if (cachedBudget) setBudgetGoal(cachedBudget);
+      if (cachedCursor) lastSyncCursorRef.current = cachedCursor;
+      await refreshQueueCount();
+    } catch {
+      // Cache read fallback
+    }
+
+    // 2. Fetch fresh data from API if online
+    if (checkOnline()) {
       try {
-        const [cachedTxs, cachedCats, cachedAutopays, cachedBudget, cachedCursor] = await Promise.all([
-          syncQueue.getCachedData<Transaction[]>('transactions'),
-          syncQueue.getCachedData<CategoriesMap>('categories'),
-          syncQueue.getCachedData<AutopayPlan[]>('autopays'),
-          syncQueue.getCachedData<BudgetGoal>('budgetGoal'),
-          syncQueue.getCachedData<string>('lastSyncCursor'),
+        const [txsRes, catsRes, anomaliesRes, plansRes, goalRes] = await Promise.all([
+          apiClient.getTransactions({ pageSize: 100 }),
+          apiClient.getCategories(),
+          apiClient.getAnomalies(),
+          apiClient.getAutopays(),
+          apiClient.getBudget(),
         ]);
 
-        if (isMounted) {
-          if (cachedTxs) setTransactions(cachedTxs);
-          if (cachedCats) setCategories(cachedCats);
-          if (cachedAutopays) setAutopays(cachedAutopays);
-          if (cachedBudget) setBudgetGoal(cachedBudget);
-          if (cachedCursor) lastSyncCursorRef.current = cachedCursor;
-          await refreshQueueCount();
-        }
-      } catch {
-        // Cache read fallback
-      }
+        const mergedCats: CategoriesMap = {
+          income: Array.from(new Set([...DEFAULT_CATEGORIES.income, ...(catsRes.income || [])])),
+          expense: Array.from(new Set([...DEFAULT_CATEGORIES.expense, ...(catsRes.expense || [])])),
+        };
 
-      // 2. Fetch fresh data from API if online
-      if (checkOnline()) {
-        try {
-          const [txsRes, catsRes, anomaliesRes, plansRes, goalRes] = await Promise.all([
-            apiClient.getTransactions({ pageSize: 100 }),
-            apiClient.getCategories(),
-            apiClient.getAnomalies(),
-            apiClient.getAutopays(),
-            apiClient.getBudget(),
-          ]);
+        const approvedIds = (anomaliesRes || []).filter((a: any) => a.anomaly === 'approved').map((a: any) => a.id);
 
-          if (!isMounted) return;
+        setTransactions(txsRes.items || []);
+        setCategories(mergedCats);
+        setApprovedAnomalies(approvedIds);
+        setAutopays(plansRes || []);
+        setBudgetGoal(goalRes || { monthlyExpenseLimit: 0, thresholdPercent: 80 });
 
-          const mergedCats: CategoriesMap = {
-            income: Array.from(new Set([...DEFAULT_CATEGORIES.income, ...(catsRes.income || [])])),
-            expense: Array.from(new Set([...DEFAULT_CATEGORIES.expense, ...(catsRes.expense || [])])),
-          };
+        // Update local cache
+        await Promise.all([
+          syncQueue.setCachedData('transactions', txsRes.items || []),
+          syncQueue.setCachedData('categories', mergedCats),
+          syncQueue.setCachedData('autopays', plansRes || []),
+          syncQueue.setCachedData('budgetGoal', goalRes || { monthlyExpenseLimit: 0, thresholdPercent: 80 }),
+        ]);
 
-          const approvedIds = (anomaliesRes || []).filter((a: any) => a.anomaly === 'approved').map((a: any) => a.id);
-
-          setTransactions(txsRes.items || []);
-          setCategories(mergedCats);
-          setApprovedAnomalies(approvedIds);
-          setAutopays(plansRes || []);
-          setBudgetGoal(goalRes || { monthlyExpenseLimit: 0, thresholdPercent: 80 });
-
-          // Update local cache
-          await Promise.all([
-            syncQueue.setCachedData('transactions', txsRes.items || []),
-            syncQueue.setCachedData('categories', mergedCats),
-            syncQueue.setCachedData('autopays', plansRes || []),
-            syncQueue.setCachedData('budgetGoal', goalRes || { monthlyExpenseLimit: 0, thresholdPercent: 80 }),
-          ]);
-
-          // Drain any pending sync queue items
-          await triggerDrain();
-        } catch {
-          // Keep offline cached data
-        }
-      }
-
-      if (isMounted) {
-        setIsLoading(false);
+        // Drain any pending sync queue items
+        await triggerDrain();
+      } catch (err: any) {
+        console.warn('Failed to fetch data from API:', err);
+        setLoadError(err?.message || 'Failed to load data from server.');
       }
     }
 
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
+    setIsLoading(false);
   }, [user, triggerDrain, refreshQueueCount]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Subscribe to network online/offline events & window focus
   useEffect(() => {
@@ -667,6 +657,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         budgetGoal,
         isOnline,
         isLoading,
+        loadError,
+        refreshData: fetchData,
         pendingSyncCount,
         addTransaction,
         deleteTransaction,

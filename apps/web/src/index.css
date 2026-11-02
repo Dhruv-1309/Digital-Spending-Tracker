@@ -97,8 +97,45 @@
   animation: routeCrossFade 160ms cubic-bezier(0.2, 0, 0, 1) forwards;
 }
 
+/* Section Entrance Choreography (SPEC Section 4 rule 5) */
+@keyframes sectionEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-section-entrance {
+  animation: sectionEntrance var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* Anomaly Banner Entrance (SPEC Section 4) */
+@keyframes bannerEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-banner-entrance {
+  animation: bannerEntrance var(--dur-base) var(--ease-out) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .route-fade-content {
+  .route-fade-content,
+  .animate-section-entrance,
+  .animate-banner-entrance {
     animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
 }

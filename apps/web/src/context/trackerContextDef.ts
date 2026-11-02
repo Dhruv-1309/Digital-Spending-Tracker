@@ -18,6 +18,8 @@ export interface TrackerContextValue {
   budgetGoal: BudgetGoal;
   isOnline: boolean;
   isLoading: boolean;
+  loadError?: string | null;
+  refreshData?: () => Promise<void>;
   pendingSyncCount?: number;
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt'>) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
