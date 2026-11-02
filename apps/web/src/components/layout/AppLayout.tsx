@@ -50,22 +50,12 @@ export function AppLayout() {
   // Dev preview toggle via URL hash #design
   useEffect(() => {
     const handleHash = () => {
-      setShowDevDesignSystem(window.location.hash === '#design');
+      setShowDevDesignSystem(window.location.hash.startsWith('#design'));
     };
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
-
-  if (!user) {
-    return (
-      <>
-        <ToastContainer />
-        <ConfirmModal />
-        <AuthModal />
-      </>
-    );
-  }
 
   if (showDevDesignSystem) {
     return (
@@ -78,6 +68,16 @@ export function AppLayout() {
             setShowDevDesignSystem(false);
           }}
         />
+      </>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <ToastContainer />
+        <ConfirmModal />
+        <AuthModal />
       </>
     );
   }
