@@ -1,7 +1,46 @@
 /**
- * MoneyTracker Design Tokens (SPEC sections 3 and 4)
+ * MoneyTracker Design Tokens & Self-Hosted Font Faces
  * Source of truth: docs/redesign/SPEC.md
  */
+
+/* ==========================================================================
+   Font Faces (Self-hosted WOFF2, SPEC Section 3)
+   ========================================================================== */
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-400-ext.woff2') format('woff2'),
+       url('../assets/fonts/instrument-sans-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-500-ext.woff2') format('woff2'),
+       url('../assets/fonts/instrument-sans-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/instrument-sans-600-ext.woff2') format('woff2'),
+       url('../assets/fonts/instrument-sans-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/bricolage-grotesque-600-ext.woff2') format('woff2'),
+       url('../assets/fonts/bricolage-grotesque-600.woff2') format('woff2');
+}
 
 :root {
   /* ==========================================================================
