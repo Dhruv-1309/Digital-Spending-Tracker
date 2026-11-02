@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
@@ -10,7 +9,6 @@ import {
   filterTransactions,
   exportTransactionsCsv,
   exportTransactionsJson,
-  importTransactionsFromCsv,
 } from '../lib/transactions';
 import type { Transaction, CategoriesMap, AutopayPlan, BudgetGoal } from '../types';
 
