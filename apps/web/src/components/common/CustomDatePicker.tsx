@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { CalendarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '../icons';
 
 export interface CustomDatePickerProps {
   value: string; // YYYY-MM-DD
@@ -226,14 +227,14 @@ export function CustomDatePicker({
         onClick={handleToggle}
         onKeyDown={handleToggle}
       >
-        <i className="fas fa-calendar-alt" />
+        <CalendarIcon size={16} />
         <span
           className={`datepicker-display ${!selectedDate ? 'placeholder' : ''}`}
           id="dateDisplay"
         >
           {formatDisplay()}
         </span>
-        <i className="fas fa-chevron-down datepicker-arrow" />
+        <ChevronDownIcon size={14} className="datepicker-arrow" />
       </div>
 
       <input type="hidden" id={id} value={value} required />
@@ -250,7 +251,7 @@ export function CustomDatePicker({
             aria-label="Previous month"
             onClick={handlePrevMonth}
           >
-            <i className="fas fa-chevron-left" />
+            <ChevronLeftIcon size={16} />
           </button>
           <div className="datepicker-month-year">
             <span id="currentMonth">{MONTH_NAMES[month]}</span>{' '}
@@ -263,7 +264,7 @@ export function CustomDatePicker({
             aria-label="Next month"
             onClick={handleNextMonth}
           >
-            <i className="fas fa-chevron-right" />
+            <ChevronRightIcon size={16} />
           </button>
         </div>
 

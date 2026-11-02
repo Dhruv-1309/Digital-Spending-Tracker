@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { CalendarIcon, ChevronDownIcon } from '../icons';
 
 export interface AutopayDayPickerProps {
   value: number | string; // 1-31 or ''
@@ -84,7 +85,7 @@ export function AutopayDayPicker({
       className={`autopay-day-picker-wrapper ${hasError ? 'has-error' : ''}`}
     >
       <div className="autopay-day-input-container">
-        <i className="fas fa-calendar-day" />
+        <CalendarIcon size={16} />
         <input
           ref={inputRef}
           type="number"
@@ -103,7 +104,7 @@ export function AutopayDayPicker({
           aria-label="Toggle day selector"
           onClick={handleToggle}
         >
-          <i className="fas fa-chevron-down" />
+          <ChevronDownIcon size={14} />
         </button>
       </div>
 

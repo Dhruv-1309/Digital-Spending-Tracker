@@ -227,6 +227,7 @@ export function Dropdown({
         role="combobox"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-label={label ? `${label}, ${displayText}` : displayText}
         onClick={handleToggle}
         onKeyDown={handleTriggerKeyDown}
         className={`h-[44px] w-full rounded-btn bg-surface px-3.5 flex items-center justify-between text-sm font-sans text-ink border transition-[border-color,box-shadow,background-color] duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-45 disabled:cursor-not-allowed disabled:bg-surface-2 ${borderStyles}`}

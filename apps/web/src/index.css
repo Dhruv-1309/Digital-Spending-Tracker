@@ -76,7 +76,7 @@
   background: linear-gradient(
     90deg,
     var(--surface-2) 0%,
-    #E8DFD3 50%,
+    var(--line) 50%,
     var(--surface-2) 100%
   );
   background-size: 200% 100%;
@@ -133,10 +133,12 @@
 @media (prefers-reduced-motion: reduce) {
   .route-fade-content,
   .animate-section-entrance,
-  .animate-banner-entrance {
+  .animate-banner-entrance,
+  .animate-shimmer {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
+    background-image: none !important;
   }
 }
 

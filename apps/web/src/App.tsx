@@ -6,21 +6,33 @@ import { ConfirmProvider } from './context/ConfirmContext';
 import { TrackerProvider } from './context/TrackerContext';
 import { AppLayout } from './components/layout/AppLayout';
 
-// Dev-only route /design, completely pruned from production builds via import.meta.env.DEV
+// Dev-only routes /design and /audit, completely pruned from production builds via import.meta.env.DEV
 const DevDesignPage = import.meta.env.DEV
   ? lazy(() => import('./components/dev/DesignSystemDevPage'))
   : null;
 
-function useIsDesignRoute() {
-  const [isDesign, setIsDesign] = useState(() => {
-    if (!import.meta.env.DEV || typeof window === 'undefined') return false;
-    return window.location.pathname === '/design' || window.location.hash === '#design';
+const DevStateAuditPage = import.meta.env.DEV
+  ? lazy(() => import('./components/dev/StateAuditDevPage'))
+  : null;
+
+function useDevRoute() {
+  const [devRoute, setDevRoute] = useState<'design' | 'audit' | null>(() => {
+    if (!import.meta.env.DEV || typeof window === 'undefined') return null;
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    if (path === '/design' || hash.startsWith('#design')) return 'design';
+    if (path === '/audit' || hash.startsWith('#audit')) return 'audit';
+    return null;
   });
 
   useEffect(() => {
     if (!import.meta.env.DEV || typeof window === 'undefined') return;
     const handleLocationChange = () => {
-      setIsDesign(window.location.pathname === '/design' || window.location.hash === '#design');
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === '/design' || hash.startsWith('#design')) setDevRoute('design');
+      else if (path === '/audit' || hash.startsWith('#audit')) setDevRoute('audit');
+      else setDevRoute(null);
     };
     window.addEventListener('popstate', handleLocationChange);
     window.addEventListener('hashchange', handleLocationChange);
@@ -30,13 +42,23 @@ function useIsDesignRoute() {
     };
   }, []);
 
-  return isDesign;
+  return devRoute;
 }
 
 export function App() {
-  const isDesign = useIsDesignRoute();
+  const devRoute = useDevRoute();
 
-  if (import.meta.env.DEV && isDesign && DevDesignPage) {
+  if (import.meta.env.DEV && devRoute === 'audit' && DevStateAuditPage) {
+    return (
+      <LazyMotion features={domAnimation} strict>
+        <Suspense fallback={<div style={{ padding: 24 }}>Loading state audit...</div>}>
+          <DevStateAuditPage />
+        </Suspense>
+      </LazyMotion>
+    );
+  }
+
+  if (import.meta.env.DEV && devRoute === 'design' && DevDesignPage) {
     return (
       <LazyMotion features={domAnimation} strict>
         <Suspense fallback={<div style={{ padding: 24 }}>Loading design tokens...</div>}>

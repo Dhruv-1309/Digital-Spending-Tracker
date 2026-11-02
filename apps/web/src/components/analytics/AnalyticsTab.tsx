@@ -146,7 +146,7 @@ export function AnalyticsTab() {
           label: 'Daily Expenses',
           data: dailyData.amounts,
           backgroundColor: themeTokens.accent,
-          hoverBackgroundColor: '#1E3FA8',
+          hoverBackgroundColor: themeTokens.accent,
           borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
           borderSkipped: 'bottom' as const,
         },

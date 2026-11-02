@@ -363,12 +363,12 @@ export function AutopayTab() {
                             aria-checked={isActive}
                             aria-label={`${isActive ? 'Pause' : 'Activate'} autopay ${plan.name}`}
                             onClick={() => handleToggle(plan.id)}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-base ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
                               isActive ? 'bg-accent' : 'bg-line-strong'
                             }`}
                           >
                             <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow-1 transition-transform duration-200 ease-standard ${
+                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow-1 transition-transform duration-base duration-200 ease-standard ${
                                 isActive ? 'translate-x-5' : 'translate-x-0'
                               }`}
                             />
@@ -448,7 +448,7 @@ export function AutopayTab() {
                               data-testid={`agenda-countdown-${plan.id}`}
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-chip text-xs font-semibold tabular-nums ${
                                 isToday
-                                  ? 'bg-accent text-white shadow-sm'
+                                  ? 'bg-accent text-white shadow-1'
                                   : 'bg-surface-2 text-ink-2 border border-line'
                               }`}
                             >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useToast } from '../../hooks/useToast';
@@ -54,6 +54,17 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [passError, setPassError] = useState<string | null>(null);
   const [passSuccess, setPassSuccess] = useState<string | null>(null);
   const [passLoading, setPassLoading] = useState(false);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Preserve and restore focus on open/close
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+    } else if (previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [isOpen]);
 
   // Sync display name if user changes
   useEffect(() => {

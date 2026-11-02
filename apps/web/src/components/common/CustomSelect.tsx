@@ -19,18 +19,18 @@ export interface CustomSelectProps {
 }
 
 const defaultIcons: Record<string, string> = {
-  income: 'fa-arrow-up',
-  expense: 'fa-arrow-down',
-  overall: 'fa-chart-line',
-  monthly: 'fa-calendar-alt',
-  yearly: 'fa-calendar',
-  cash: 'fa-money-bill-wave',
-  card: 'fa-credit-card',
-  bank_transfer: 'fa-university',
-  upi: 'fa-mobile-alt',
-  wallet: 'fa-wallet',
-  other: 'fa-ellipsis-h',
-  default: 'fa-tag',
+  income: 'arrow-up',
+  expense: 'arrow-down',
+  overall: 'chart-line',
+  monthly: 'calendar-alt',
+  yearly: 'calendar',
+  cash: 'money-bill-wave',
+  card: 'credit-card',
+  bank_transfer: 'university',
+  upi: 'mobile-alt',
+  wallet: 'wallet',
+  other: 'ellipsis-h',
+  default: 'tag',
 };
 
 export function CustomSelect({
@@ -228,7 +228,7 @@ export function CustomSelect({
                 onKeyDown={(e) => handleOptionKeyDown(e, opt.value)}
               >
                 <span className="option-icon">
-                  <i className={`fas ${iconClass}`} />
+                  <span className="option-icon-symbol" data-icon={iconClass} />
                 </span>
                 <span className="option-text">{opt.label}</span>
               </div>

@@ -403,7 +403,8 @@ describe('Redesigned UI Primitives (Phase 2)', () => {
 
       expect(handleChange).toHaveBeenCalled();
       const calledDate = handleChange.mock.calls[0][0];
-      const todayIso = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       expect(calledDate).toBe(todayIso);
       expect(document.activeElement).toBe(trigger);
     });
@@ -426,7 +427,7 @@ describe('Redesigned UI Primitives (Phase 2)', () => {
       expect(handleChange).toHaveBeenCalled();
       const d = new Date();
       d.setDate(d.getDate() - 1);
-      const yesterdayIso = d.toISOString().slice(0, 10);
+      const yesterdayIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       expect(handleChange.mock.calls[0][0]).toBe(yesterdayIso);
     });
 

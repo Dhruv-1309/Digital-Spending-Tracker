@@ -57,6 +57,7 @@ export function ProgressBar({
       {/* 8px Track */}
       <div
         role="progressbar"
+        aria-label={label || 'Budget progress'}
         aria-valuenow={Math.round(value)}
         aria-valuemin={0}
         aria-valuemax={max}
