@@ -1,4 +1,5 @@
 import React from 'react';
+import emptyShapeUrl from '../../assets/art/empty-shape.svg';
 
 export interface EmptyStateProps {
   title: string;
@@ -9,27 +10,18 @@ export interface EmptyStateProps {
 }
 
 /**
- * Default Warm Palette SVG Illustration
+ * Default Warm Palette SVG Illustration using empty-shape.svg
  */
 function DefaultWarmIllustration() {
   return (
-    <svg
+    <img
+      src={emptyShapeUrl}
+      alt=""
       width="120"
       height="120"
-      viewBox="0 0 120 120"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+      className="w-28 h-28 object-contain"
       aria-hidden="true"
-      className="text-ink-3"
-    >
-      <circle cx="60" cy="60" r="50" fill="var(--surface-2)" />
-      <path
-        d="M40 70C40 58.9543 48.9543 50 60 50C71.0457 50 80 58.9543 80 70H40Z"
-        fill="var(--accent-tint)"
-      />
-      <circle cx="60" cy="42" r="10" fill="var(--line-strong)" />
-      <rect x="48" y="74" width="24" height="4" rx="2" fill="var(--line)" />
-    </svg>
+    />
   );
 }
 

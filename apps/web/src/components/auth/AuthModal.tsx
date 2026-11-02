@@ -1,14 +1,51 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
+import { Button } from '../ui/Button';
+import { TextInput } from '../ui/TextInput';
+import { SegmentedControl } from '../ui/SegmentedControl';
+import {
+  GoogleIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LockIcon,
+  MailIcon,
+  AlertCircleIcon,
+  CheckCircleIcon,
+  WalletIcon,
+  ArrowRightIcon,
+  ShieldIcon,
+} from '../icons';
+import authWaveUrl from '../../assets/art/auth-wave.svg';
 
+/**
+ * AuthModal (Phase 8: Auth Redesign - SPEC Section 6)
+ *
+ * 1. Auth layout: on desktop a split screen. The left panel shows src/assets/art/auth-wave.svg
+ *    over the --bg colour with the product name and one line taken from the PRD vision:
+ *    "No trackers, no bank logins." On phones the panel shrinks to a header strip.
+ * 2. Form: one form for sign in and sign up with a two-option SegmentedControl switching between them.
+ *    Email and password TextInputs with labels above, a show and hide password button,
+ *    inline errors with the existing shake, and a primary Button with the loading state.
+ *    Google sign-in is a full-width secondary button with the standard Google mark.
+ * 3. Password reset opens inline under the form (not a separate view), with the same input
+ *    and button components, and success and error toasts as today.
+ */
 export function AuthModal() {
-  const { signInWithEmail, signInWithGoogle, sendPasswordReset } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle, sendPasswordReset } = useAuth();
+  const { showToast } = useToast();
 
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Inline Password Reset state
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   const [statusMessage, setStatusMessage] = useState<{
     text: string;
@@ -38,10 +75,17 @@ export function AuthModal() {
     try {
       setStatusMessage(null);
       setLoading(true);
-      await signInWithEmail(cleanEmail, password);
+      if (authMode === 'signup') {
+        await signUpWithEmail(cleanEmail, password);
+      } else {
+        await signInWithEmail(cleanEmail, password);
+      }
     } catch (err: unknown) {
       const e = err as { message?: string };
-      triggerError(e.message || 'Authentication failed');
+      triggerError(
+        e.message ||
+          (authMode === 'signup' ? 'Registration failed' : 'Authentication failed')
+      );
     } finally {
       setLoading(false);
     }
@@ -60,223 +104,268 @@ export function AuthModal() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    const cleanEmail = email.trim();
+  const handleForgotPassword = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanEmail = (resetEmail || email).trim();
     if (!cleanEmail) {
-      triggerError('Please enter your email address first');
+      showToast('Please enter your email address for password reset', 'error');
+      triggerError('Please enter your email address for password reset');
       return;
     }
 
     try {
       setStatusMessage(null);
+      setResetLoading(true);
       await sendPasswordReset(cleanEmail);
+      showToast('Password reset email sent! Check your inbox.', 'success');
       triggerSuccess('Password reset email sent! Check your inbox.');
+      setIsResetOpen(false);
     } catch (err: unknown) {
       const e = err as { message?: string };
-      triggerError(e.message || 'Failed to send password reset email');
+      const msg = e.message || 'Failed to send password reset email';
+      showToast(msg, 'error');
+      triggerError(msg);
+    } finally {
+      setResetLoading(false);
     }
   };
 
   return (
-    <div id="authModal" className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden">
-      {/* Animated Background with colorful blobs */}
-      <div className="absolute inset-0 bg-slate-100/80">
-        <div className="absolute top-[-10%] left-[-5%] w-80 h-80 bg-purple-300/60 rounded-full filter blur-3xl animate-blob" />
-        <div className="absolute top-[-5%] right-[-5%] w-96 h-96 bg-yellow-300/60 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-[10%] left-[5%] w-80 h-80 bg-pink-300/60 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
-        <div className="absolute bottom-[20%] right-[5%] w-72 h-72 bg-blue-300/60 rounded-full filter blur-3xl animate-blob animation-delay-6000" />
-      </div>
+    <div
+      id="authModal"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 bg-ink/50 backdrop-blur-sm overflow-y-auto"
+    >
+      {/* Split Layout Modal Card */}
+      <div className="relative bg-surface rounded-card border border-line shadow-3 w-full max-w-4xl overflow-hidden flex flex-col md:flex-row my-auto">
+        {/* Left Panel: Desktop Split Screen / Mobile Header Strip */}
+        <div className="relative w-full md:w-5/12 bg-bg p-6 sm:p-8 md:p-10 flex flex-col justify-between shrink-0 border-b md:border-b-0 md:border-r border-line overflow-hidden">
+          {/* Layered Wave SVG Art over --bg */}
+          <img
+            id="authWaveImg"
+            src={authWaveUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-85"
+            aria-hidden="true"
+          />
 
-      {/* Auth Card */}
-      <div className="relative bg-white p-8 md:p-10 rounded-3xl shadow-xl w-full max-w-md mx-4 animate-fadeInUp">
-        {/* Header with icon */}
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <i className="fas fa-arrow-right text-white text-xl" />
+          {/* Product Name & Brand Icon */}
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-btn bg-accent text-white flex items-center justify-center shadow-1 shrink-0">
+              <WalletIcon size={22} />
+            </div>
+            <div>
+              <span className="font-display text-lg font-bold block text-ink leading-tight">
+                MoneyTracker
+              </span>
+              <span className="text-xs text-ink-3 block">Personal Finance</span>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Sign in with email</h2>
-          <p className="text-slate-500 text-sm">Access your spending dashboard securely.</p>
+
+          {/* PRD Vision Line: "No trackers, no bank logins." */}
+          <div className="relative z-10 my-4 md:my-0">
+            <p className="font-display text-base md:text-xl font-semibold text-ink leading-snug">
+              No trackers, no bank logins.
+            </p>
+            <p className="text-xs text-ink-2 mt-1 hidden md:block">
+              Privacy-first personal finance tracking that stays on your device.
+            </p>
+          </div>
+
+          {/* Security footnote on desktop */}
+          <div className="relative z-10 hidden md:flex items-center gap-2 text-xs text-ink-3">
+            <ShieldIcon size={14} className="text-accent shrink-0" />
+            <span>Client-side privacy & secure sync</span>
+          </div>
         </div>
 
-        {/* Status Alert */}
-        {statusMessage && (
-          <div
-            id="authError"
-            className={`p-4 rounded-xl text-sm mb-6 border flex items-center gap-3 ${
-              statusMessage.type === 'error'
-                ? 'bg-red-50 text-red-600 border-red-100'
-                : 'bg-green-50 text-green-600 border-green-100'
-            } ${isShaking ? 'animate-shake' : ''}`}
-          >
+        {/* Right Panel: Form Area */}
+        <div className="w-full md:w-7/12 p-6 sm:p-8 md:p-10 bg-surface flex flex-col justify-center">
+          {/* Mode Switch: SegmentedControl */}
+          <SegmentedControl
+            id="authModeControl"
+            options={[
+              { value: 'signin', label: 'Sign In' },
+              { value: 'signup', label: 'Sign Up' },
+            ]}
+            value={authMode}
+            onChange={(val) => {
+              setAuthMode(val as 'signin' | 'signup');
+              setStatusMessage(null);
+            }}
+            className="w-full mb-6"
+          />
+
+          {/* Mode Header */}
+          <div className="mb-6">
+            <h2 className="font-display text-xl sm:text-2xl font-semibold text-ink mb-1">
+              {authMode === 'signup' ? 'Create your account' : 'Sign in with email'}
+            </h2>
+            <p className="text-xs sm:text-sm text-ink-2">
+              {authMode === 'signup'
+                ? 'Start tracking your digital spending with zero trackers.'
+                : 'Access your spending dashboard securely.'}
+            </p>
+          </div>
+
+          {/* Status Alert with Shake */}
+          {statusMessage && (
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                statusMessage.type === 'error' ? 'bg-red-100' : 'bg-green-100'
-              }`}
+              id="authError"
+              role={statusMessage.type === 'error' ? 'alert' : 'status'}
+              className={`p-3.5 rounded-btn text-xs sm:text-sm mb-5 border flex items-center gap-2.5 transition-all duration-fast ${
+                statusMessage.type === 'error'
+                  ? 'bg-danger-tint text-danger border-danger/30'
+                  : 'bg-income-tint text-income border-income/30'
+              } ${isShaking ? 'animate-shake' : ''}`}
             >
-              <i
-                className={`fas ${
-                  statusMessage.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'
-                }`}
-              />
-            </div>
-            <span id="authErrorMessage" className="font-medium">
-              {statusMessage.text}
-            </span>
-          </div>
-        )}
-
-        {/* Form */}
-        <form id="authForm" className="space-y-5" onSubmit={handleEmailSubmit}>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">Email</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                <i className="fas fa-envelope text-sm" />
+              <div className="shrink-0">
+                {statusMessage.type === 'error' ? (
+                  <AlertCircleIcon size={18} />
+                ) : (
+                  <CheckCircleIcon size={18} />
+                )}
               </div>
-              <input
-                type="email"
-                id="authEmail"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all duration-200"
-                placeholder="name@example.com"
-              />
+              <span id="authErrorMessage" className="font-medium">
+                {statusMessage.text}
+              </span>
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-slate-700">Password</label>
-              <button
-                type="button"
-                id="forgotPasswordBtn"
-                onClick={handleForgotPassword}
-                className="text-sm text-slate-500 hover:text-blue-600 transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                <i className="fas fa-lock text-sm" />
-              </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="authPassword"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all duration-200"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                id="togglePassword"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`} id="eyeIcon" />
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            id="signInBtn"
-            disabled={loading || googleLoading}
-            className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <span>Signing in...</span>
-                <svg
-                  id="signInSpinner"
-                  className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              </>
-            ) : (
-              <>
-                <span id="signInText">Get Started</span>
-                <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform" id="signInIcon" />
-              </>
-            )}
-          </button>
-        </form>
-
-        <div className="relative flex py-5 items-center">
-          <div className="flex-grow border-t border-slate-200" />
-          <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-medium">Or sign in with</span>
-          <div className="flex-grow border-t border-slate-200" />
-        </div>
-
-        {/* Google Sign In Button */}
-        <button
-          type="button"
-          id="googleSignInBtn"
-          disabled={loading || googleLoading}
-          onClick={handleGoogleSignIn}
-          className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {googleLoading ? (
-            <>
-              <span>Signing in...</span>
-              <svg
-                id="googleSpinner"
-                className="animate-spin h-5 w-5 text-slate-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-            </>
-          ) : (
-            <>
-              <svg id="googleIcon" className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              <span id="googleSignInText">Continue with Google</span>
-            </>
           )}
-        </button>
 
-        <p className="mt-6 text-xs text-slate-400 text-center flex items-center justify-center gap-2">
-          <i className="fas fa-shield-alt text-blue-400" />
-          <span>Your data is encrypted & secure</span>
-        </p>
+          {/* Main Auth Form */}
+          <form id="authForm" onSubmit={handleEmailSubmit} className="space-y-4" noValidate>
+            {/* Email Field */}
+            <TextInput
+              id="authEmail"
+              label="Email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              required
+              leftAddon={<MailIcon size={16} />}
+              hasError={Boolean(statusMessage?.type === 'error')}
+            />
+
+            {/* Password Field */}
+            <TextInput
+              id="authPassword"
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              leftAddon={<LockIcon size={16} />}
+              rightAddon={
+                <button
+                  type="button"
+                  id="togglePassword"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-ink-3 hover:text-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded p-0.5"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon size={18} id="eyeIcon" />
+                  ) : (
+                    <EyeIcon size={18} id="eyeIcon" />
+                  )}
+                </button>
+              }
+              hasError={Boolean(statusMessage?.type === 'error')}
+            />
+
+            {/* Forgot Password Toggle (Sign in mode) */}
+            {authMode === 'signin' && (
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  id="forgotPasswordBtn"
+                  onClick={() => setIsResetOpen((prev) => !prev)}
+                  className="text-xs text-accent hover:underline font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
+                >
+                  {isResetOpen ? 'Close password reset' : 'Forgot password?'}
+                </button>
+              </div>
+            )}
+
+            {/* Submit Primary Button */}
+            <Button
+              type="submit"
+              id="signInBtn"
+              variant="primary"
+              size="lg"
+              loading={loading}
+              disabled={loading || googleLoading}
+              className="w-full justify-center text-sm font-semibold mt-2"
+              icon={<ArrowRightIcon size={16} id="signInIcon" />}
+              iconPosition="right"
+            >
+              <span id="signInText">
+                {authMode === 'signup' ? 'Create Account' : 'Get Started'}
+              </span>
+            </Button>
+          </form>
+
+          {/* Password Reset Sub-panel (opens inline under the form) */}
+          {isResetOpen && (
+            <div
+              id="resetPasswordSection"
+              className="mt-4 p-4 rounded-card bg-surface-2 border border-line space-y-3 animate-fadeIn"
+            >
+              <p className="text-xs sm:text-sm text-ink-2 font-medium">
+                Enter your email to receive a password reset link:
+              </p>
+              <form onSubmit={handleForgotPassword} className="flex flex-col sm:flex-row gap-2.5 items-end sm:items-center">
+                <TextInput
+                  id="resetEmailInput"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={resetEmail || email}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  leftAddon={<MailIcon size={16} />}
+                  containerClassName="flex-1 w-full"
+                />
+                <Button
+                  type="submit"
+                  id="sendResetBtn"
+                  variant="primary"
+                  size="md"
+                  loading={resetLoading}
+                  className="w-full sm:w-auto shrink-0"
+                >
+                  Send Reset Link
+                </Button>
+              </form>
+            </div>
+          )}
+
+          {/* Or Divider */}
+          <div className="relative flex py-5 items-center">
+            <div className="flex-grow border-t border-line" />
+            <span className="shrink-0 mx-3 text-xs text-ink-3">Or continue with</span>
+            <div className="flex-grow border-t border-line" />
+          </div>
+
+          {/* Google Sign In Full-Width Button */}
+          <Button
+            type="button"
+            id="googleSignInBtn"
+            variant="secondary"
+            size="lg"
+            loading={googleLoading}
+            disabled={loading || googleLoading}
+            onClick={handleGoogleSignIn}
+            className="w-full justify-center gap-2.5 font-medium"
+            icon={<GoogleIcon size={18} id="googleIcon" />}
+          >
+            <span id="googleSignInText">Continue with Google</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
+
+export default AuthModal;

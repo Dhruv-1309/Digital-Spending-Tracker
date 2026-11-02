@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none" width="100%" height="100%">
+  <defs>
+    <linearGradient id="wave-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E6EBFB" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#F3EEE6" stop-opacity="0.6" />
+    </linearGradient>
+    <linearGradient id="wave-grad-2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2A4FD6" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FAF7F2" stop-opacity="0.05" />
+    </linearGradient>
+  </defs>
+  <!-- Background fill using palette --bg -->
+  <rect width="800" height="600" fill="#FAF7F2" />
+  <!-- Base subtle wave -->
+  <path d="M0,180 C200,120 320,260 520,200 C680,150 740,220 800,190 L800,600 L0,600 Z" fill="#F3EEE6" />
+  <!-- Mid subtle wave with tint -->
+  <path d="M0,280 C180,220 340,360 560,300 C700,260 760,330 800,310 L800,600 L0,600 Z" fill="url(#wave-grad-1)" />
+  <!-- Accent layered wave -->
+  <path d="M0,380 C160,330 280,440 480,390 C640,350 720,430 800,400 L800,600 L0,600 Z" fill="url(#wave-grad-2)" />
+  <!-- Foreground warm contour -->
+  <path d="M0,470 C220,430 360,520 580,480 C700,460 760,500 800,490 L800,600 L0,600 Z" fill="#E6DFD3" fill-opacity="0.5" />
+</svg>
