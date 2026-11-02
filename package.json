@@ -10,7 +10,9 @@
     "dev:api": "npm --workspace=apps/api run dev",
     "build": "npm run --workspaces --if-present build",
     "test": "npm run --workspaces --if-present test",
-    "lint": "npm run --workspaces --if-present lint"
+    "lint": "npm run --workspaces --if-present lint",
+    "migrate:firestore": "tsx scripts/migrate-firestore-to-postgres.ts",
+    "verify:parity": "tsx scripts/verify-parity.ts"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.5",

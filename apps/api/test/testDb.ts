@@ -61,6 +61,33 @@ export function setupInMemoryPrisma() {
     return user;
   });
 
+  vi.spyOn(prisma.user, 'upsert').mockImplementation(async (args: any) => {
+    let user = inMemoryDb.users.find(
+      (u) =>
+        (args.where.firebaseUid && u.firebaseUid === args.where.firebaseUid) ||
+        (args.where.id && u.id === args.where.id),
+    );
+    if (user) {
+      if (args.update.displayName !== undefined) user.displayName = args.update.displayName;
+      if (args.update.email !== undefined) user.email = args.update.email;
+      if (args.update.timezone !== undefined) user.timezone = args.update.timezone;
+      if (args.update.lastSignIn !== undefined) user.lastSignIn = args.update.lastSignIn;
+    } else {
+      user = {
+        id: args.create.id || randomUUID(),
+        firebaseUid: args.create.firebaseUid,
+        email: args.create.email ?? null,
+        displayName: args.create.displayName ?? null,
+        authMethod: args.create.authMethod || 'password',
+        timezone: args.create.timezone || 'Asia/Kolkata',
+        createdAt: new Date(),
+        lastSignIn: new Date(),
+      };
+      inMemoryDb.users.push(user);
+    }
+    return user;
+  });
+
   vi.spyOn(prisma.user, 'delete').mockImplementation(async (args: any) => {
     const idx = inMemoryDb.users.findIndex((u) => u.id === args.where.id);
     if (idx === -1) throw new Error('User not found');
@@ -107,6 +134,7 @@ export function setupInMemoryPrisma() {
         if (args.where.userId && t.userId !== args.where.userId) return false;
         if (args.where.deletedAt === null && t.deletedAt !== null) return false;
         if (args.where.importHash && t.importHash !== args.where.importHash) return false;
+        if (args.where.legacyId && t.legacyId !== args.where.legacyId) return false;
         return true;
       }) || null
     );
@@ -242,6 +270,28 @@ export function setupInMemoryPrisma() {
     return deleted;
   });
 
+  vi.spyOn(prisma.category, 'upsert').mockImplementation(async (args: any) => {
+    const { userId, name, type } = args.where.userId_name_type;
+    let cat = inMemoryDb.categories.find(
+      (c) => c.userId === userId && c.name.toLowerCase() === name.toLowerCase() && c.type === type,
+    );
+    if (!cat) {
+      cat = {
+        id: args.create.id || randomUUID(),
+        userId,
+        name: args.create.name,
+        type: args.create.type,
+      };
+      inMemoryDb.categories.push(cat);
+    }
+    return cat;
+  });
+
+  vi.spyOn(prisma.category, 'count').mockImplementation(async (args: any = {}) => {
+    const list = await (prisma.category.findMany as any)(args);
+    return list.length;
+  });
+
   // 4. AutopayPlan
   vi.spyOn(prisma.autopayPlan, 'findMany').mockImplementation(async (args: any = {}) => {
     return inMemoryDb.autopayPlans.filter((p) => {
@@ -259,10 +309,17 @@ export function setupInMemoryPrisma() {
       inMemoryDb.autopayPlans.find((p) => {
         if (args.where.id && p.id !== args.where.id) return false;
         if (args.where.userId && p.userId !== args.where.userId) return false;
+        if (args.where.name && p.name !== args.where.name) return false;
+        if (args.where.day && p.day !== args.where.day) return false;
         if (args.where.deletedAt === null && p.deletedAt !== null) return false;
         return true;
       }) || null
     );
+  });
+
+  vi.spyOn(prisma.autopayPlan, 'count').mockImplementation(async (args: any = {}) => {
+    const list = await (prisma.autopayPlan.findMany as any)(args);
+    return list.length;
   });
 
   vi.spyOn(prisma.autopayPlan, 'findUnique').mockImplementation(async (args: any) => {
