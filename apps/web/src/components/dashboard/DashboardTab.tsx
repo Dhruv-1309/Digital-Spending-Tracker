@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
 import { WeeklyActivityChart } from './WeeklyActivityChart';
@@ -6,23 +6,6 @@ import { getCurrentMonthExpenses, evaluateBudgetStatus } from '../../lib/budget'
 import { detectSpendingAnomalies } from '../../lib/anomalies';
 import { formatCurrency } from '../../lib/formatters';
 import { validateBudgetGoalForm } from '../../lib/validation';
-import { Card } from '../common/Card';
-import { Button } from '../common/Button';
-import { TextInput } from '../common/Input';
-import { CategoryBadge } from '../common/Badge';
-import { ProgressBar } from '../common/ProgressBar';
-import { SkeletonCard } from '../common/Skeleton';
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  AlertTriangleIcon,
-  CheckIcon,
-  XIcon,
-  ClockIcon,
-  ChevronRightIcon,
-  PlusIcon,
-  SettingsIcon,
-} from '../common/icons';
 
 export function DashboardTab() {
   const {
@@ -33,7 +16,6 @@ export function DashboardTab() {
     updateBudgetGoal,
     approveAnomaly,
     dismissAnomaly,
-    isLoading,
   } = useTracker();
   const { showToast } = useToast();
 
@@ -61,46 +43,6 @@ export function DashboardTab() {
       currentBalance: income - expense,
     };
   }, [transactions]);
-
-  // Animated Count-Up for Hero Balance (SPEC Rule 7: 800ms requestAnimationFrame ease-out)
-  const [animatedBalance, setAnimatedBalance] = useState<number>(currentBalance);
-  const prevBalanceRef = useRef<number>(currentBalance);
-
-  useEffect(() => {
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion) {
-      setAnimatedBalance(currentBalance);
-      prevBalanceRef.current = currentBalance;
-      return;
-    }
-
-    const startVal = prevBalanceRef.current;
-    const endVal = currentBalance;
-    const duration = 800;
-    const startTime = performance.now();
-
-    const step = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      // easeOutCubic
-      const ease = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(startVal + (endVal - startVal) * ease);
-      setAnimatedBalance(current);
-
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      } else {
-        prevBalanceRef.current = endVal;
-      }
-    };
-
-    const animFrame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animFrame);
-  }, [currentBalance]);
 
   // Current month expenses & budget status
   const currentMonthExpenses = useMemo(
@@ -152,8 +94,8 @@ export function DashboardTab() {
       showToast('Budget goal saved successfully.', 'success');
       setIsBudgetFormOpen(false);
     } catch (err: unknown) {
-      const errorObj = err as { message?: string };
-      showToast(errorObj.message || 'Failed to save budget goal.', 'error');
+      const e = err as { message?: string };
+      showToast(e.message || 'Failed to save budget goal.', 'error');
     } finally {
       setIsSavingBudget(false);
     }
@@ -169,349 +111,344 @@ export function DashboardTab() {
     showToast('Transaction dismissed and removed from your records.', 'success');
   };
 
-  if (isLoading && transactions.length === 0) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <SkeletonCard className="h-64" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <SkeletonCard className="lg:col-span-2 h-80" />
-          <SkeletonCard className="h-80" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div id="dashboard" className="tab-content active space-y-6 animate-fadeIn">
-      {/* 1. Anomaly Banner (Sits above hero when present) */}
-      <div id="anomalyAlertSection">
-        {unapprovedAnomalies.length > 0 && (
-          <div className="space-y-3">
-            {unapprovedAnomalies.map((anomaly) => {
-              const formattedDate = new Date(anomaly.date).toLocaleDateString('en-IN', {
-                month: 'short',
-                day: 'numeric',
-              });
-              const meanVal = anomaly.expectedAmount || 0;
-              const percentAboveMean =
-                meanVal > 0 ? (((anomaly.amount - meanVal) / meanVal) * 100).toFixed(0) : '0';
-
-              return (
-                <div
-                  key={anomaly.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-warning-tint border-l-4 border-warning rounded-r-card shadow-warm-1 text-ink animate-fadeIn"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-full bg-warning/15 text-warning shrink-0 mt-0.5">
-                      <AlertTriangleIcon size={20} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-body-sm text-ink">
-                          Unusual {anomaly.category} spending
-                        </span>
-                        <span className="px-2 py-0.5 rounded-chip text-caption font-semibold bg-white/70 text-warning border border-warning/30">
-                          {percentAboveMean}% above average
-                        </span>
-                      </div>
-                      <p className="text-body-sm text-ink-2 mt-0.5">
-                        <strong className="text-ink">{formatCurrency(anomaly.amount)}</strong> on{' '}
-                        {formattedDate} (typical {anomaly.category}: {formatCurrency(meanVal)})
-                        {anomaly.transaction?.description && ` • "${anomaly.transaction.description}"`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleApproveAnomaly(anomaly.id)}
-                      leftIcon={<CheckIcon size={14} />}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDismissAnomaly(anomaly.id)}
-                      className="text-danger hover:bg-danger-tint"
-                      leftIcon={<XIcon size={14} />}
-                    >
-                      Dismiss
-                    </Button>
-                  </div>
+    <div id="dashboard" className="tab-content active">
+      <div className="dashboard-container">
+        <div className="dashboard-main">
+          {/* Stats Grid */}
+          <div className="stats-grid">
+            <div className="stat-card income">
+              <div className="icon">
+                <i className="fas fa-arrow-up" />
+              </div>
+              <div>
+                <h3>Total Income</h3>
+                <div className="amount" id="totalIncome">
+                  {formatCurrency(totalIncome)}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* 2. Hero Card: Current Balance & Monthly Flow Chips */}
-      <Card className="p-6 md:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-          <div>
-            <span className="text-caption font-medium uppercase tracking-wider text-ink-3">
-              Current Balance
-            </span>
-            <div className="mt-1 flex items-baseline">
-              {/* Screen reader text immediate */}
-              <span className="sr-only" id="balance">
-                {formatCurrency(currentBalance)}
-              </span>
-              {/* Animated display for visual users */}
-              <h1
-                aria-hidden="true"
-                className={`font-display text-hero-mobile sm:text-hero font-semibold tabular-nums leading-none ${
-                  currentBalance < 0 ? 'text-danger' : 'text-ink'
-                }`}
-              >
-                ₹{animatedBalance.toLocaleString('en-IN')}
-              </h1>
-            </div>
-          </div>
-
-          {/* Income and Expense Chips beside hero figure */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Income chip */}
-            <div
-              className="flex items-center gap-2 px-3.5 py-2 rounded-btn bg-income-tint border border-income/20 text-income"
-              id="totalIncome"
-            >
-              <div className="p-1 rounded-full bg-income/15">
-                <ArrowDownIcon size={16} strokeWidth={2.5} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[11px] font-medium leading-none text-income/80">
-                  Total Income
-                </span>
-                <span className="font-semibold text-body-sm tabular-nums leading-snug">
-                  +{formatCurrency(totalIncome)}
-                </span>
               </div>
             </div>
-
-            {/* Expense chip (ink color, not red) */}
-            <div
-              className="flex items-center gap-2 px-3.5 py-2 rounded-btn bg-surface-2 border border-line text-ink"
-              id="totalExpenses"
-            >
-              <div className="p-1 rounded-full bg-surface">
-                <ArrowUpIcon size={16} strokeWidth={2.5} className="text-ink-2" />
+            <div className="stat-card expense">
+              <div className="icon">
+                <i className="fas fa-arrow-down" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[11px] font-medium leading-none text-ink-3">
-                  Total Expenses
-                </span>
-                <span className="font-semibold text-body-sm tabular-nums leading-snug">
+              <div>
+                <h3>Total Expenses</h3>
+                <div className="amount" id="totalExpenses">
                   {formatCurrency(totalExpenses)}
-                </span>
+                </div>
+              </div>
+            </div>
+            <div className="stat-card balance">
+              <div className="icon">
+                <i className="fas fa-wallet" />
+              </div>
+              <div>
+                <h3>Current Balance</h3>
+                <div className="amount" id="balance">
+                  {formatCurrency(currentBalance)}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Budget Bar Section directly under Hero */}
-        <div className="pt-4 border-t border-line space-y-3" id="budgetGoalCard">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-body-sm font-semibold text-ink">Monthly Budget</span>
-              <span
-                id="budgetGoalChip"
-                className={`px-2 py-0.5 rounded-chip text-caption font-semibold ${
-                  budgetStatus.alertLevel === 'critical'
-                    ? 'bg-danger-tint text-danger'
-                    : budgetStatus.alertLevel === 'warning'
-                    ? 'bg-warning-tint text-warning'
-                    : 'bg-income-tint text-income'
-                }`}
+          {/* Monthly Budget Goal Card */}
+          <div className="budget-goal-card dashboard-card" id="budgetGoalCard">
+            <div className="card-header align-between">
+              <h3>
+                <i className="fas fa-bullseye" /> Monthly Budget Goal
+              </h3>
+              <button
+                type="button"
+                className="icon-btn"
+                id="toggleBudgetFormBtn"
+                title="Budget Settings"
+                onClick={() => setIsBudgetFormOpen((prev) => !prev)}
+                style={{
+                  transform: isBudgetFormOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.3s ease',
+                }}
               >
-                {budgetStatus.statusChip}
-              </span>
+                <i className="fas fa-cog" />
+              </button>
             </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsBudgetFormOpen((prev) => !prev)}
-              id="toggleBudgetFormBtn"
-              leftIcon={<SettingsIcon size={15} />}
+            <div
+              className={`budget-goal-progress ${
+                budgetStatus.alertLevel === 'critical'
+                  ? 'over'
+                  : budgetStatus.alertLevel === 'warning'
+                  ? 'warning'
+                  : ''
+              }`}
+              id="budgetGoalProgress"
             >
-              <span>{isBudgetFormOpen ? 'Close Settings' : 'Edit limit'}</span>
-            </Button>
-          </div>
+              <div className="budget-amounts-row">
+                <div className="budget-amount-box">
+                  <span className="budget-amount-label">Spent this month</span>
+                  <span className="budget-amount-value" id="budgetSpentVal">
+                    {formatCurrency(currentMonthExpenses)}
+                  </span>
+                </div>
+                <div className="budget-amount-box" style={{ textAlign: 'right' }}>
+                  <span className="budget-amount-label">Monthly Limit</span>
+                  <span
+                    className={`budget-amount-value ${
+                      !budgetGoal.monthlyExpenseLimit ? 'text-muted' : ''
+                    }`}
+                    id="budgetTotalVal"
+                  >
+                    {budgetGoal.monthlyExpenseLimit > 0
+                      ? formatCurrency(budgetGoal.monthlyExpenseLimit)
+                      : 'Not set'}
+                  </span>
+                </div>
+              </div>
 
-          <div id="budgetGoalProgress" className="space-y-1.5">
-            <div className="flex justify-between items-baseline text-caption font-medium">
-              <span className="text-ink-2">
-                Spent <strong className="text-ink" id="budgetSpentVal">{formatCurrency(currentMonthExpenses)}</strong> of{' '}
-                <span id="budgetTotalVal">
-                  {budgetGoal.monthlyExpenseLimit > 0
-                    ? formatCurrency(budgetGoal.monthlyExpenseLimit)
-                    : 'No limit set'}
+              <div className="budget-progress-track" aria-hidden="true">
+                <div
+                  className="budget-progress-fill"
+                  id="budgetProgressFill"
+                  style={{ width: `${budgetStatus.clampedPercent}%` }}
+                  aria-valuenow={Math.round(budgetStatus.clampedPercent)}
+                />
+              </div>
+
+              <div className="budget-footer-row">
+                <p className="budget-goal-meta" id="budgetGoalMeta">
+                  {budgetStatus.metaText}
+                </p>
+                <span className="budget-goal-chip" id="budgetGoalChip">
+                  {budgetStatus.statusChip}
                 </span>
-              </span>
-              <span className="text-ink-3 tabular-nums" id="budgetGoalMeta">
-                {budgetStatus.metaText}
-              </span>
+              </div>
             </div>
 
-            <ProgressBar
-              value={currentMonthExpenses}
-              max={budgetGoal.monthlyExpenseLimit || currentMonthExpenses || 1}
-              thresholdPercent={budgetGoal.thresholdPercent || 80}
-            />
-          </div>
-
-          {/* In-place Edit Limit Form */}
-          {isBudgetFormOpen && (
             <form
               id="budgetGoalForm"
+              className={`budget-goal-form ${isBudgetFormOpen ? '' : 'hidden-form'}`}
               onSubmit={handleSaveBudget}
-              className="mt-4 p-4 bg-surface-2/60 border border-line rounded-btn space-y-4 animate-fadeIn"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <TextInput
-                  id="budgetMonthlyLimit"
-                  label="Monthly Expense Limit (₹)"
-                  type="number"
-                  placeholder="e.g. 50000"
-                  value={monthlyLimitInput}
-                  onChange={(e) => {
-                    setMonthlyLimitInput(e.target.value);
-                    setBudgetFormErrors((prev) => ({ ...prev, monthlyLimit: '' }));
-                  }}
-                  error={budgetFormErrors.monthlyLimit}
-                />
-                <TextInput
-                  id="budgetAlertThreshold"
-                  label="Alert Threshold (%)"
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={thresholdInput}
-                  onChange={(e) => {
-                    setThresholdInput(e.target.value);
-                    setBudgetFormErrors((prev) => ({ ...prev, thresholdPercent: '' }));
-                  }}
-                  error={budgetFormErrors.thresholdPercent}
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsBudgetFormOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  isLoading={isSavingBudget}
-                >
-                  Save Budget Goal
-                </Button>
-              </div>
-            </form>
-          )}
-        </div>
-      </Card>
-
-      {/* 3. Main Dashboard Grid: Weekly Activity Chart + Recent Transactions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Weekly Activity Line Chart (2 Cols) */}
-        <Card className="lg:col-span-2 p-6 flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 mb-2 border-b border-line">
-            <div>
-              <h2 className="font-display text-section-title font-semibold text-ink">
-                Weekly Activity
-              </h2>
-              <p className="text-caption text-ink-3">7-day cash flow trends</p>
-            </div>
-          </div>
-          <div className="h-64 sm:h-72 w-full pt-2">
-            <WeeklyActivityChart transactions={transactions} />
-          </div>
-        </Card>
-
-        {/* Recent Transactions (1 Col) */}
-        <Card className="p-6 flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-line">
-            <div className="flex items-center gap-2">
-              <ClockIcon size={18} className="text-ink-3" />
-              <h2 className="font-display text-section-title font-semibold text-ink">
-                Recent Transactions
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCurrentTab('transactions')}
-              className="text-body-sm font-semibold text-accent hover:underline flex items-center gap-1 transition-colors"
-            >
-              <span>View all</span>
-              <ChevronRightIcon size={15} />
-            </button>
-          </div>
-
-          <div id="recentTransactions" className="space-y-2 flex-1">
-            {recentTransactions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center text-ink-3">
-                  <ClockIcon size={24} />
-                </div>
-                <p className="text-body-sm text-ink-2">No recent activity yet.</p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCurrentTab('add-transaction')}
-                  leftIcon={<PlusIcon size={15} />}
-                >
-                  Add your first transaction
-                </Button>
-              </div>
-            ) : (
-              recentTransactions.map((tx) => {
-                const isIncome = tx.type === 'income';
-                const formattedDate = new Date(tx.date).toLocaleDateString('en-IN', {
-                  month: 'short',
-                  day: 'numeric',
-                });
-
-                return (
-                  <div
-                    key={tx.id}
-                    className="flex items-center justify-between p-2.5 rounded-btn hover:bg-surface-2 transition-colors duration-fast"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <CategoryBadge category={tx.category} />
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-body-sm font-medium text-ink truncate">
-                          {tx.description || tx.category}
-                        </span>
-                        <span className="text-[11px] text-ink-3">
-                          {formattedDate} • {tx.paymentMethod.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`text-body-sm font-semibold tabular-nums shrink-0 ml-3 ${
-                        isIncome ? 'text-income' : 'text-ink'
-                      }`}
-                    >
-                      {isIncome ? `+₹${tx.amount.toLocaleString('en-IN')}` : `₹${tx.amount.toLocaleString('en-IN')}`}
-                    </div>
+              <hr className="divider" />
+              <div className="budget-goal-grid">
+                <div className="form-group">
+                  <label htmlFor="budgetMonthlyLimit">Monthly Expense Limit</label>
+                  <div className="currency-input">
+                    <span className="currency-symbol-small">₹</span>
+                    <input
+                      type="number"
+                      id="budgetMonthlyLimit"
+                      min="0"
+                      step="0.01"
+                      placeholder="Set your monthly cap"
+                      value={monthlyLimitInput}
+                      onChange={(e) => {
+                        setMonthlyLimitInput(e.target.value);
+                        setBudgetFormErrors((prev) => ({ ...prev, monthlyLimit: '' }));
+                      }}
+                    />
                   </div>
-                );
-              })
+                  {budgetFormErrors.monthlyLimit && (
+                    <span className="field-error">{budgetFormErrors.monthlyLimit}</span>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label htmlFor="budgetAlertThreshold">Alert Threshold (%)</label>
+                  <input
+                    type="number"
+                    id="budgetAlertThreshold"
+                    min="1"
+                    max="100"
+                    step="1"
+                    value={thresholdInput}
+                    onChange={(e) => {
+                      setThresholdInput(e.target.value);
+                      setBudgetFormErrors((prev) => ({ ...prev, thresholdPercent: '' }));
+                    }}
+                  />
+                  {budgetFormErrors.thresholdPercent && (
+                    <span className="field-error">{budgetFormErrors.thresholdPercent}</span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary budget-save-btn"
+                disabled={isSavingBudget}
+              >
+                <i className="fas fa-save" />{' '}
+                {isSavingBudget ? 'Saving budget...' : 'Save Budget Goal'}
+              </button>
+            </form>
+          </div>
+
+          {/* Weekly Activity Chart Section */}
+          <div className="chart-section dashboard-card">
+            <div className="card-header">
+              <h3>
+                <i className="fas fa-chart-area" /> Weekly Activity
+              </h3>
+            </div>
+            <div className="chart-wrapper">
+              <WeeklyActivityChart transactions={transactions} />
+            </div>
+          </div>
+
+          {/* Anomaly Detection Alert Section */}
+          <div id="anomalyAlertSection">
+            {unapprovedAnomalies.length > 0 && (
+              <div className="anomaly-alert-container">
+                <h3>
+                  <i className="fas fa-exclamation-triangle" /> Unusual Spending
+                  Detected ({unapprovedAnomalies.length} Alert
+                  {unapprovedAnomalies.length > 1 ? 's' : ''})
+                </h3>
+                <p style={{ marginBottom: '16px', color: '#92400e', fontSize: '0.9rem' }}>
+                  The following transactions are statistically unusual compared to your typical
+                  spending in each category:
+                </p>
+                <div className="anomaly-list">
+                  {unapprovedAnomalies.map((anomaly) => {
+                    const formattedDate = new Date(anomaly.date).toLocaleDateString('en-IN');
+                    const meanVal = anomaly.expectedAmount || 0;
+                    const percentAboveMean =
+                      meanVal > 0 ? (((anomaly.amount - meanVal) / meanVal) * 100).toFixed(0) : '0';
+
+                    return (
+                      <div key={anomaly.id} className="anomaly-item">
+                        <div className="anomaly-item-header">
+                          <span className="anomaly-category">
+                            {anomaly.category}
+                            <span className="anomaly-z-score">
+                              Z-score: {(anomaly.amount / (meanVal || 1)).toFixed(1)}
+                            </span>
+                          </span>
+                          <span className="anomaly-amount">
+                            {formatCurrency(anomaly.amount)}
+                          </span>
+                        </div>
+                        <div className="anomaly-details">
+                          <span>
+                            <i className="fas fa-calendar" /> {formattedDate}
+                          </span>
+                          <span>
+                            <i className="fas fa-credit-card" />{' '}
+                            {anomaly.transaction?.paymentMethod || 'cash'}
+                          </span>
+                          <span>
+                            <i className="fas fa-chart-line" /> {percentAboveMean}% above
+                            average
+                          </span>
+                        </div>
+                        {anomaly.transaction?.description && (
+                          <div style={{ marginTop: '8px', fontSize: '0.875rem', color: '#64748b' }}>
+                            <strong>Description:</strong> {anomaly.transaction.description}
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            marginTop: '6px',
+                            fontSize: '0.8rem',
+                            color: '#92400e',
+                            background: '#fef3c7',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            display: 'inline-block',
+                          }}
+                        >
+                          💡 Typical {anomaly.category} spending: {formatCurrency(meanVal)}
+                        </div>
+                        <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleApproveAnomaly(anomaly.id)}
+                            className="btn btn-success"
+                            style={{ padding: '8px 16px', fontSize: '0.875rem' }}
+                          >
+                            <i className="fas fa-check" /> Approve (Legitimate)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDismissAnomaly(anomaly.id)}
+                            className="btn"
+                            style={{
+                              padding: '8px 16px',
+                              fontSize: '0.875rem',
+                              background: '#94a3b8',
+                              color: 'white',
+                            }}
+                          >
+                            <i className="fas fa-times" /> Dismiss
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
-        </Card>
+        </div>
+
+        {/* Dashboard Sidebar */}
+        <div className="dashboard-sidebar">
+          <div className="dashboard-card h-full">
+            <div className="card-header">
+              <h3>
+                <i className="fas fa-clock" /> Recent Transactions
+              </h3>
+              <button
+                type="button"
+                className="view-all-btn"
+                onClick={() => setCurrentTab('transactions')}
+              >
+                View All
+              </button>
+            </div>
+            <div id="recentTransactions" className="recent-list">
+              {recentTransactions.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '0.9rem' }}>
+                  No recent activity.
+                </p>
+              ) : (
+                recentTransactions.map((tx) => {
+                  const isIncome = tx.type === 'income';
+                  const amountPrefix = isIncome ? '+' : '-';
+                  const icon = isIncome ? 'fa-arrow-up' : 'fa-arrow-down';
+                  const iconBg = isIncome ? '#dcfce7' : '#fee2e2';
+                  const iconColor = isIncome ? '#16a34a' : '#dc2626';
+
+                  return (
+                    <div key={tx.id} className="recent-item-clean">
+                      <div className="recent-info">
+                        <div
+                          className="recent-icon"
+                          style={{ background: iconBg, color: iconColor }}
+                        >
+                          <i className={`fas ${icon}`} />
+                        </div>
+                        <div className="recent-details">
+                          <h4>{tx.category}</h4>
+                          <p>
+                            {new Date(tx.date).toLocaleDateString('en-IN', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}{' '}
+                            • {tx.paymentMethod || 'Cash'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="recent-amount" style={{ color: iconColor }}>
+                        {amountPrefix}
+                        {formatCurrency(tx.amount)}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

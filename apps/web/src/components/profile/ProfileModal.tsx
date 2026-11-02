@@ -2,16 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useToast } from '../../hooks/useToast';
-import { Button } from '../common/Button';
-import {
-  XIcon,
-  EyeIcon,
-  EyeOffIcon,
-  TrashIcon,
-  AlertTriangleIcon,
-  CheckCircleIcon,
-  LockIcon,
-} from '../common/icons';
 
 export interface ProfileModalProps {
   isOpen: boolean;
@@ -40,12 +30,6 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [nameLoading, setNameLoading] = useState(false);
 
   if (!isOpen || !user) return null;
-
-  const initialLetter = user.displayName
-    ? user.displayName.charAt(0).toUpperCase()
-    : user.email
-    ? user.email.charAt(0).toUpperCase()
-    : 'U';
 
   const handleSaveDisplayName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,156 +120,130 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   };
 
   return (
-    <div
-      id="profileModal"
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm overflow-y-auto"
-    >
-      <div className="relative bg-surface rounded-card border border-line shadow-warm-3 w-full max-w-xl overflow-hidden my-auto max-h-[90vh] flex flex-col">
-        {/* Modal Header */}
-        <div className="p-6 border-b border-line flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            {/* Initial-letter Avatar */}
-            <div className="w-12 h-12 rounded-full bg-accent-tint text-accent border border-accent/20 flex items-center justify-center font-display font-semibold text-title shrink-0">
-              {initialLetter}
-            </div>
-            <div>
-              <h2 className="font-display text-body font-semibold text-ink">
-                Profile Settings
-              </h2>
-              <p id="profileEmail" className="text-caption text-ink-3">
-                {user.email || 'user@example.com'}
-              </p>
-            </div>
+    <div id="profileModal" className="profile-modal-overlay">
+      <div className="profile-modal">
+        <div className="profile-modal-header">
+          <div className="profile-avatar">
+            <i className="fas fa-user" />
           </div>
-
           <button
             id="closeProfileModal"
+            className="profile-close-btn"
+            aria-label="Close profile settings"
             type="button"
             onClick={onClose}
-            aria-label="Close profile settings"
-            className="p-1.5 rounded-btn hover:bg-surface-2 text-ink-3 hover:text-ink transition-colors"
           >
-            <XIcon size={18} />
+            <i className="fas fa-times" />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          {/* 1. In-place Display Name Card */}
-          <div className="p-4 bg-surface rounded-card border border-line shadow-warm-1 space-y-3">
-            <h3 className="text-caption font-semibold text-ink-2 uppercase tracking-wider">
-              Display Name
+        <div className="profile-modal-body">
+          <h2 className="profile-title">Profile Settings</h2>
+          <p className="profile-subtitle" id="profileEmail">
+            {user.email || 'user@example.com'}
+          </p>
+
+          {/* Profile Info Section */}
+          <div className="profile-section">
+            <h3>
+              <i className="fas fa-info-circle" /> Account Information
             </h3>
-            <form id="displayNameForm" onSubmit={handleSaveDisplayName} className="space-y-2">
-              <div className="flex gap-2">
+            <div className="profile-info-grid">
+              <div className="profile-info-item">
+                <label>Email</label>
+                <span id="profileEmailDisplay">{user.email || '-'}</span>
+              </div>
+              <div className="profile-info-item">
+                <label>Account Type</label>
+                <span id="profileAuthMethod">{user.authMethod}</span>
+              </div>
+              <div className="profile-info-item">
+                <label>Member Since</label>
+                <span id="profileCreatedAt">{user.createdAt}</span>
+              </div>
+              <div className="profile-info-item">
+                <label>Last Sign In</label>
+                <span id="profileLastSignIn">{user.lastSignIn}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Display Name Section */}
+          <div className="profile-section">
+            <h3>
+              <i className="fas fa-id-card" /> Display Name
+            </h3>
+            <form id="displayNameForm" className="profile-form" onSubmit={handleSaveDisplayName}>
+              <div className="profile-input-group">
                 <input
                   type="text"
                   id="displayNameInput"
                   placeholder="Enter your display name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="flex-1 h-10 px-3.5 text-body-sm bg-surface border border-line-strong rounded-btn focus:outline-none focus:border-accent text-ink"
                 />
-                <Button
+                <button
                   type="submit"
-                  variant="secondary"
-                  size="sm"
-                  isLoading={nameLoading}
+                  className="profile-save-btn"
                   disabled={nameLoading}
                 >
-                  Save
-                </Button>
+                  <i className="fas fa-save" /> {nameLoading ? 'Saving...' : 'Save'}
+                </button>
               </div>
-              <p className="text-caption text-ink-3">
-                This name is displayed in the navigation bar and reports.
+              <p className="profile-form-hint">
+                This name will be displayed in your profile.
               </p>
             </form>
           </div>
 
-          {/* 2. Account Information Card */}
-          <div className="p-4 bg-surface rounded-card border border-line shadow-warm-1 space-y-3">
-            <h3 className="text-caption font-semibold text-ink-2 uppercase tracking-wider">
-              Account Information
+          {/* Password Section */}
+          <div className="profile-section" id="passwordSection">
+            <h3>
+              <i className="fas fa-lock" /> Password Settings
             </h3>
-            <div className="grid grid-cols-2 gap-3 text-caption">
-              <div>
-                <span className="text-ink-3 block">Email</span>
-                <span id="profileEmailDisplay" className="font-medium text-ink truncate block">
-                  {user.email || '-'}
-                </span>
-              </div>
-              <div>
-                <span className="text-ink-3 block">Account Type</span>
-                <span id="profileAuthMethod" className="font-medium text-ink capitalize block">
-                  {user.authMethod}
-                </span>
-              </div>
-              <div>
-                <span className="text-ink-3 block">Member Since</span>
-                <span id="profileCreatedAt" className="font-medium text-ink tabular-nums block">
-                  {user.createdAt}
-                </span>
-              </div>
-              <div>
-                <span className="text-ink-3 block">Last Sign In</span>
-                <span id="profileLastSignIn" className="font-medium text-ink tabular-nums block">
-                  {user.lastSignIn}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* 3. Password Settings Card */}
-          <div id="passwordSection" className="p-4 bg-surface rounded-card border border-line shadow-warm-1 space-y-4">
-            <h3 className="text-caption font-semibold text-ink-2 uppercase tracking-wider">
-              Password Settings
-            </h3>
-
             {!user.hasPassword && (
-              <div id="passwordNotSet" className="p-3 rounded-btn bg-warning-tint/40 border border-warning/30 text-caption text-ink-2 flex items-start gap-2.5">
-                <AlertTriangleIcon size={16} className="text-warning shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-ink font-semibold block">No password set</strong>
-                  <span>Your account was created via Google Sign-In. You can set a password to allow email login.</span>
+              <div id="passwordNotSet" className="password-notice">
+                <div className="notice-icon">
+                  <i className="fas fa-exclamation-circle" />
+                </div>
+                <div className="notice-content">
+                  <p>
+                    <strong>No password set</strong>
+                  </p>
+                  <p>
+                    Your account was created using Google Sign-In. Set a password to
+                    enable email login.
+                  </p>
                 </div>
               </div>
             )}
-
-            <form id="passwordForm" className="space-y-3" onSubmit={handleUpdatePassword}>
-              <div className="space-y-3">
-                {/* New Password */}
-                <div>
-                  <label htmlFor="newPassword" className="block text-caption font-medium text-ink-2 mb-1">
-                    New Password
-                  </label>
-                  <div className="relative">
+            <form id="passwordForm" className="profile-form" onSubmit={handleUpdatePassword}>
+              <div className="password-fields">
+                <div className="profile-input-wrapper">
+                  <label>New Password</label>
+                  <div className="password-input-container">
                     <input
                       type={showNewPass ? 'text' : 'password'}
                       id="newPassword"
-                      placeholder="Minimum 6 characters"
+                      placeholder="Enter new password"
                       minLength={6}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full h-10 pl-3 pr-10 text-body-sm bg-surface border border-line-strong rounded-btn text-ink focus:outline-none focus:border-accent"
                     />
                     <button
                       type="button"
+                      className="toggle-password"
                       data-target="newPassword"
-                      aria-label={showNewPass ? 'Hide new password' : 'Show new password'}
+                      aria-label="Show new password"
                       onClick={() => setShowNewPass((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-ink-3 hover:text-ink"
                     >
-                      {showNewPass ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                      <i className={`fas ${showNewPass ? 'fa-eye-slash' : 'fa-eye'}`} />
                     </button>
                   </div>
                 </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-caption font-medium text-ink-2 mb-1">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
+                <div className="profile-input-wrapper">
+                  <label>Confirm Password</label>
+                  <div className="password-input-container">
                     <input
                       type={showConfirmPass ? 'text' : 'password'}
                       id="confirmPassword"
@@ -293,44 +251,38 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                       minLength={6}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full h-10 pl-3 pr-10 text-body-sm bg-surface border border-line-strong rounded-btn text-ink focus:outline-none focus:border-accent"
                     />
                     <button
                       type="button"
+                      className="toggle-password"
                       data-target="confirmPassword"
-                      aria-label={showConfirmPass ? 'Hide confirm password' : 'Show confirm password'}
+                      aria-label="Show confirm password"
                       onClick={() => setShowConfirmPass((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-ink-3 hover:text-ink"
                     >
-                      {showConfirmPass ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                      <i className={`fas ${showConfirmPass ? 'fa-eye-slash' : 'fa-eye'}`} />
                     </button>
                   </div>
                 </div>
               </div>
 
               {passError && (
-                <div id="passwordError" className="p-2.5 rounded-btn bg-danger-tint/30 text-danger border border-danger/30 text-caption font-medium">
+                <div id="passwordError" className="profile-error">
                   {passError}
                 </div>
               )}
-
               {passSuccess && (
-                <div id="passwordSuccess" className="p-2.5 rounded-btn bg-income-tint/40 text-income border border-income/30 text-caption font-medium flex items-center gap-1.5">
-                  <CheckCircleIcon size={14} />
-                  <span>{passSuccess}</span>
+                <div id="passwordSuccess" className="profile-success">
+                  {passSuccess}
                 </div>
               )}
 
-              <Button
+              <button
                 type="submit"
                 id="updatePasswordBtn"
-                variant="primary"
-                size="sm"
-                isLoading={passLoading}
+                className="profile-action-btn"
                 disabled={passLoading}
-                className="mt-1"
               >
-                <LockIcon size={14} />
+                <i className="fas fa-key" />
                 <span id="updatePasswordText">
                   {passLoading
                     ? 'Updating...'
@@ -338,30 +290,50 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                     ? 'Update Password'
                     : 'Set Password'}
                 </span>
-              </Button>
+                {passLoading && (
+                  <svg
+                    id="passwordSpinner"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="animate-spin inline ml-2"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                )}
+              </button>
             </form>
           </div>
 
-          {/* 4. Danger Zone Card */}
-          <div className="p-4 bg-danger-tint/10 rounded-card border border-danger/30 space-y-3">
-            <h3 className="text-caption font-semibold text-danger uppercase tracking-wider flex items-center gap-1.5">
-              <AlertTriangleIcon size={14} />
-              <span>Danger Zone</span>
+          {/* Danger Zone */}
+          <div className="profile-section danger-zone">
+            <h3>
+              <i className="fas fa-exclamation-triangle" /> Danger Zone
             </h3>
-            <p className="text-caption text-ink-2">
-              Permanently delete your account, transaction ledger, and all cloud backup data.
+            <p className="danger-text">
+              Once you delete your account, there is no going back. Please be certain.
             </p>
-            <Button
+            <button
               type="button"
               id="deleteAccountBtn"
-              variant="danger"
-              size="sm"
+              className="delete-account-btn"
               onClick={handleDeleteAccount}
-              className="gap-1.5"
             >
-              <TrashIcon size={14} />
-              <span>Delete Account</span>
-            </Button>
+              <i className="fas fa-trash-alt" /> Delete Account
+            </button>
           </div>
         </div>
       </div>

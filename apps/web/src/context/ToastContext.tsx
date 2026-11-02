@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import type { ToastItem, ToastType, ToastAction } from '../types';
+import type { ToastItem, ToastType } from '../types';
 import { ToastContext } from './toastContextDef';
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -16,14 +16,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const showToast = useCallback(
-    (
-      message: string,
-      type: ToastType = 'info',
-      duration: number = 3800,
-      action?: ToastAction,
-    ) => {
+    (message: string, type: ToastType = 'info', duration: number = 3800) => {
       const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const newToast: ToastItem = { id, message, type, duration, action };
+      const newToast: ToastItem = { id, message, type, duration };
 
       setToasts((prev) => [...prev, newToast]);
 

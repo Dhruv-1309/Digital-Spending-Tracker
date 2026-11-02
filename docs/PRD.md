@@ -42,7 +42,7 @@ To provide personal finance tracking that bridges the gap between simple manual 
 - **Framework**: React 19 (`react`, `react-dom`)
 - **Language**: TypeScript 5.9 (Strict Mode, `noImplicitAny`)
 - **Build Tool**: Vite (`rolldown-vite` runtime)
-- **Styling**: Tailwind CSS v3.4.17 + Design Tokens System (Instrument Sans & Bricolage Grotesque, CSS Custom Properties, SVG Icons, Zero external CSS/font CDNs)
+- **Styling**: Tailwind CSS v3.4.17 + Vanilla `legacy.css` design system
 - **Data Visualization**: Chart.js v4.5.1 + `react-chartjs-2` v5.3.1
 - **Backend / Authentication**: Firebase Modular SDK v13 (Firebase Auth + Cloud Firestore)
 - **Testing**: Vitest v5 + `@testing-library/react` + JSDOM
@@ -155,7 +155,7 @@ flowchart TD
 - **Firestore Rules**: Strict user-level isolation where read/write is authenticated and scoped to `request.auth.uid == userId`.
 
 ### 5.3 Usability & Design Fidelity
-- **Design System Specification**: Conforms strictly to `docs/redesign/SPEC.md`. Warm editorial palette (`#FBF9F5` base, `#D97706` accent, `#1F1B16` ink, `#2E7D5B` income), 232px desktop left rail, bottom mobile navigation bar, self-hosted WOFF2 typography, 44px touch targets, and inline accessible SVG icon system (replacing legacy.css and Font Awesome).
+- **Strict Visual Parity**: Maintains 100% aesthetic and layout parity with the original design system via `legacy.css` and Font Awesome 6.
 - **Responsive Layout**: Fluid breakpoints optimized for Mobile ($\le 640\text{px}$), Tablet ($641\text{px} - 1024\text{px}$), and Desktop ($> 1024\text{px}$).
 
 ### 5.4 Compatibility

@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronDownIcon, CheckIcon } from './icons';
 
 export interface SelectOption {
   value: string;
@@ -19,6 +18,21 @@ export interface CustomSelectProps {
   disabled?: boolean;
 }
 
+const defaultIcons: Record<string, string> = {
+  income: 'fa-arrow-up',
+  expense: 'fa-arrow-down',
+  overall: 'fa-chart-line',
+  monthly: 'fa-calendar-alt',
+  yearly: 'fa-calendar',
+  cash: 'fa-money-bill-wave',
+  card: 'fa-credit-card',
+  bank_transfer: 'fa-university',
+  upi: 'fa-mobile-alt',
+  wallet: 'fa-wallet',
+  other: 'fa-ellipsis-h',
+  default: 'fa-tag',
+};
+
 export function CustomSelect({
   id,
   name,
@@ -31,7 +45,6 @@ export function CustomSelect({
   disabled = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [opensUpward, setOpensUpward] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
@@ -43,16 +56,6 @@ export function CustomSelect({
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
   }, []);
-
-  const openDropdown = () => {
-    if (disabled) return;
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setOpensUpward(spaceBelow < 220 && rect.top > 220);
-    }
-    setIsOpen(true);
-  };
 
   // Close on outside click
   useEffect(() => {
@@ -76,11 +79,7 @@ export function CustomSelect({
   const handleTriggerClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (disabled) return;
-    if (isOpen) {
-      closeDropdown();
-    } else {
-      openDropdown();
-    }
+    setIsOpen((prev) => !prev);
   };
 
   const handleTriggerKeyDown = (e: React.KeyboardEvent) => {
@@ -88,15 +87,11 @@ export function CustomSelect({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      if (isOpen) {
-        closeDropdown();
-      } else {
-        openDropdown();
-      }
+      setIsOpen((prev) => !prev);
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       if (!isOpen) {
-        openDropdown();
+        setIsOpen(true);
       }
       setTimeout(() => {
         const firstOption = optionsRef.current?.querySelector<HTMLDivElement>('.custom-option');
@@ -113,9 +108,25 @@ export function CustomSelect({
     optionValue: string,
   ) => {
     e.stopPropagation();
+
+    // Create ripple effect
+    const element = e.currentTarget;
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    const rect = element.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+    element.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+
     onChange(optionValue);
-    closeDropdown();
-    triggerRef.current?.focus();
+
+    setTimeout(() => {
+      closeDropdown();
+      triggerRef.current?.focus();
+    }, 150);
   };
 
   const handleOptionKeyDown = (
@@ -125,8 +136,10 @@ export function CustomSelect({
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onChange(optionValue);
-      closeDropdown();
-      triggerRef.current?.focus();
+      setTimeout(() => {
+        closeDropdown();
+        triggerRef.current?.focus();
+      }, 150);
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       const current = e.currentTarget;
@@ -141,24 +154,21 @@ export function CustomSelect({
       } else {
         triggerRef.current?.focus();
       }
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      const first = optionsRef.current?.querySelector<HTMLDivElement>('.custom-option');
-      first?.focus();
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      const all = optionsRef.current?.querySelectorAll<HTMLDivElement>('.custom-option');
-      if (all && all.length > 0) all[all.length - 1].focus();
     } else if (e.key === 'Escape') {
       closeDropdown();
       triggerRef.current?.focus();
     }
   };
 
+  const getIconClass = (opt: SelectOption) => {
+    if (opt.icon) return opt.icon;
+    return defaultIcons[opt.value] || defaultIcons.default;
+  };
+
   return (
     <div
       ref={wrapperRef}
-      className={`relative custom-select-wrapper w-full ${isOpen ? 'open' : ''} ${
+      className={`custom-select-wrapper ${isOpen ? 'open' : ''} ${
         hasError ? 'has-error' : ''
       } ${className}`}
     >
@@ -169,7 +179,7 @@ export function CustomSelect({
         onChange={(e) => onChange(e.target.value)}
         tabIndex={-1}
         aria-hidden="true"
-        className="hidden"
+        style={{ display: 'none' }}
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -180,13 +190,7 @@ export function CustomSelect({
 
       <div
         ref={triggerRef}
-        className={`custom-select-trigger flex items-center justify-between h-11 px-3.5 bg-surface border rounded-btn text-body-sm font-sans transition-colors cursor-pointer select-none ${
-          hasError
-            ? 'border-danger'
-            : isOpen
-            ? 'border-accent ring-2 ring-accent/20'
-            : 'border-line-strong hover:border-ink/50'
-        } ${disabled ? 'opacity-45 cursor-not-allowed bg-surface-2' : ''}`}
+        className="custom-select-trigger"
         tabIndex={disabled ? -1 : 0}
         onClick={handleTriggerClick}
         onKeyDown={handleTriggerKeyDown}
@@ -194,53 +198,43 @@ export function CustomSelect({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        <span className={`truncate ${isPlaceholder ? 'text-ink-3 placeholder' : 'text-ink font-medium'}`}>
+        <span className={isPlaceholder ? 'placeholder' : ''}>
           {displayText}
         </span>
-        <div className={`custom-select-arrow transition-transform duration-fast shrink-0 ml-2 text-ink-3 ${isOpen ? 'rotate-180' : ''}`}>
-          <ChevronDownIcon size={18} />
-        </div>
+        <div className="custom-select-arrow" />
       </div>
 
-      {isOpen && (
-        <div
-          ref={optionsRef}
-          className={`custom-options absolute z-50 w-full bg-surface border border-line rounded-card shadow-warm-2 py-1 max-h-60 overflow-y-auto animate-fadeIn ${
-            opensUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-          }`}
-          role="listbox"
-        >
-          {options
-            .filter((opt) => !(opt.value === '' && options.length > 1))
-            .map((opt) => {
-              const isSelected = opt.value === value;
+      <div
+        ref={optionsRef}
+        className="custom-options"
+        role="listbox"
+        style={{ display: isOpen ? 'block' : 'none' }}
+      >
+        {options
+          .filter((opt) => !(opt.value === '' && options.length > 1))
+          .map((opt) => {
+            const isSelected = opt.value === value;
+            const iconClass = getIconClass(opt);
 
-              return (
-                <div
-                  key={opt.value}
-                  className={`custom-option flex items-center justify-between h-10 px-3.5 text-body-sm cursor-pointer outline-none transition-colors duration-fast ${
-                    isSelected
-                      ? 'bg-accent-tint text-accent font-semibold selected'
-                      : 'text-ink hover:bg-surface-2 focus:bg-surface-2'
-                  }`}
-                  tabIndex={0}
-                  data-value={opt.value}
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={(e) => handleOptionClick(e, opt.value)}
-                  onKeyDown={(e) => handleOptionKeyDown(e, opt.value)}
-                >
-                  <span className="option-text truncate">{opt.label}</span>
-                  {isSelected && (
-                    <span className="text-accent shrink-0 ml-2">
-                      <CheckIcon size={16} strokeWidth={2.5} />
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-        </div>
-      )}
+            return (
+              <div
+                key={opt.value}
+                className={`custom-option ${isSelected ? 'selected' : ''}`}
+                tabIndex={isOpen ? 0 : -1}
+                data-value={opt.value}
+                role="option"
+                aria-selected={isSelected}
+                onClick={(e) => handleOptionClick(e, opt.value)}
+                onKeyDown={(e) => handleOptionKeyDown(e, opt.value)}
+              >
+                <span className="option-icon">
+                  <i className={`fas ${iconClass}`} />
+                </span>
+                <span className="option-text">{opt.label}</span>
+              </div>
+            );
+          })}
+      </div>
     </div>
   );
 }

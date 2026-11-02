@@ -17,8 +17,6 @@ import {
   calculateMoneyRunway,
   getExpensesByDayOfWeek,
 } from '../../lib/analytics';
-import { formatCurrency } from '../../lib/formatters';
-import { CheckIcon, AlertTriangleIcon } from '../common/icons';
 
 const MONTH_OPTIONS = [
   { value: '01', label: 'January' },
@@ -41,17 +39,6 @@ const PERIOD_OPTIONS = [
   { value: 'yearly', label: 'Yearly' },
 ];
 
-const CATEGORY_PALETTE = [
-  '#B45309', // amber/accent
-  '#2E7D5B', // sage/income
-  '#854D0E', // warm brown
-  '#C2410C', // terracotta
-  '#0F766E', // teal
-  '#4338CA', // indigo
-  '#7E22CE', // purple
-  '#A16207', // ochre
-];
-
 export function AnalyticsTab() {
   const { transactions } = useTracker();
 
@@ -63,7 +50,6 @@ export function AnalyticsTab() {
   const [period, setPeriod] = useState<AnalyticsPeriod>('overall');
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
   const [selectedYear, setSelectedYear] = useState<string>(currentYearStr);
-  const [hoveredCategoryIndex, setHoveredCategoryIndex] = useState<number | null>(null);
 
   const availableYears = useMemo(() => {
     return extractUniqueYears(transactions, now.getFullYear());
@@ -116,12 +102,12 @@ export function AnalyticsTab() {
       labels: dailyData.labels,
       datasets: [
         {
-          label: 'Daily Expenses',
+          label: 'Daily Expenses (₹)',
           data: dailyData.amounts,
-          backgroundColor: '#B45309', // --accent deep
-          borderColor: '#92400E',
+          backgroundColor: '#ef4444',
+          borderColor: '#dc2626',
           borderWidth: 1,
-          borderRadius: 6,
+          borderRadius: 4,
         },
       ],
     };
@@ -132,35 +118,22 @@ export function AnalyticsTab() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'top' },
         tooltip: {
-          backgroundColor: '#FFFDF9',
-          titleColor: '#1F1B16',
-          bodyColor: '#5C5449',
-          borderColor: '#E8E2D8',
-          borderWidth: 1,
-          padding: 10,
-          boxPadding: 4,
-          usePointStyle: true,
           callbacks: {
             label: (context: TooltipItem<'bar'>) => {
-              return ` ${formatCurrency(Number(context.parsed.y))}`;
+              return `₹${Number(context.parsed.y).toLocaleString()}`;
             },
           },
         },
       },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { color: '#8C8274', font: { family: 'Instrument Sans', size: 11 } },
-        },
         y: {
           beginAtZero: true,
-          grid: { color: '#E8E2D8' },
           ticks: {
-            color: '#8C8274',
-            font: { family: 'Instrument Sans', size: 11 },
-            callback: (value: string | number) => '₹' + Number(value).toLocaleString('en-IN'),
+            callback: (value: string | number) => {
+              return '₹' + Number(value).toLocaleString();
+            },
           },
         },
       },
@@ -173,23 +146,17 @@ export function AnalyticsTab() {
   }, [filteredTransactions]);
 
   const pieData = useMemo(() => {
-    const colors = categoryData.labels.map((_, i) => CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]);
     return {
       labels: categoryData.labels,
       datasets: [
         {
           data: categoryData.amounts,
-          backgroundColor: colors,
+          backgroundColor: categoryData.colors,
           borderWidth: 2,
-          borderColor: '#FFFDF9',
-          hoverOffset: 6,
+          borderColor: '#ffffff',
         },
       ],
     };
-  }, [categoryData]);
-
-  const totalCategoryExpenses = useMemo(() => {
-    return categoryData.amounts.reduce((a, b) => a + b, 0);
   }, [categoryData]);
 
   const pieOptions: ChartOptions<'doughnut'> = useMemo(() => {
@@ -197,27 +164,21 @@ export function AnalyticsTab() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { position: 'bottom' },
         tooltip: {
-          backgroundColor: '#FFFDF9',
-          titleColor: '#1F1B16',
-          bodyColor: '#5C5449',
-          borderColor: '#E8E2D8',
-          borderWidth: 1,
-          padding: 10,
           callbacks: {
             label: (context: TooltipItem<'doughnut'>) => {
               const value = context.parsed;
-              const total = totalCategoryExpenses;
+              const dataArr = context.dataset.data as number[];
+              const total = dataArr.reduce((a, b) => a + b, 0);
               const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-              return ` ${context.label}: ${formatCurrency(value)} (${percentage}%)`;
+              return `${context.label}: ₹${value.toLocaleString()} (${percentage}%)`;
             },
           },
         },
       },
-      cutout: '72%',
     };
-  }, [totalCategoryExpenses]);
+  }, []);
 
   // 3. Time Series Data & Forecast & Runway
   const timeSeriesAnalysis = useMemo(() => {
@@ -245,45 +206,45 @@ export function AnalyticsTab() {
     const allLabels = [...timeSeriesAnalysis.dates, ...forecast.forecastDates];
     const datasets = [
       {
-        label: 'Actual Spending',
+        label: 'Daily Expenses',
         data: [
           ...timeSeriesAnalysis.amounts,
           ...Array(forecast.forecastDates.length).fill(null),
         ],
-        borderColor: '#1F1B16', // --ink
-        backgroundColor: 'rgba(31, 27, 22, 0.04)',
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
         borderWidth: 2,
         fill: true,
-        tension: 0.2,
+        tension: 0.1,
         pointRadius: 3,
         pointHoverRadius: 6,
-        pointBackgroundColor: '#1F1B16',
-        pointBorderColor: '#FFFDF9',
+        pointBackgroundColor: '#ef4444',
+        pointBorderColor: '#fff',
         pointBorderWidth: 2,
       },
     ];
 
     if (forecast.forecastDates.length > 0) {
       datasets.push({
-        label: '7-Day Forecast',
+        label: '7-Day Forecast (SMA)',
         data: [
           ...Array(Math.max(0, timeSeriesAnalysis.amounts.length - 1)).fill(null),
           timeSeriesAnalysis.amounts[timeSeriesAnalysis.amounts.length - 1],
           ...forecast.forecastAmounts,
         ],
-        borderColor: '#B45309', // --accent
-        backgroundColor: 'rgba(180, 83, 9, 0.04)',
+        borderColor: '#8b5cf6',
+        backgroundColor: 'rgba(139, 92, 246, 0.05)',
         borderWidth: 2,
         // @ts-expect-error borderDash is valid on Line dataset
-        borderDash: [6, 4],
+        borderDash: [8, 4],
         fill: false,
-        tension: 0.1,
+        tension: 0,
         pointRadius: 4,
         pointHoverRadius: 6,
-        pointBackgroundColor: '#B45309',
-        pointBorderColor: '#FFFDF9',
+        pointBackgroundColor: '#8b5cf6',
+        pointBorderColor: '#fff',
         pointBorderWidth: 2,
-        pointStyle: 'circle',
+        pointStyle: 'rectRot',
       });
     }
 
@@ -302,19 +263,12 @@ export function AnalyticsTab() {
           display: true,
           position: 'top',
           labels: {
-            font: { family: 'Instrument Sans', size: 12, weight: 600 },
-            color: '#1F1B16',
+            font: { weight: 'bold' },
             usePointStyle: true,
-            padding: 16,
+            padding: 15,
           },
         },
         tooltip: {
-          backgroundColor: '#FFFDF9',
-          titleColor: '#1F1B16',
-          bodyColor: '#5C5449',
-          borderColor: '#E8E2D8',
-          borderWidth: 1,
-          padding: 10,
           callbacks: {
             title: (context: TooltipItem<'line'>[]) => {
               const index = context[0].dataIndex;
@@ -326,36 +280,48 @@ export function AnalyticsTab() {
               );
               const daysAhead = index - timeSeriesAnalysis.rawDates.length + 1;
               lastDate.setDate(lastDate.getDate() + daysAhead);
-              return lastDate.toISOString().split('T')[0] + ' (Forecast)';
+              return lastDate.toISOString().split('T')[0] + ' (Predicted)';
             },
             label: (context: TooltipItem<'line'>) => {
               const value = context.parsed.y;
               if (value === null) return '';
-              const prefix = context.datasetIndex === 0 ? 'Actual: ' : 'Forecast: ';
-              return `${prefix}${formatCurrency(value)}`;
+              if (value === 0) return 'No spending';
+              const prefix = context.datasetIndex === 0 ? 'Spent: ' : 'Predicted: ';
+              return `${prefix}₹${value.toLocaleString()}`;
             },
           },
         },
       },
       scales: {
         x: {
-          grid: { display: false },
-          ticks: { color: '#8C8274', font: { family: 'Instrument Sans', size: 11 } },
+          title: {
+            display: true,
+            text: 'Date',
+            font: { weight: 'bold' },
+          },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+          },
         },
         y: {
           beginAtZero: true,
-          grid: { color: '#E8E2D8' },
+          title: {
+            display: true,
+            text: 'Amount (₹)',
+            font: { weight: 'bold' },
+          },
           ticks: {
-            color: '#8C8274',
-            font: { family: 'Instrument Sans', size: 11 },
-            callback: (value: string | number) => '₹' + Number(value).toLocaleString('en-IN'),
+            callback: (value: string | number) => {
+              return '₹' + Number(value).toLocaleString();
+            },
           },
         },
       },
     };
   }, [timeSeriesAnalysis]);
 
-  // 4. Day of Week Analysis (Heatmap from --accent-tint to --accent)
+  // 4. Day of Week Analysis
   const dayOfWeekData = useMemo(() => {
     return getExpensesByDayOfWeek(filteredTransactions);
   }, [filteredTransactions]);
@@ -365,23 +331,26 @@ export function AnalyticsTab() {
     const totals = Object.values(dayOfWeekData.dayTotals);
     const maxTotal = Math.max(...totals);
 
-    // Color gradient from --accent-tint (rgba(180,83,9,0.15)) to --accent (rgba(180,83,9,1))
-    const backgroundColors = totals.map((total) => {
-      const ratio = maxTotal > 0 ? total / maxTotal : 0;
-      const alpha = Math.max(0.18, ratio).toFixed(2);
-      return `rgba(180, 83, 9, ${alpha})`;
+    const colors = totals.map((total) => {
+      const intensity = maxTotal > 0 ? total / maxTotal : 0;
+      const red = 239;
+      const green = Math.floor(68 + 180 * (1 - intensity));
+      const blue = Math.floor(68 + 180 * (1 - intensity));
+      return `rgb(${red}, ${green}, ${blue})`;
     });
 
     return {
       labels: days,
       datasets: [
         {
-          label: 'Total Spending',
+          label: 'Total Spending (₹)',
           data: totals,
-          backgroundColor: backgroundColors,
-          borderColor: '#B45309',
-          borderWidth: 1.5,
-          borderRadius: 6,
+          backgroundColor: colors,
+          borderColor: colors.map((color) =>
+            color.replace('rgb', 'rgba').replace(')', ', 0.8)'),
+          ),
+          borderWidth: 2,
+          borderRadius: 8,
         },
       ],
     };
@@ -392,14 +361,14 @@ export function AnalyticsTab() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: { weight: 'bold' },
+          },
+        },
         tooltip: {
-          backgroundColor: '#FFFDF9',
-          titleColor: '#1F1B16',
-          bodyColor: '#5C5449',
-          borderColor: '#E8E2D8',
-          borderWidth: 1,
-          padding: 10,
           callbacks: {
             title: (context: TooltipItem<'bar'>[]) => {
               const day = context[0].label;
@@ -411,8 +380,8 @@ export function AnalyticsTab() {
               const total = context.parsed.y;
               const avg = dayOfWeekData.dayAverages[day] || 0;
               return [
-                ` Total: ${formatCurrency(Number(total))}`,
-                ` Average: ${formatCurrency(avg)} / txn`,
+                `Total: ₹${Number(total).toLocaleString()}`,
+                `Average: ₹${avg.toLocaleString()} per transaction`,
               ];
             },
           },
@@ -420,16 +389,23 @@ export function AnalyticsTab() {
       },
       scales: {
         x: {
-          grid: { display: false },
-          ticks: { color: '#8C8274', font: { family: 'Instrument Sans', size: 11 } },
+          title: {
+            display: true,
+            text: 'Day of Week',
+            font: { weight: 'bold' },
+          },
         },
         y: {
           beginAtZero: true,
-          grid: { color: '#E8E2D8' },
+          title: {
+            display: true,
+            text: 'Total Spending (₹)',
+            font: { weight: 'bold' },
+          },
           ticks: {
-            color: '#8C8274',
-            font: { family: 'Instrument Sans', size: 11 },
-            callback: (value: string | number) => '₹' + Number(value).toLocaleString('en-IN'),
+            callback: (value: string | number) => {
+              return '₹' + Number(value).toLocaleString();
+            },
           },
         },
       },
@@ -438,37 +414,41 @@ export function AnalyticsTab() {
 
   const tsStats = timeSeriesAnalysis.stats;
 
-  // Insight sentences derived from data
-  const dailyInsight = useMemo(() => {
-    if (dailyData.amounts.length === 0) return 'No expenses recorded in this period.';
-    const maxAmount = Math.max(...dailyData.amounts);
-    const maxIndex = dailyData.amounts.indexOf(maxAmount);
-    const maxLabel = dailyData.labels[maxIndex] || 'N/A';
-    return `Peak expense was ${formatCurrency(maxAmount)} on ${maxLabel}. Average daily expense is ${formatCurrency(tsStats.averageDailySpending)}.`;
-  }, [dailyData, tsStats]);
+  const runwayColor =
+    runway.daysRemaining <= 7
+      ? '#ef4444'
+      : runway.daysRemaining <= 30
+        ? '#f59e0b'
+        : runway.daysRemaining === Infinity
+          ? '#10b981'
+          : '#3b82f6';
 
-  const categoryInsight = useMemo(() => {
-    if (categoryData.amounts.length === 0) return 'No categorized expenses found.';
-    const maxAmount = Math.max(...categoryData.amounts);
-    const maxIndex = categoryData.amounts.indexOf(maxAmount);
-    const topCat = categoryData.labels[maxIndex];
-    const pct = totalCategoryExpenses > 0 ? ((maxAmount / totalCategoryExpenses) * 100).toFixed(1) : '0';
-    return `${topCat} is your highest expense, accounting for ${pct}% (${formatCurrency(maxAmount)}) of total spending.`;
-  }, [categoryData, totalCategoryExpenses]);
+  const confidenceColor =
+    forecast.confidence === 'high'
+      ? '#10b981'
+      : forecast.confidence === 'medium'
+        ? '#f59e0b'
+        : '#ef4444';
+
+  const confidenceIcon =
+    forecast.confidence === 'high'
+      ? '✓'
+      : forecast.confidence === 'medium'
+        ? '⚠'
+        : '!';
 
   return (
-    <div id="analytics" className="tab-content active space-y-6">
-      {/* Sticky Top Control Toolbar */}
-      <div className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md py-3 border-b border-line -mx-4 px-4 md:-mx-8 md:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Preset Buttons */}
-        <div className="flex items-center gap-1.5" id="analyticsPresets">
+    <div id="analytics" className="tab-content active">
+      <div className="analytics-toolbar">
+        <div className="section-header analytics-header">
+          <h3>
+            <i className="fas fa-chart-pie"></i> Analytics
+          </h3>
+        </div>
+        <div className="analytics-presets" id="analyticsPresets">
           <button
             type="button"
-            className={`px-3.5 py-1.5 text-caption font-semibold rounded-btn border transition-all ${
-              preset === 'this-week'
-                ? 'bg-accent text-white border-accent shadow-warm-1'
-                : 'bg-surface text-ink-2 border-line hover:bg-surface-2'
-            }`}
+            className={`analytics-preset-btn ${preset === 'this-week' ? 'active' : ''}`}
             onClick={() => handlePreset('this-week')}
             data-preset="this-week"
           >
@@ -476,11 +456,7 @@ export function AnalyticsTab() {
           </button>
           <button
             type="button"
-            className={`px-3.5 py-1.5 text-caption font-semibold rounded-btn border transition-all ${
-              preset === 'this-month'
-                ? 'bg-accent text-white border-accent shadow-warm-1'
-                : 'bg-surface text-ink-2 border-line hover:bg-surface-2'
-            }`}
+            className={`analytics-preset-btn ${preset === 'this-month' ? 'active' : ''}`}
             onClick={() => handlePreset('this-month')}
             data-preset="this-month"
           >
@@ -488,21 +464,15 @@ export function AnalyticsTab() {
           </button>
           <button
             type="button"
-            className={`px-3.5 py-1.5 text-caption font-semibold rounded-btn border transition-all ${
-              preset === 'last-30-days'
-                ? 'bg-accent text-white border-accent shadow-warm-1'
-                : 'bg-surface text-ink-2 border-line hover:bg-surface-2'
-            }`}
+            className={`analytics-preset-btn ${preset === 'last-30-days' ? 'active' : ''}`}
             onClick={() => handlePreset('last-30-days')}
             data-preset="last-30-days"
           >
             Last 30 Days
           </button>
         </div>
-
-        {/* Granularity Dropdowns */}
-        <div className="flex items-center gap-2">
-          <div className="w-32">
+        <div className="analytics-filters">
+          <div className="custom-select analytics-select">
             <CustomSelect
               id="analyticsPeriod"
               value={period}
@@ -511,8 +481,8 @@ export function AnalyticsTab() {
             />
           </div>
           <div
+            className={`custom-select analytics-select analytics-filter ${period !== 'monthly' ? 'is-hidden' : ''}`}
             id="analyticsMonthWrap"
-            className={`w-36 ${period !== 'monthly' ? 'hidden' : 'block'}`}
           >
             <CustomSelect
               id="analyticsMonth"
@@ -522,8 +492,8 @@ export function AnalyticsTab() {
             />
           </div>
           <div
+            className={`custom-select analytics-select analytics-filter ${period === 'overall' ? 'is-hidden' : ''}`}
             id="analyticsYearWrap"
-            className={`w-28 ${period === 'overall' ? 'hidden' : 'block'}`}
           >
             <CustomSelect
               id="analyticsYear"
@@ -535,328 +505,350 @@ export function AnalyticsTab() {
         </div>
       </div>
 
-      {/* Summary Metrics Cards */}
-      <div id="analyticsSummaryGrid" className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Income Card */}
-        <div className="p-4 bg-surface rounded-card border border-line shadow-warm-1">
-          <span className="text-caption font-semibold text-ink-3 uppercase tracking-wider block mb-1">
-            Income
-          </span>
-          <span
-            id="analyticsIncome"
-            className="font-display text-section-title font-semibold text-income tabular-nums"
-          >
-            {formatCurrency(summary.income)}
-          </span>
+      <div className="analytics-summary-grid" id="analyticsSummaryGrid">
+        <div className="analytics-summary-card income">
+          <div className="label">Income</div>
+          <div className="value" id="analyticsIncome">
+            ₹{summary.income.toLocaleString('en-IN')}
+          </div>
         </div>
-
-        {/* Expenses Card */}
-        <div className="p-4 bg-surface rounded-card border border-line shadow-warm-1">
-          <span className="text-caption font-semibold text-ink-3 uppercase tracking-wider block mb-1">
-            Expenses
-          </span>
-          <span
-            id="analyticsExpenses"
-            className="font-display text-section-title font-semibold text-ink tabular-nums"
-          >
-            {formatCurrency(summary.expenses)}
-          </span>
+        <div className="analytics-summary-card expense">
+          <div className="label">Expenses</div>
+          <div className="value" id="analyticsExpenses">
+            ₹{summary.expenses.toLocaleString('en-IN')}
+          </div>
         </div>
-
-        {/* Net Flow Card */}
-        <div className="p-4 bg-surface rounded-card border border-line shadow-warm-1">
-          <span className="text-caption font-semibold text-ink-3 uppercase tracking-wider block mb-1">
-            Net
-          </span>
-          <span
+        <div className="analytics-summary-card balance">
+          <div className="label">Net</div>
+          <div
+            className="value"
             id="analyticsNet"
-            className={`font-display text-section-title font-semibold tabular-nums ${
-              summary.net >= 0 ? 'text-income' : 'text-danger'
-            }`}
+            style={{ color: summary.net >= 0 ? '#16a34a' : '#dc2626' }}
           >
-            {summary.net >= 0 ? '+' : ''}
-            {formatCurrency(summary.net)}
-          </span>
+            ₹{summary.net.toLocaleString('en-IN')}
+          </div>
         </div>
-
-        {/* Transactions Count Card */}
-        <div className="p-4 bg-surface rounded-card border border-line shadow-warm-1">
-          <span className="text-caption font-semibold text-ink-3 uppercase tracking-wider block mb-1">
-            Transactions
-          </span>
-          <span
-            id="analyticsCount"
-            className="font-display text-section-title font-semibold text-ink tabular-nums"
-          >
+        <div className="analytics-summary-card count">
+          <div className="label">Transactions</div>
+          <div className="value" id="analyticsCount">
             {summary.count}
-          </span>
+          </div>
         </div>
       </div>
 
-      {/* Row 1: Daily Expenses & Expense by Category */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Daily Expenses Chart Card (7 cols) */}
-        <div className="lg:col-span-7 bg-surface rounded-card border border-line p-5 md:p-6 shadow-warm-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-display text-body font-semibold text-ink">Daily Expenses</h3>
-              <span className="text-caption text-ink-3">Trend by day</span>
-            </div>
-            <p className="text-caption text-ink-3 mb-4">{dailyInsight}</p>
-          </div>
-
-          <div className="h-64 relative w-full">
-            {dailyData.labels.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-body-sm text-ink-3">
-                No expense data available for this range
-              </div>
-            ) : (
-              <Bar data={dailyBarData} options={dailyBarOptions} />
-            )}
-          </div>
-        </div>
-
-        {/* Expense by Category Doughnut Card (5 cols) */}
-        <div className="lg:col-span-5 bg-surface rounded-card border border-line p-5 md:p-6 shadow-warm-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-display text-body font-semibold text-ink">
-                Expense by Category
-              </h3>
-              <span className="text-caption text-ink-3">Distribution</span>
-            </div>
-            <p className="text-caption text-ink-3 mb-4">{categoryInsight}</p>
-          </div>
-
-          {categoryData.labels.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-body-sm text-ink-3">
-              No category data available
+      <div className="analytics-grid">
+        <div className="chart-container">
+          <h3>
+            <i className="fas fa-chart-bar"></i> Daily Expenses
+          </h3>
+          {dailyData.labels.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              No expense data available
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="h-44 relative flex items-center justify-center">
-                <Doughnut data={pieData} options={pieOptions} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                  <span className="text-[11px] text-ink-3 font-medium uppercase tracking-wider">
-                    Total
+            <div style={{ height: 250, position: 'relative' }}>
+              <Bar data={dailyBarData} options={dailyBarOptions} />
+            </div>
+          )}
+        </div>
+
+        <div className="chart-container">
+          <h3>
+            <i className="fas fa-chart-pie"></i> Expense by Category
+          </h3>
+          {categoryData.labels.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              No expense data available
+            </div>
+          ) : (
+            <div style={{ height: 250, position: 'relative' }}>
+              <Doughnut data={pieData} options={pieOptions} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Time Series Analysis Section */}
+      <div className="chart-container analytics-section-gap">
+        <h3>
+          <i className="fas fa-chart-area"></i> Time Series Analysis - Expense Trends
+        </h3>
+        {timeSeriesAnalysis.dates.length === 0 ? (
+          <>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              No expense data available for time series analysis
+            </div>
+            <div id="timeSeriesStats" className="analytics-stats-box">
+              <p style={{ textAlign: 'center', color: '#64748b' }}>
+                Add some expense transactions to see time series analysis and forecasts
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ height: 300, position: 'relative' }}>
+              <Line data={timeSeriesLineData} options={timeSeriesLineOptions} />
+            </div>
+            <div id="timeSeriesStats" className="analytics-stats-box">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Total Period:</strong>
+                  <br />
+                  <span style={{ color: '#64748b' }}>{tsStats.totalDays} days</span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Days with Spending:</strong>
+                  <br />
+                  <span style={{ color: '#ef4444', fontWeight: 600 }}>
+                    {tsStats.daysWithSpending} days
                   </span>
-                  <span className="font-display text-body font-semibold text-ink tabular-nums">
-                    {formatCurrency(totalCategoryExpenses)}
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Days without Spending:</strong>
+                  <br />
+                  <span style={{ color: '#10b981', fontWeight: 600 }}>
+                    {tsStats.daysWithoutSpending} days
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Average Daily Spending:</strong>
+                  <br />
+                  <span style={{ color: '#3b82f6', fontWeight: 600 }}>
+                    ₹{tsStats.averageDailySpending.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Maximum Daily Spending:</strong>
+                  <br />
+                  <span style={{ color: '#ef4444', fontWeight: 600 }}>
+                    ₹{tsStats.maxSpending.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Minimum Daily Spending:</strong>
+                  <br />
+                  <span style={{ color: '#10b981', fontWeight: 600 }}>
+                    ₹{tsStats.minSpending.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Total Spending:</strong>
+                  <br />
+                  <span style={{ color: '#0f172a', fontWeight: 700, fontSize: '1.1rem' }}>
+                    ₹{tsStats.totalSpending.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Spending Frequency:</strong>
+                  <br />
+                  <span style={{ color: '#64748b' }}>
+                    {tsStats.totalDays > 0
+                      ? ((tsStats.daysWithSpending / tsStats.totalDays) * 100).toFixed(1)
+                      : '0.0'}
+                    %
+                  </span>
+                </div>
+
+                {forecast.forecastDates.length > 0 && (
+                  <>
+                    <div
+                      style={{
+                        gridColumn: '1 / -1',
+                        marginTop: 12,
+                        paddingTop: 16,
+                        borderTop: '2px solid #e2e8f0',
+                      }}
+                    >
+                      <strong style={{ color: '#8b5cf6', fontSize: '1.05rem' }}>
+                        <i className="fas fa-crystal-ball"></i> 7-Day Forecast (SMA Prediction)
+                      </strong>
+                    </div>
+                    <div>
+                      <strong style={{ color: '#0f172a' }}>Predicted Daily Average:</strong>
+                      <br />
+                      <span style={{ color: '#8b5cf6', fontWeight: 700, fontSize: '1.1rem' }}>
+                        ₹{forecast.smaValue.toLocaleString()}
+                      </span>
+                    </div>
+                    <div>
+                      <strong style={{ color: '#0f172a' }}>Total Forecast (7 days):</strong>
+                      <br />
+                      <span style={{ color: '#8b5cf6', fontWeight: 700, fontSize: '1.1rem' }}>
+                        ₹{forecast.totalForecast.toLocaleString()}
+                      </span>
+                    </div>
+                    <div>
+                      <strong style={{ color: '#0f172a' }}>Forecast Confidence:</strong>
+                      <br />
+                      <span
+                        style={{
+                          color: confidenceColor,
+                          fontWeight: 600,
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {confidenceIcon} {forecast.confidence}
+                      </span>
+                    </div>
+                    <div>
+                      <strong style={{ color: '#0f172a' }}>Data Variance:</strong>
+                      <br />
+                      <span style={{ color: '#64748b' }}>
+                        {forecast.coefficientOfVariation.toFixed(1)}% CV
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                <div
+                  style={{
+                    gridColumn: '1 / -1',
+                    marginTop: 12,
+                    paddingTop: 16,
+                    borderTop: '2px solid #e2e8f0',
+                  }}
+                >
+                  <strong style={{ color: runwayColor, fontSize: '1.05rem' }}>
+                    <i className="fas fa-hourglass-half"></i> Money Runway Prediction
+                  </strong>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Current Balance:</strong>
+                  <br />
+                  <span
+                    style={{
+                      color: runway.balance >= 0 ? '#10b981' : '#ef4444',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                    }}
+                  >
+                    ₹{runway.balance.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Days Until Depleted:</strong>
+                  <br />
+                  <span style={{ color: runwayColor, fontWeight: 700, fontSize: '1.1rem' }}>
+                    {runway.daysRemaining === Infinity
+                      ? '∞ (Sustainable)'
+                      : `${runway.daysRemaining} days`}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Estimated Depletion:</strong>
+                  <br />
+                  <span style={{ color: runwayColor, fontWeight: 600 }}>
+                    {runway.depletionDate}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Daily Burn Rate:</strong>
+                  <br />
+                  <span style={{ color: '#64748b' }}>{runway.burnRatePercent}%/day</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Day of Week Heatmap Section */}
+      <div className="chart-container analytics-section-gap">
+        <h3>
+          <i className="fas fa-fire"></i> Spending Heatmap - Day of Week Analysis
+        </h3>
+        {dayOfWeekData.isEmpty ? (
+          <>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              No expense data available for day of week analysis
+            </div>
+            <div id="dayOfWeekStats" className="analytics-stats-box">
+              <p style={{ textAlign: 'center', color: '#64748b' }}>
+                Add some expense transactions to see day of week analysis
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ height: 300, position: 'relative' }}>
+              <Bar data={dayOfWeekBarData} options={dayOfWeekBarOptions} />
+            </div>
+            <div id="dayOfWeekStats" className="analytics-stats-box">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Highest Spending Day:</strong>
+                  <br />
+                  <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '1.1rem' }}>
+                    {dayOfWeekData.maxDay}
+                  </span>
+                  <br />
+                  <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                    ₹{dayOfWeekData.maxAmount.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Lowest Spending Day:</strong>
+                  <br />
+                  <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.1rem' }}>
+                    {dayOfWeekData.minDay}
+                  </span>
+                  <br />
+                  <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                    ₹{dayOfWeekData.minAmount.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Total Weekly Spending:</strong>
+                  <br />
+                  <span style={{ color: '#0f172a', fontWeight: 700, fontSize: '1.1rem' }}>
+                    ₹{dayOfWeekData.totalExpenses.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: '#0f172a' }}>Average per Day:</strong>
+                  <br />
+                  <span style={{ color: '#3b82f6', fontWeight: 600 }}>
+                    ₹{(dayOfWeekData.totalExpenses / 7).toFixed(0).toLocaleString()}
                   </span>
                 </div>
               </div>
-
-              {/* Synchronized Legend with percent bars */}
-              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                {categoryData.labels.map((cat, idx) => {
-                  const amount = categoryData.amounts[idx];
-                  const pct = totalCategoryExpenses > 0 ? (amount / totalCategoryExpenses) * 100 : 0;
-                  const color = CATEGORY_PALETTE[idx % CATEGORY_PALETTE.length];
-                  const isHovered = hoveredCategoryIndex === idx;
-
-                  return (
-                    <div
-                      key={cat}
-                      onMouseEnter={() => setHoveredCategoryIndex(idx)}
-                      onMouseLeave={() => setHoveredCategoryIndex(null)}
-                      className={`p-1.5 rounded-btn transition-colors cursor-pointer ${
-                        isHovered ? 'bg-surface-2' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-caption font-medium text-ink mb-1">
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: color }}
-                          />
-                          <span className="truncate max-w-[130px]">{cat}</span>
-                        </div>
-                        <span className="tabular-nums font-semibold">
-                          {formatCurrency(amount)} ({pct.toFixed(0)}%)
-                        </span>
-                      </div>
-                      <div className="w-full bg-surface-2 rounded-full h-1 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{ width: `${pct}%`, backgroundColor: color }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Row 2: Time Series Analysis & 7-Day Forecast */}
-      <div className="bg-surface rounded-card border border-line p-5 md:p-6 shadow-warm-1 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 className="font-display text-body font-semibold text-ink">
-              Time Series Analysis - Expense Trends
-            </h3>
-            <p className="text-caption text-ink-3 mt-0.5">
-              Historical spending patterns with 7-day Simple Moving Average (SMA) forecast
-            </p>
-          </div>
-
-          {forecast.forecastDates.length > 0 && (
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="text-caption text-ink-3">Confidence:</span>
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-caption font-semibold capitalize inline-flex items-center gap-1 ${
-                  forecast.confidence === 'high'
-                    ? 'bg-income-tint text-income border border-income/30'
-                    : forecast.confidence === 'medium'
-                    ? 'bg-warning-tint text-warning border border-warning/30'
-                    : 'bg-danger-tint text-danger border border-danger/30'
-                }`}
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: 12,
+                  background: 'white',
+                  borderRadius: 8,
+                  borderLeft: '4px solid #3b82f6',
+                }}
               >
-                {forecast.confidence === 'high' ? (
-                  <CheckIcon size={12} />
-                ) : (
-                  <AlertTriangleIcon size={12} />
-                )}
-                <span>{forecast.confidence}</span>
-              </span>
+                <strong style={{ color: '#0f172a' }}>💡 Spending Pattern Insight:</strong>
+                <br />
+                <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                  You tend to spend most on{' '}
+                  <strong style={{ color: '#ef4444' }}>{dayOfWeekData.maxDay}s</strong> (₹
+                  {dayOfWeekData.maxAmount.toLocaleString()}) and least on{' '}
+                  <strong style={{ color: '#10b981' }}>{dayOfWeekData.minDay}s</strong> (₹
+                  {dayOfWeekData.minAmount.toLocaleString()}).{' '}
+                  {dayOfWeekData.maxAmount > (dayOfWeekData.totalExpenses / 7) * 1.5
+                    ? `Consider budgeting more carefully on ${dayOfWeekData.maxDay}s.`
+                    : 'Your spending is relatively balanced across the week.'}
+                </span>
+              </div>
             </div>
-          )}
-        </div>
-
-        {timeSeriesAnalysis.dates.length === 0 ? (
-          <div className="text-center py-12 text-ink-3 text-body-sm">
-            Add some expense transactions to see time series trends and SMA forecasts.
-          </div>
-        ) : (
-          <div className="h-72 relative w-full">
-            <Line data={timeSeriesLineData} options={timeSeriesLineOptions} />
-          </div>
+          </>
         )}
-
-        {/* Time Series Stats & Forecast Cards */}
-        <div id="timeSeriesStats" className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-line">
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider block">
-              Avg Daily Spend
-            </span>
-            <span className="font-display text-body font-semibold text-ink tabular-nums">
-              {formatCurrency(tsStats.averageDailySpending)}
-            </span>
-          </div>
-
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider block">
-              Peak Day Spend
-            </span>
-            <span className="font-display text-body font-semibold text-ink tabular-nums">
-              {formatCurrency(tsStats.maxSpending)}
-            </span>
-          </div>
-
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider block">
-              Spending Active
-            </span>
-            <span className="font-display text-body font-semibold text-ink tabular-nums">
-              {tsStats.daysWithSpending} of {tsStats.totalDays} days
-            </span>
-          </div>
-
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-semibold text-ink-3 uppercase tracking-wider block">
-              7-Day Projected Total
-            </span>
-            <span className="font-display text-body font-semibold text-accent tabular-nums">
-              {formatCurrency(forecast.totalForecast)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Money Runway & Weekday Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Money Runway Card (5 cols) */}
-        <div className="lg:col-span-5 bg-surface rounded-card border border-line p-5 md:p-6 shadow-warm-1 flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-display text-body font-semibold text-ink">Money Runway</h3>
-              <span className="text-caption text-ink-3">Sustainability</span>
-            </div>
-            <p className="text-caption text-ink-3">
-              Estimated duration your current balance will last at current spending velocity.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-card bg-surface-2/60 border border-line space-y-4">
-            <div>
-              <span className="text-caption text-ink-3 block mb-1">Days Remaining</span>
-              <div className="flex items-baseline gap-2">
-                <span className="font-display text-hero font-semibold text-ink tabular-nums">
-                  {runway.daysRemaining === Infinity ? '∞' : runway.daysRemaining}
-                </span>
-                <span className="text-body font-medium text-ink-2">
-                  {runway.daysRemaining === Infinity ? 'Sustainable' : 'days'}
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-line/60 grid grid-cols-2 gap-3 text-caption">
-              <div>
-                <span className="text-ink-3 block">Depletion Date</span>
-                <span className="font-semibold text-ink">{runway.depletionDate}</span>
-              </div>
-              <div>
-                <span className="text-ink-3 block">Daily Burn Rate</span>
-                <span className="font-semibold text-ink">{runway.burnRatePercent}% / day</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Day of Week Heatmap Card (7 cols) */}
-        <div className="lg:col-span-7 bg-surface rounded-card border border-line p-5 md:p-6 shadow-warm-1 flex flex-col justify-between space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-display text-body font-semibold text-ink">
-                Spending Heatmap - Day of Week Analysis
-              </h3>
-              <span className="text-caption text-ink-3">Distribution</span>
-            </div>
-            <p className="text-caption text-ink-3">
-              {dayOfWeekData.isEmpty
-                ? 'No expense data available for day of week analysis.'
-                : `You spend the most on ${dayOfWeekData.maxDay}s (${formatCurrency(
-                    dayOfWeekData.maxAmount,
-                  )}) and least on ${dayOfWeekData.minDay}s (${formatCurrency(
-                    dayOfWeekData.minAmount,
-                  )}).`}
-            </p>
-          </div>
-
-          <div className="h-56 relative w-full">
-            {dayOfWeekData.isEmpty ? (
-              <div className="h-full flex items-center justify-center text-body-sm text-ink-3">
-                No expenses to analyze across weekdays
-              </div>
-            ) : (
-              <Bar data={dayOfWeekBarData} options={dayOfWeekBarOptions} />
-            )}
-          </div>
-
-          <div id="dayOfWeekStats" className="pt-3 border-t border-line flex items-center justify-between text-caption text-ink-3">
-            <span>
-              Highest Day: <strong className="text-ink">{dayOfWeekData.maxDay}</strong>
-            </span>
-            <span>
-              Lowest Day: <strong className="text-ink">{dayOfWeekData.minDay}</strong>
-            </span>
-            <span>
-              Weekly Total: <strong className="text-ink">{formatCurrency(dayOfWeekData.totalExpenses)}</strong>
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );
