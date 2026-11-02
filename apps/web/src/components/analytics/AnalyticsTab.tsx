@@ -1,10 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import type { ChartOptions, TooltipItem } from 'chart.js';
+import type { ChartOptions, Plugin, TooltipItem, Chart as ChartJS } from 'chart.js';
 import '../../lib/chartConfig';
 import type { AnalyticsPreset, AnalyticsPeriod } from '../../types';
 import { useTracker } from '../../hooks/useTracker';
-import { CustomSelect } from '../common/CustomSelect';
 import {
   extractUniqueYears,
   getAnalyticsDateRange,
@@ -17,8 +16,46 @@ import {
   calculateMoneyRunway,
   getExpensesByDayOfWeek,
 } from '../../lib/analytics';
+import { Card } from '../ui/Card';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { SegmentedControl, type SegmentedOption } from '../ui/SegmentedControl';
+import { Dropdown, type DropdownOption } from '../ui/Dropdown';
+import { EmptyState } from '../ui/EmptyState';
+import { formatIndianGrouping } from '../ui/formatIndianGrouping';
+import { getCategoryBadgeColor } from '../ui/categoryColors';
+import { useChartTheme, customHtmlTooltip, cleanupChartTooltips } from '../../ui/chartTheme';
+import {
+  getDailyExpensesInsight,
+  getCategoryExpensesInsight,
+  getForecastInsight,
+  getRunwayInsight,
+  getWeekdayExpensesInsight,
+} from './analyticsInsights';
+import { AnalyticsSkeleton } from './AnalyticsSkeleton';
+import {
+  AlertCircleIcon,
+  RefreshCwIcon,
+  BarChartIcon,
+  PieChartIcon,
+  AreaChartIcon,
+  HourglassIcon,
+  FlameIcon,
+} from '../icons';
 
-const MONTH_OPTIONS = [
+const PRESET_OPTIONS: SegmentedOption[] = [
+  { value: 'this-week', label: 'This Week' },
+  { value: 'this-month', label: 'This Month' },
+  { value: 'last-30-days', label: 'Last 30 Days' },
+];
+
+const PERIOD_OPTIONS: DropdownOption[] = [
+  { value: 'overall', label: 'Overall' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'yearly', label: 'Yearly' },
+];
+
+const MONTH_OPTIONS: DropdownOption[] = [
   { value: '01', label: 'January' },
   { value: '02', label: 'February' },
   { value: '03', label: 'March' },
@@ -33,14 +70,9 @@ const MONTH_OPTIONS = [
   { value: '12', label: 'December' },
 ];
 
-const PERIOD_OPTIONS = [
-  { value: 'overall', label: 'Overall' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'yearly', label: 'Yearly' },
-];
-
 export function AnalyticsTab() {
-  const { transactions } = useTracker();
+  const { transactions, isLoading, loadError, refreshData } = useTracker();
+  const { themeTokens, animation } = useChartTheme();
 
   const now = useMemo(() => new Date(), []);
   const currentYearStr = String(now.getFullYear());
@@ -51,16 +83,25 @@ export function AnalyticsTab() {
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
   const [selectedYear, setSelectedYear] = useState<string>(currentYearStr);
 
+  // Category Doughnut <-> Legend bidirectional hover state
+  const [hoveredCategoryIndex, setHoveredCategoryIndex] = useState<number | null>(null);
+  const doughnutRef = useRef<ChartJS<'doughnut'> | null>(null);
+
+  // Cleanup tooltips on unmount
+  useEffect(() => {
+    return () => cleanupChartTooltips();
+  }, []);
+
   const availableYears = useMemo(() => {
     return extractUniqueYears(transactions, now.getFullYear());
   }, [transactions, now]);
 
-  const yearOptions = useMemo(() => {
+  const yearOptions: DropdownOption[] = useMemo(() => {
     return availableYears.map((y) => ({ value: y, label: y }));
   }, [availableYears]);
 
-  const handlePreset = (clickedPreset: NonNullable<AnalyticsPreset>) => {
-    setPreset((prev) => (prev === clickedPreset ? null : clickedPreset));
+  const handlePreset = (clickedPreset: string) => {
+    setPreset((prev) => (prev === clickedPreset ? null : (clickedPreset as AnalyticsPreset)));
   };
 
   const handlePeriodChange = (val: string) => {
@@ -102,48 +143,63 @@ export function AnalyticsTab() {
       labels: dailyData.labels,
       datasets: [
         {
-          label: 'Daily Expenses (₹)',
+          label: 'Daily Expenses',
           data: dailyData.amounts,
-          backgroundColor: '#ef4444',
-          borderColor: '#dc2626',
-          borderWidth: 1,
-          borderRadius: 4,
+          backgroundColor: themeTokens.accent,
+          hoverBackgroundColor: '#1E3FA8',
+          borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+          borderSkipped: 'bottom' as const,
         },
       ],
     };
-  }, [dailyData]);
+  }, [dailyData, themeTokens.accent]);
 
   const dailyBarOptions: ChartOptions<'bar'> = useMemo(() => {
     return {
       responsive: true,
       maintainAspectRatio: false,
+      animation,
       plugins: {
-        legend: { display: true, position: 'top' },
+        legend: { display: false },
         tooltip: {
-          callbacks: {
-            label: (context: TooltipItem<'bar'>) => {
-              return `₹${Number(context.parsed.y).toLocaleString()}`;
-            },
-          },
+          enabled: false,
+          external: customHtmlTooltip,
         },
       },
       scales: {
+        x: {
+          grid: { display: false, drawBorder: false },
+          ticks: {
+            color: themeTokens.ink3,
+            font: { family: themeTokens.fontBody, size: 11, weight: 500 },
+          },
+        },
         y: {
           beginAtZero: true,
+          grid: { color: themeTokens.line, drawBorder: false },
           ticks: {
-            callback: (value: string | number) => {
-              return '₹' + Number(value).toLocaleString();
-            },
+            color: themeTokens.ink3,
+            font: { family: themeTokens.fontBody, size: 11, weight: 500 },
+            callback: (value: string | number) => `₹${formatIndianGrouping(Number(value))}`,
           },
         },
       },
     };
-  }, []);
+  }, [animation, themeTokens]);
 
   // 2. Expense by Category Data
   const categoryData = useMemo(() => {
     return calculateExpensesByCategory(filteredTransactions);
   }, [filteredTransactions]);
+
+  const categoryTotal = useMemo(() => {
+    return categoryData.amounts.reduce((sum, val) => sum + val, 0);
+  }, [categoryData]);
+
+  // Use Badge color assignment for category colors (SPEC Section 3 & Task 5)
+  const categoryPalettes = useMemo(() => {
+    return categoryData.labels.map((label) => getCategoryBadgeColor(label));
+  }, [categoryData.labels]);
 
   const pieData = useMemo(() => {
     return {
@@ -151,34 +207,97 @@ export function AnalyticsTab() {
       datasets: [
         {
           data: categoryData.amounts,
-          backgroundColor: categoryData.colors,
+          backgroundColor: categoryPalettes.map((p) => p.ink),
+          hoverBackgroundColor: categoryPalettes.map((p) => p.ink),
           borderWidth: 2,
-          borderColor: '#ffffff',
+          borderColor: themeTokens.surface,
+          hoverOffset: 6,
         },
       ],
     };
-  }, [categoryData]);
+  }, [categoryData, categoryPalettes, themeTokens.surface]);
+
+  // Small Chart.js plugin to draw category name and amount in the centre
+  const doughnutCentreTextPlugin: Plugin<'doughnut'> = useMemo(() => {
+    return {
+      id: 'categoryDoughnutCentreText',
+      afterDraw(chart) {
+        const { ctx, chartArea } = chart;
+        if (!chartArea) return;
+        const activeElements = chart.getActiveElements();
+
+        let title = 'Total Expenses';
+        let amount = `₹${formatIndianGrouping(categoryTotal)}`;
+        let share = '';
+
+        if (activeElements.length > 0) {
+          const idx = activeElements[0].index;
+          if (categoryData.labels[idx]) {
+            title = categoryData.labels[idx];
+            const val = categoryData.amounts[idx] || 0;
+            amount = `₹${formatIndianGrouping(val)}`;
+            share = categoryTotal > 0 ? `${((val / categoryTotal) * 100).toFixed(1)}%` : '0%';
+          }
+        }
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const cx = (chartArea.left + chartArea.right) / 2;
+        const cy = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.font = `500 12px ${themeTokens.fontBody}`;
+        ctx.fillStyle = themeTokens.ink2;
+        ctx.fillText(title, cx, share ? cy - 14 : cy - 8);
+
+        ctx.font = `600 18px ${themeTokens.fontBody}`;
+        ctx.fillStyle = themeTokens.ink;
+        ctx.fillText(amount, cx, share ? cy + 6 : cy + 12);
+
+        if (share) {
+          ctx.font = `500 11px ${themeTokens.fontBody}`;
+          ctx.fillStyle = themeTokens.ink3;
+          ctx.fillText(share, cx, cy + 24);
+        }
+
+        ctx.restore();
+      },
+    };
+  }, [categoryData, categoryTotal, themeTokens]);
 
   const pieOptions: ChartOptions<'doughnut'> = useMemo(() => {
     return {
       responsive: true,
       maintainAspectRatio: false,
+      animation,
+      cutout: '72%',
       plugins: {
-        legend: { position: 'bottom' },
+        legend: { display: false },
         tooltip: {
-          callbacks: {
-            label: (context: TooltipItem<'doughnut'>) => {
-              const value = context.parsed;
-              const dataArr = context.dataset.data as number[];
-              const total = dataArr.reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-              return `${context.label}: ₹${value.toLocaleString()} (${percentage}%)`;
-            },
-          },
+          enabled: false,
+          external: customHtmlTooltip,
         },
       },
+      onHover: (_event, elements) => {
+        if (elements.length > 0) {
+          setHoveredCategoryIndex(elements[0].index);
+        } else {
+          setHoveredCategoryIndex(null);
+        }
+      },
     };
-  }, []);
+  }, [animation]);
+
+  // Legend hover row -> chart segment highlight
+  const highlightChartSegment = (index: number | null) => {
+    if (!doughnutRef.current) return;
+    if (index !== null) {
+      doughnutRef.current.setActiveElements([{ datasetIndex: 0, index }]);
+    } else {
+      doughnutRef.current.setActiveElements([]);
+    }
+    doughnutRef.current.update();
+  };
 
   // 3. Time Series Data & Forecast & Runway
   const timeSeriesAnalysis = useMemo(() => {
@@ -211,15 +330,15 @@ export function AnalyticsTab() {
           ...timeSeriesAnalysis.amounts,
           ...Array(forecast.forecastDates.length).fill(null),
         ],
-        borderColor: '#ef4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderColor: themeTokens.ink,
+        backgroundColor: 'rgba(31, 27, 22, 0.05)',
         borderWidth: 2,
         fill: true,
-        tension: 0.1,
+        tension: 0.2,
         pointRadius: 3,
         pointHoverRadius: 6,
-        pointBackgroundColor: '#ef4444',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: themeTokens.surface,
+        pointBorderColor: themeTokens.ink,
         pointBorderWidth: 2,
       },
     ];
@@ -232,17 +351,17 @@ export function AnalyticsTab() {
           timeSeriesAnalysis.amounts[timeSeriesAnalysis.amounts.length - 1],
           ...forecast.forecastAmounts,
         ],
-        borderColor: '#8b5cf6',
-        backgroundColor: 'rgba(139, 92, 246, 0.05)',
+        borderColor: themeTokens.accent,
+        backgroundColor: 'rgba(42, 79, 214, 0.06)',
         borderWidth: 2,
         // @ts-expect-error borderDash is valid on Line dataset
-        borderDash: [8, 4],
+        borderDash: [6, 4],
         fill: false,
         tension: 0,
         pointRadius: 4,
         pointHoverRadius: 6,
-        pointBackgroundColor: '#8b5cf6',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: themeTokens.surface,
+        pointBorderColor: themeTokens.accent,
         pointBorderWidth: 2,
         pointStyle: 'rectRot',
       });
@@ -252,74 +371,53 @@ export function AnalyticsTab() {
       labels: allLabels,
       datasets,
     };
-  }, [timeSeriesAnalysis, forecast]);
+  }, [timeSeriesAnalysis, forecast, themeTokens]);
 
   const timeSeriesLineOptions: ChartOptions<'line'> = useMemo(() => {
     return {
       responsive: true,
       maintainAspectRatio: false,
+      animation,
       plugins: {
         legend: {
           display: true,
           position: 'top',
+          align: 'end',
           labels: {
-            font: { weight: 'bold' },
             usePointStyle: true,
-            padding: 15,
+            boxWidth: 8,
+            boxHeight: 8,
+            color: themeTokens.ink2,
+            font: { family: themeTokens.fontBody, size: 12, weight: 500 },
           },
         },
         tooltip: {
-          callbacks: {
-            title: (context: TooltipItem<'line'>[]) => {
-              const index = context[0].dataIndex;
-              if (index < timeSeriesAnalysis.rawDates.length) {
-                return timeSeriesAnalysis.rawDates[index];
-              }
-              const lastDate = new Date(
-                timeSeriesAnalysis.rawDates[timeSeriesAnalysis.rawDates.length - 1],
-              );
-              const daysAhead = index - timeSeriesAnalysis.rawDates.length + 1;
-              lastDate.setDate(lastDate.getDate() + daysAhead);
-              return lastDate.toISOString().split('T')[0] + ' (Predicted)';
-            },
-            label: (context: TooltipItem<'line'>) => {
-              const value = context.parsed.y;
-              if (value === null) return '';
-              if (value === 0) return 'No spending';
-              const prefix = context.datasetIndex === 0 ? 'Spent: ' : 'Predicted: ';
-              return `${prefix}₹${value.toLocaleString()}`;
-            },
-          },
+          enabled: false,
+          external: customHtmlTooltip,
         },
       },
       scales: {
         x: {
-          title: {
-            display: true,
-            text: 'Date',
-            font: { weight: 'bold' },
-          },
+          grid: { display: false, drawBorder: false },
           ticks: {
+            color: themeTokens.ink3,
+            font: { family: themeTokens.fontBody, size: 11, weight: 500 },
             maxRotation: 45,
-            minRotation: 45,
+            minRotation: 0,
           },
         },
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Amount (₹)',
-            font: { weight: 'bold' },
-          },
+          grid: { color: themeTokens.line, drawBorder: false },
           ticks: {
-            callback: (value: string | number) => {
-              return '₹' + Number(value).toLocaleString();
-            },
+            color: themeTokens.ink3,
+            font: { family: themeTokens.fontBody, size: 11, weight: 500 },
+            callback: (value: string | number) => `₹${formatIndianGrouping(Number(value))}`,
           },
         },
       },
     };
-  }, [timeSeriesAnalysis]);
+  }, [animation, themeTokens]);
 
   // 4. Day of Week Analysis
   const dayOfWeekData = useMemo(() => {
@@ -329,45 +427,40 @@ export function AnalyticsTab() {
   const dayOfWeekBarData = useMemo(() => {
     const days = Object.keys(dayOfWeekData.dayTotals);
     const totals = Object.values(dayOfWeekData.dayTotals);
-    const maxTotal = Math.max(...totals);
+    const maxTotal = Math.max(...totals, 1);
 
+    // Color runs from --accent-tint (#E6EBFB: 230, 235, 251) to --accent (#2A4FD6: 42, 79, 214)
     const colors = totals.map((total) => {
       const intensity = maxTotal > 0 ? total / maxTotal : 0;
-      const red = 239;
-      const green = Math.floor(68 + 180 * (1 - intensity));
-      const blue = Math.floor(68 + 180 * (1 - intensity));
-      return `rgb(${red}, ${green}, ${blue})`;
+      const r = Math.round(230 - intensity * (230 - 42));
+      const g = Math.round(235 - intensity * (235 - 79));
+      const b = Math.round(251 - intensity * (251 - 214));
+      return `rgb(${r}, ${g}, ${b})`;
     });
 
     return {
       labels: days,
       datasets: [
         {
-          label: 'Total Spending (₹)',
+          label: 'Total Spending',
           data: totals,
           backgroundColor: colors,
-          borderColor: colors.map((color) =>
-            color.replace('rgb', 'rgba').replace(')', ', 0.8)'),
-          ),
-          borderWidth: 2,
-          borderRadius: 8,
+          hoverBackgroundColor: themeTokens.accent,
+          borderWidth: 0,
+          borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+          borderSkipped: 'bottom' as const,
         },
       ],
     };
-  }, [dayOfWeekData]);
+  }, [dayOfWeekData, themeTokens.accent]);
 
   const dayOfWeekBarOptions: ChartOptions<'bar'> = useMemo(() => {
     return {
       responsive: true,
       maintainAspectRatio: false,
+      animation,
       plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            font: { weight: 'bold' },
-          },
-        },
+        legend: { display: false },
         tooltip: {
           callbacks: {
             title: (context: TooltipItem<'bar'>[]) => {
@@ -380,8 +473,8 @@ export function AnalyticsTab() {
               const total = context.parsed.y;
               const avg = dayOfWeekData.dayAverages[day] || 0;
               return [
-                `Total: ₹${Number(total).toLocaleString()}`,
-                `Average: ₹${avg.toLocaleString()} per transaction`,
+                `Total: ₹${formatIndianGrouping(Number(total))}`,
+                `Average: ₹${formatIndianGrouping(avg)} per transaction`,
               ];
             },
           },
@@ -389,113 +482,99 @@ export function AnalyticsTab() {
       },
       scales: {
         x: {
-          title: {
-            display: true,
-            text: 'Day of Week',
-            font: { weight: 'bold' },
+          grid: { display: false, drawBorder: false },
+          ticks: {
+            color: themeTokens.ink3,
+            font: { family: themeTokens.fontBody, size: 11, weight: 500 },
           },
         },
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Total Spending (₹)',
-            font: { weight: 'bold' },
-          },
+          grid: { color: themeTokens.line, drawBorder: false },
           ticks: {
-            callback: (value: string | number) => {
-              return '₹' + Number(value).toLocaleString();
-            },
+            color: themeTokens.ink3,
+            font: { family: themeTokens.fontBody, size: 11, weight: 500 },
+            callback: (value: string | number) => `₹${formatIndianGrouping(Number(value))}`,
           },
         },
       },
     };
-  }, [dayOfWeekData]);
+  }, [animation, dayOfWeekData, themeTokens]);
 
   const tsStats = timeSeriesAnalysis.stats;
 
-  const runwayColor =
-    runway.daysRemaining <= 7
-      ? '#ef4444'
-      : runway.daysRemaining <= 30
-        ? '#f59e0b'
-        : runway.daysRemaining === Infinity
-          ? '#10b981'
-          : '#3b82f6';
+  // 1. Loading State Skeletons
+  if (isLoading) {
+    return <AnalyticsSkeleton />;
+  }
 
-  const confidenceColor =
-    forecast.confidence === 'high'
-      ? '#10b981'
-      : forecast.confidence === 'medium'
-        ? '#f59e0b'
-        : '#ef4444';
-
-  const confidenceIcon =
-    forecast.confidence === 'high'
-      ? '✓'
-      : forecast.confidence === 'medium'
-        ? '⚠'
-        : '!';
+  // 2. Error State with Retry
+  if (loadError) {
+    return (
+      <div id="analytics" className="w-full max-w-md mx-auto my-12 p-8 text-center bg-surface border border-line rounded-card shadow-1 animate-section-entrance">
+        <div className="w-12 h-12 rounded-full bg-danger-tint text-danger flex items-center justify-center mx-auto mb-4">
+          <AlertCircleIcon size={24} />
+        </div>
+        <h3 className="font-display font-semibold text-lg text-ink mb-2">
+          Unable to load analytics
+        </h3>
+        <p className="text-sm text-ink-2 mb-6">
+          {loadError || 'An error occurred while calculating analytics data.'}
+        </p>
+        <Button
+          variant="secondary"
+          onClick={() => (refreshData ? refreshData() : window.location.reload())}
+          className="gap-2 mx-auto"
+        >
+          <RefreshCwIcon size={16} />
+          <span>Retry</span>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div id="analytics" className="tab-content active">
-      <div className="analytics-toolbar">
-        <div className="section-header analytics-header">
-          <h3>
-            <i className="fas fa-chart-pie"></i> Analytics
-          </h3>
+    <div id="analytics" className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* 1. Sticky Controls Bar (SPEC Section 6, Task 1) */}
+      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3.5 bg-bg/95 backdrop-blur-sm border-b border-line flex flex-wrap items-center justify-between gap-3">
+        {/* Presets SegmentedControl with sliding indicator */}
+        <div id="analyticsPresets" className="flex items-center">
+          <SegmentedControl
+            options={PRESET_OPTIONS}
+            value={preset || ''}
+            onChange={handlePreset}
+            size="md"
+          />
         </div>
-        <div className="analytics-presets" id="analyticsPresets">
-          <button
-            type="button"
-            className={`analytics-preset-btn ${preset === 'this-week' ? 'active' : ''}`}
-            onClick={() => handlePreset('this-week')}
-            data-preset="this-week"
-          >
-            This Week
-          </button>
-          <button
-            type="button"
-            className={`analytics-preset-btn ${preset === 'this-month' ? 'active' : ''}`}
-            onClick={() => handlePreset('this-month')}
-            data-preset="this-month"
-          >
-            This Month
-          </button>
-          <button
-            type="button"
-            className={`analytics-preset-btn ${preset === 'last-30-days' ? 'active' : ''}`}
-            onClick={() => handlePreset('last-30-days')}
-            data-preset="last-30-days"
-          >
-            Last 30 Days
-          </button>
-        </div>
-        <div className="analytics-filters">
-          <div className="custom-select analytics-select">
-            <CustomSelect
+
+        {/* Period granularity and year/month dropdowns on right */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="w-32">
+            <Dropdown
               id="analyticsPeriod"
               value={period}
               options={PERIOD_OPTIONS}
               onChange={handlePeriodChange}
             />
           </div>
+
           <div
-            className={`custom-select analytics-select analytics-filter ${period !== 'monthly' ? 'is-hidden' : ''}`}
             id="analyticsMonthWrap"
+            className={period !== 'monthly' ? 'hidden' : 'w-36'}
           >
-            <CustomSelect
+            <Dropdown
               id="analyticsMonth"
               value={selectedMonth}
               options={MONTH_OPTIONS}
               onChange={handleMonthChange}
             />
           </div>
+
           <div
-            className={`custom-select analytics-select analytics-filter ${period === 'overall' ? 'is-hidden' : ''}`}
             id="analyticsYearWrap"
+            className={period === 'overall' ? 'hidden' : 'w-28'}
           >
-            <CustomSelect
+            <Dropdown
               id="analyticsYear"
               value={selectedYear}
               options={yearOptions}
@@ -505,351 +584,550 @@ export function AnalyticsTab() {
         </div>
       </div>
 
-      <div className="analytics-summary-grid" id="analyticsSummaryGrid">
-        <div className="analytics-summary-card income">
-          <div className="label">Income</div>
-          <div className="value" id="analyticsIncome">
-            ₹{summary.income.toLocaleString('en-IN')}
-          </div>
-        </div>
-        <div className="analytics-summary-card expense">
-          <div className="label">Expenses</div>
-          <div className="value" id="analyticsExpenses">
-            ₹{summary.expenses.toLocaleString('en-IN')}
-          </div>
-        </div>
-        <div className="analytics-summary-card balance">
-          <div className="label">Net</div>
-          <div
-            className="value"
-            id="analyticsNet"
-            style={{ color: summary.net >= 0 ? '#16a34a' : '#dc2626' }}
-          >
-            ₹{summary.net.toLocaleString('en-IN')}
-          </div>
-        </div>
-        <div className="analytics-summary-card count">
-          <div className="label">Transactions</div>
-          <div className="value" id="analyticsCount">
-            {summary.count}
-          </div>
-        </div>
-      </div>
-
-      <div className="analytics-grid">
-        <div className="chart-container">
-          <h3>
-            <i className="fas fa-chart-bar"></i> Daily Expenses
-          </h3>
-          {dailyData.labels.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-              No expense data available
-            </div>
-          ) : (
-            <div style={{ height: 250, position: 'relative' }}>
-              <Bar data={dailyBarData} options={dailyBarOptions} />
-            </div>
-          )}
-        </div>
-
-        <div className="chart-container">
-          <h3>
-            <i className="fas fa-chart-pie"></i> Expense by Category
-          </h3>
-          {categoryData.labels.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-              No expense data available
-            </div>
-          ) : (
-            <div style={{ height: 250, position: 'relative' }}>
-              <Doughnut data={pieData} options={pieOptions} />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Time Series Analysis Section */}
-      <div className="chart-container analytics-section-gap">
-        <h3>
-          <i className="fas fa-chart-area"></i> Time Series Analysis - Expense Trends
-        </h3>
-        {timeSeriesAnalysis.dates.length === 0 ? (
-          <>
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-              No expense data available for time series analysis
-            </div>
-            <div id="timeSeriesStats" className="analytics-stats-box">
-              <p style={{ textAlign: 'center', color: '#64748b' }}>
-                Add some expense transactions to see time series analysis and forecasts
-              </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ height: 300, position: 'relative' }}>
-              <Line data={timeSeriesLineData} options={timeSeriesLineOptions} />
-            </div>
-            <div id="timeSeriesStats" className="analytics-stats-box">
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: 16,
+      {/* 3. Empty State when no transactions in selected period */}
+      {filteredTransactions.length === 0 ? (
+        <div className="py-12">
+          <EmptyState
+            title="No transactions in this period"
+            description="There are no transactions recorded for the selected date range. Try choosing another preset or period."
+            action={
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setPreset(null);
+                  setPeriod('overall');
                 }}
               >
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Total Period:</strong>
-                  <br />
-                  <span style={{ color: '#64748b' }}>{tsStats.totalDays} days</span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Days with Spending:</strong>
-                  <br />
-                  <span style={{ color: '#ef4444', fontWeight: 600 }}>
-                    {tsStats.daysWithSpending} days
+                View Overall Analytics
+              </Button>
+            }
+          />
+        </div>
+      ) : (
+        <>
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" id="analyticsSummaryGrid">
+            <Card className="p-4 space-y-1">
+              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Income</span>
+              <div id="analyticsIncome" className="text-xl sm:text-2xl font-semibold text-income tabular-nums">
+                ₹{formatIndianGrouping(summary.income)}
+              </div>
+            </Card>
+
+            <Card className="p-4 space-y-1">
+              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Expenses</span>
+              <div id="analyticsExpenses" className="text-xl sm:text-2xl font-semibold text-ink tabular-nums">
+                ₹{formatIndianGrouping(summary.expenses)}
+              </div>
+            </Card>
+
+            <Card className="p-4 space-y-1">
+              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Net</span>
+              <div
+                id="analyticsNet"
+                className={`text-xl sm:text-2xl font-semibold tabular-nums ${
+                  summary.net >= 0 ? 'text-income' : 'text-danger'
+                }`}
+              >
+                ₹{formatIndianGrouping(summary.net)}
+              </div>
+            </Card>
+
+            <Card className="p-4 space-y-1">
+              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Transactions</span>
+              <div id="analyticsCount" className="text-xl sm:text-2xl font-semibold text-ink tabular-nums">
+                {summary.count}
+              </div>
+            </Card>
+          </div>
+
+          {/* Grid: Daily Expenses & Category Doughnut */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 4. Daily Expenses Card */}
+            <Card className="p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-accent">
+                    <BarChartIcon size={20} />
                   </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Days without Spending:</strong>
-                  <br />
-                  <span style={{ color: '#10b981', fontWeight: 600 }}>
-                    {tsStats.daysWithoutSpending} days
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Average Daily Spending:</strong>
-                  <br />
-                  <span style={{ color: '#3b82f6', fontWeight: 600 }}>
-                    ₹{tsStats.averageDailySpending.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Maximum Daily Spending:</strong>
-                  <br />
-                  <span style={{ color: '#ef4444', fontWeight: 600 }}>
-                    ₹{tsStats.maxSpending.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Minimum Daily Spending:</strong>
-                  <br />
-                  <span style={{ color: '#10b981', fontWeight: 600 }}>
-                    ₹{tsStats.minSpending.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Total Spending:</strong>
-                  <br />
-                  <span style={{ color: '#0f172a', fontWeight: 700, fontSize: '1.1rem' }}>
-                    ₹{tsStats.totalSpending.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Spending Frequency:</strong>
-                  <br />
-                  <span style={{ color: '#64748b' }}>
-                    {tsStats.totalDays > 0
-                      ? ((tsStats.daysWithSpending / tsStats.totalDays) * 100).toFixed(1)
-                      : '0.0'}
-                    %
-                  </span>
+                  <h3 className="font-sans font-semibold text-ink text-base">Daily Expenses</h3>
                 </div>
 
-                {forecast.forecastDates.length > 0 && (
-                  <>
-                    <div
-                      style={{
-                        gridColumn: '1 / -1',
-                        marginTop: 12,
-                        paddingTop: 16,
-                        borderTop: '2px solid #e2e8f0',
-                      }}
+                {dailyData.labels.length === 0 ? (
+                  <div className="flex items-center justify-center h-64 text-sm text-ink-3">
+                    No expense data available
+                  </div>
+                ) : (
+                  <div className="h-64 relative w-full">
+                    <Bar data={dailyBarData} options={dailyBarOptions} />
+
+                    {/* Visually hidden data table */}
+                    <div className="sr-only">
+                      <h4>Daily Expenses Table</h4>
+                      <table>
+                        <caption>Daily expenses for the selected period</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dailyData.labels.map((lbl, idx) => (
+                            <tr key={lbl}>
+                              <td>{lbl}</td>
+                              <td>₹{formatIndianGrouping(dailyData.amounts[idx])}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 1 sentence underneath */}
+              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
+                {getDailyExpensesInsight(dailyData)}
+              </p>
+            </Card>
+
+            {/* 5. Category Doughnut Card with Linked Legend */}
+            <Card className="p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-accent">
+                    <PieChartIcon size={20} />
+                  </span>
+                  <h3 className="font-sans font-semibold text-ink text-base">Expense by Category</h3>
+                </div>
+
+                {categoryData.labels.length === 0 ? (
+                  <div className="flex items-center justify-center h-64 text-sm text-ink-3">
+                    No category expense data available
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+                    {/* Doughnut Chart */}
+                    <div className="sm:col-span-6 h-60 relative w-full flex items-center justify-center">
+                      <Doughnut
+                        ref={doughnutRef}
+                        data={pieData}
+                        options={pieOptions}
+                        plugins={[doughnutCentreTextPlugin]}
+                      />
+                    </div>
+
+                    {/* Interactive Legend beside it with percent bars */}
+                    <div className="sm:col-span-6 space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {categoryData.labels.map((label, idx) => {
+                        const amount = categoryData.amounts[idx];
+                        const pct = categoryTotal > 0 ? ((amount / categoryTotal) * 100).toFixed(1) : '0';
+                        const palette = categoryPalettes[idx];
+                        const isHovered = hoveredCategoryIndex === idx;
+
+                        return (
+                          <div
+                            key={label}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`${label}: ₹${formatIndianGrouping(amount)} (${pct}%)`}
+                            onMouseEnter={() => {
+                              setHoveredCategoryIndex(idx);
+                              highlightChartSegment(idx);
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredCategoryIndex(null);
+                              highlightChartSegment(null);
+                            }}
+                            onFocus={() => {
+                              setHoveredCategoryIndex(idx);
+                              highlightChartSegment(idx);
+                            }}
+                            onBlur={() => {
+                              setHoveredCategoryIndex(null);
+                              highlightChartSegment(null);
+                            }}
+                            className={`p-2 rounded-btn transition-all duration-fast select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                              isHovered
+                                ? 'bg-surface-2 ring-1 ring-line-strong'
+                                : hoveredCategoryIndex !== null
+                                  ? 'opacity-40'
+                                  : 'hover:bg-surface-2'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between text-xs font-sans gap-2">
+                              <Badge category={label}>{label}</Badge>
+                              <div className="text-right">
+                                <span className="font-semibold text-ink tabular-nums">
+                                  ₹{formatIndianGrouping(amount)}
+                                </span>
+                                <span className="text-ink-3 ml-1.5 tabular-nums">({pct}%)</span>
+                              </div>
+                            </div>
+
+                            {/* Percent bar */}
+                            <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden mt-1.5">
+                              <div
+                                className="h-full rounded-full transition-all duration-base"
+                                style={{
+                                  width: `${pct}%`,
+                                  backgroundColor: palette.ink,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Visually hidden data table */}
+                    <div className="sr-only">
+                      <h4>Expenses by Category Table</h4>
+                      <table>
+                        <caption>Category breakdown for the selected period</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Category</th>
+                            <th scope="col">Amount</th>
+                            <th scope="col">Share</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categoryData.labels.map((cat, idx) => (
+                            <tr key={cat}>
+                              <td>{cat}</td>
+                              <td>₹{formatIndianGrouping(categoryData.amounts[idx])}</td>
+                              <td>
+                                {categoryTotal > 0
+                                  ? ((categoryData.amounts[idx] / categoryTotal) * 100).toFixed(1)
+                                  : '0'}
+                                %
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 1 sentence underneath */}
+              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
+                {getCategoryExpensesInsight(categoryData)}
+              </p>
+            </Card>
+          </div>
+
+          {/* Grid: 6. Forecast & 7. Money Runway */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 6. Forecast Card */}
+            <Card className="lg:col-span-2 p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-accent">
+                      <AreaChartIcon size={20} />
+                    </span>
+                    <h3 className="font-sans font-semibold text-ink text-base">
+                      Time Series Analysis - Expense Trends
+                    </h3>
+                  </div>
+
+                  {forecast.forecastDates.length > 0 && (
+                    <Badge
+                      variant={
+                        forecast.confidence === 'high'
+                          ? 'income'
+                          : forecast.confidence === 'medium'
+                            ? 'warning'
+                            : 'danger'
+                      }
                     >
-                      <strong style={{ color: '#8b5cf6', fontSize: '1.05rem' }}>
-                        <i className="fas fa-crystal-ball"></i> 7-Day Forecast (SMA Prediction)
-                      </strong>
+                      Confidence: {forecast.confidence.toUpperCase()}
+                    </Badge>
+                  )}
+                </div>
+
+                {timeSeriesAnalysis.dates.length === 0 ? (
+                  <div className="flex items-center justify-center h-64 text-sm text-ink-3">
+                    No expense data available for time series analysis
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-64 relative w-full mb-4">
+                      <Line data={timeSeriesLineData} options={timeSeriesLineOptions} />
+
+                      {/* Visually hidden data table */}
+                      <div className="sr-only">
+                        <h4>Expense Trends & Forecast Table</h4>
+                        <table>
+                          <caption>Daily spending and 7-day forecast predictions</caption>
+                          <thead>
+                            <tr>
+                              <th scope="col">Date</th>
+                              <th scope="col">Actual Expense</th>
+                              <th scope="col">Predicted Expense</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {timeSeriesAnalysis.rawDates.map((date, idx) => (
+                              <tr key={date}>
+                                <td>{date}</td>
+                                <td>₹{formatIndianGrouping(timeSeriesAnalysis.amounts[idx])}</td>
+                                <td>—</td>
+                              </tr>
+                            ))}
+                            {forecast.forecastDates.map((date, idx) => (
+                              <tr key={date}>
+                                <td>{date} (Predicted)</td>
+                                <td>—</td>
+                                <td>₹{formatIndianGrouping(forecast.forecastAmounts[idx])}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                    <div>
-                      <strong style={{ color: '#0f172a' }}>Predicted Daily Average:</strong>
-                      <br />
-                      <span style={{ color: '#8b5cf6', fontWeight: 700, fontSize: '1.1rem' }}>
-                        ₹{forecast.smaValue.toLocaleString()}
-                      </span>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#0f172a' }}>Total Forecast (7 days):</strong>
-                      <br />
-                      <span style={{ color: '#8b5cf6', fontWeight: 700, fontSize: '1.1rem' }}>
-                        ₹{forecast.totalForecast.toLocaleString()}
-                      </span>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#0f172a' }}>Forecast Confidence:</strong>
-                      <br />
-                      <span
-                        style={{
-                          color: confidenceColor,
-                          fontWeight: 600,
-                          textTransform: 'capitalize',
-                        }}
-                      >
-                        {confidenceIcon} {forecast.confidence}
-                      </span>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#0f172a' }}>Data Variance:</strong>
-                      <br />
-                      <span style={{ color: '#64748b' }}>
-                        {forecast.coefficientOfVariation.toFixed(1)}% CV
-                      </span>
+
+                    {/* Stats Box */}
+                    <div
+                      id="timeSeriesStats"
+                      className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-surface-2 rounded-btn text-xs font-sans"
+                    >
+                      <div>
+                        <span className="text-ink-3 block">Total Period</span>
+                        <span className="font-semibold text-ink">{tsStats.totalDays} days</span>
+                      </div>
+                      <div>
+                        <span className="text-ink-3 block">Active Spending Days</span>
+                        <span className="font-semibold text-ink">{tsStats.daysWithSpending} days</span>
+                      </div>
+                      <div>
+                        <span className="text-ink-3 block">Avg Daily Spend</span>
+                        <span className="font-semibold text-ink tabular-nums">
+                          ₹{formatIndianGrouping(tsStats.averageDailySpending)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-ink-3 block">Predicted Daily SMA</span>
+                        <span className="font-semibold text-accent tabular-nums">
+                          ₹{formatIndianGrouping(forecast.smaValue)}
+                        </span>
+                      </div>
                     </div>
                   </>
                 )}
-
-                <div
-                  style={{
-                    gridColumn: '1 / -1',
-                    marginTop: 12,
-                    paddingTop: 16,
-                    borderTop: '2px solid #e2e8f0',
-                  }}
-                >
-                  <strong style={{ color: runwayColor, fontSize: '1.05rem' }}>
-                    <i className="fas fa-hourglass-half"></i> Money Runway Prediction
-                  </strong>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Current Balance:</strong>
-                  <br />
-                  <span
-                    style={{
-                      color: runway.balance >= 0 ? '#10b981' : '#ef4444',
-                      fontWeight: 700,
-                      fontSize: '1.1rem',
-                    }}
-                  >
-                    ₹{runway.balance.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Days Until Depleted:</strong>
-                  <br />
-                  <span style={{ color: runwayColor, fontWeight: 700, fontSize: '1.1rem' }}>
-                    {runway.daysRemaining === Infinity
-                      ? '∞ (Sustainable)'
-                      : `${runway.daysRemaining} days`}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Estimated Depletion:</strong>
-                  <br />
-                  <span style={{ color: runwayColor, fontWeight: 600 }}>
-                    {runway.depletionDate}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Daily Burn Rate:</strong>
-                  <br />
-                  <span style={{ color: '#64748b' }}>{runway.burnRatePercent}%/day</span>
-                </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* Day of Week Heatmap Section */}
-      <div className="chart-container analytics-section-gap">
-        <h3>
-          <i className="fas fa-fire"></i> Spending Heatmap - Day of Week Analysis
-        </h3>
-        {dayOfWeekData.isEmpty ? (
-          <>
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-              No expense data available for day of week analysis
-            </div>
-            <div id="dayOfWeekStats" className="analytics-stats-box">
-              <p style={{ textAlign: 'center', color: '#64748b' }}>
-                Add some expense transactions to see day of week analysis
+              {/* 1 sentence underneath */}
+              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
+                {getForecastInsight(forecast)}
               </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ height: 300, position: 'relative' }}>
-              <Bar data={dayOfWeekBarData} options={dayOfWeekBarOptions} />
-            </div>
-            <div id="dayOfWeekStats" className="analytics-stats-box">
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: 16,
-                }}
-              >
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Highest Spending Day:</strong>
-                  <br />
-                  <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '1.1rem' }}>
-                    {dayOfWeekData.maxDay}
-                  </span>
-                  <br />
-                  <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
-                    ₹{dayOfWeekData.maxAmount.toLocaleString()}
-                  </span>
+            </Card>
+
+            {/* 7. Money Runway Card */}
+            <Card className="p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-accent">
+                      <HourglassIcon size={20} />
+                    </span>
+                    <h3 className="font-sans font-semibold text-ink text-base">Money Runway</h3>
+                  </div>
+                  <Badge
+                    variant={
+                      runway.daysRemaining === Infinity
+                        ? 'income'
+                        : runway.daysRemaining <= 7
+                          ? 'danger'
+                          : runway.daysRemaining <= 30
+                            ? 'warning'
+                            : 'income'
+                    }
+                  >
+                    {runway.daysRemaining === Infinity
+                      ? 'Sustainable'
+                      : runway.daysRemaining <= 7
+                        ? 'Critical'
+                        : runway.daysRemaining <= 30
+                          ? 'Watch'
+                          : 'Healthy'}
+                  </Badge>
                 </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Lowest Spending Day:</strong>
-                  <br />
-                  <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.1rem' }}>
-                    {dayOfWeekData.minDay}
-                  </span>
-                  <br />
-                  <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
-                    ₹{dayOfWeekData.minAmount.toLocaleString()}
-                  </span>
+
+                {/* Days remaining large figure */}
+                <div className="my-6">
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className={`font-display text-4xl sm:text-5xl font-semibold tabular-nums ${
+                        runway.daysRemaining <= 7
+                          ? 'text-danger'
+                          : runway.daysRemaining <= 30
+                            ? 'text-warning'
+                            : 'text-income'
+                      }`}
+                    >
+                      {runway.daysRemaining === Infinity ? '∞' : runway.daysRemaining}
+                    </span>
+                    <span className="text-ink-2 font-sans text-sm font-medium">
+                      {runway.daysRemaining === Infinity ? 'days (Sustainable)' : 'days remaining'}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Total Weekly Spending:</strong>
-                  <br />
-                  <span style={{ color: '#0f172a', fontWeight: 700, fontSize: '1.1rem' }}>
-                    ₹{dayOfWeekData.totalExpenses.toLocaleString()}
-                  </span>
+
+                {/* Metrics list */}
+                <div className="space-y-3 pt-2 border-t border-line text-xs font-sans">
+                  <div className="flex items-center justify-between">
+                    <span className="text-ink-2">Estimated Depletion</span>
+                    <span className="font-semibold text-ink tabular-nums">
+                      {runway.depletionDate}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-ink-2">Daily Burn Rate</span>
+                    <span className="font-semibold text-ink tabular-nums">
+                      {runway.burnRatePercent}%/day
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-ink-2">Current Balance</span>
+                    <span
+                      className={`font-semibold tabular-nums ${
+                        runway.balance >= 0 ? 'text-income' : 'text-danger'
+                      }`}
+                    >
+                      ₹{formatIndianGrouping(runway.balance)}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <strong style={{ color: '#0f172a' }}>Average per Day:</strong>
-                  <br />
-                  <span style={{ color: '#3b82f6', fontWeight: 600 }}>
-                    ₹{(dayOfWeekData.totalExpenses / 7).toFixed(0).toLocaleString()}
-                  </span>
+
+                {/* Visually hidden data table */}
+                <div className="sr-only">
+                  <h4>Money Runway Summary Table</h4>
+                  <table>
+                    <caption>Estimated runway and burn metrics</caption>
+                    <tbody>
+                      <tr>
+                        <td>Current Balance</td>
+                        <td>₹{formatIndianGrouping(runway.balance)}</td>
+                      </tr>
+                      <tr>
+                        <td>Days Remaining</td>
+                        <td>{runway.daysRemaining}</td>
+                      </tr>
+                      <tr>
+                        <td>Estimated Depletion Date</td>
+                        <td>{runway.depletionDate}</td>
+                      </tr>
+                      <tr>
+                        <td>Daily Burn Rate</td>
+                        <td>{runway.burnRatePercent}%/day</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div
-                style={{
-                  marginTop: 16,
-                  padding: 12,
-                  background: 'white',
-                  borderRadius: 8,
-                  borderLeft: '4px solid #3b82f6',
-                }}
-              >
-                <strong style={{ color: '#0f172a' }}>💡 Spending Pattern Insight:</strong>
-                <br />
-                <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
-                  You tend to spend most on{' '}
-                  <strong style={{ color: '#ef4444' }}>{dayOfWeekData.maxDay}s</strong> (₹
-                  {dayOfWeekData.maxAmount.toLocaleString()}) and least on{' '}
-                  <strong style={{ color: '#10b981' }}>{dayOfWeekData.minDay}s</strong> (₹
-                  {dayOfWeekData.minAmount.toLocaleString()}).{' '}
-                  {dayOfWeekData.maxAmount > (dayOfWeekData.totalExpenses / 7) * 1.5
-                    ? `Consider budgeting more carefully on ${dayOfWeekData.maxDay}s.`
-                    : 'Your spending is relatively balanced across the week.'}
+
+              {/* 1 sentence underneath */}
+              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
+                {getRunwayInsight(runway)}
+              </p>
+            </Card>
+          </div>
+
+          {/* 8. Weekday Heatmap Card */}
+          <Card className="p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-accent">
+                  <FlameIcon size={20} />
                 </span>
+                <h3 className="font-sans font-semibold text-ink text-base">
+                  Spending Heatmap - Day of Week Analysis
+                </h3>
               </div>
+
+              {dayOfWeekData.isEmpty ? (
+                <div className="flex items-center justify-center h-64 text-sm text-ink-3">
+                  No expense data available for day of week analysis
+                </div>
+              ) : (
+                <>
+                  <div className="h-64 relative w-full mb-4">
+                    <Bar data={dayOfWeekBarData} options={dayOfWeekBarOptions} />
+
+                    {/* Visually hidden data table */}
+                    <div className="sr-only">
+                      <h4>Day of Week Spending Heatmap Table</h4>
+                      <table>
+                        <caption>Total and average spending by day of week</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Day</th>
+                            <th scope="col">Total Spending</th>
+                            <th scope="col">Transaction Count</th>
+                            <th scope="col">Average Spending</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.keys(dayOfWeekData.dayTotals).map((day) => (
+                            <tr key={day}>
+                              <td>{day}</td>
+                              <td>₹{formatIndianGrouping(dayOfWeekData.dayTotals[day])}</td>
+                              <td>{dayOfWeekData.dayCounts[day] || 0}</td>
+                              <td>₹{formatIndianGrouping(dayOfWeekData.dayAverages[day] || 0)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Quick stats box */}
+                  <div
+                    id="dayOfWeekStats"
+                    className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-surface-2 rounded-btn text-xs font-sans mb-3"
+                  >
+                    <div>
+                      <span className="text-ink-3 block">Highest Day</span>
+                      <span className="font-semibold text-ink">
+                        {dayOfWeekData.maxDay} (₹{formatIndianGrouping(dayOfWeekData.maxAmount)})
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-ink-3 block">Lowest Day</span>
+                      <span className="font-semibold text-ink">
+                        {dayOfWeekData.minDay} (₹{formatIndianGrouping(dayOfWeekData.minAmount)})
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-ink-3 block">Total Weekly Spend</span>
+                      <span className="font-semibold text-ink tabular-nums">
+                        ₹{formatIndianGrouping(dayOfWeekData.totalExpenses)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-ink-3 block">Average Daily Spend</span>
+                      <span className="font-semibold text-ink tabular-nums">
+                        ₹{formatIndianGrouping(Math.round(dayOfWeekData.totalExpenses / 7))}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          </>
-        )}
-      </div>
+
+            {/* 1 sentence underneath (existing insight sentence) */}
+            <p className="mt-3 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
+              {getWeekdayExpensesInsight(dayOfWeekData)}
+            </p>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

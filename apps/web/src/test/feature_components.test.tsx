@@ -173,9 +173,9 @@ describe('Feature Components', () => {
 
   it('AnalyticsTab renders preset buttons and summary cards', () => {
     renderWithProviders(<AnalyticsTab />);
-    expect(screen.getByRole('button', { name: 'This Week' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'This Month' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Last 30 Days' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'This Week' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'This Month' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Last 30 Days' })).toBeInTheDocument();
     expect(screen.getByText('Daily Expenses')).toBeInTheDocument();
     expect(screen.getByText('Expense by Category')).toBeInTheDocument();
     expect(screen.getByText('Time Series Analysis - Expense Trends')).toBeInTheDocument();

@@ -1,74 +1,30 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import type { ChartData, ChartOptions } from 'chart.js';
 import '../../lib/chartConfig';
 import type { Transaction } from '../../types';
 import { formatIndianGrouping } from '../ui/formatIndianGrouping';
-import { useReducedMotion } from '../../ui/motion';
+import { useChartTheme, cleanupChartTooltips } from '../../ui/chartTheme';
 
 export interface WeeklyActivityChartProps {
   transactions: Transaction[];
 }
 
 /**
- * Helper to read design tokens from CSS variables via getComputedStyle
- */
-function getThemeTokens() {
-  if (typeof window === 'undefined') {
-    return {
-      income: '#2E7D5B',
-      incomeTint: '#E4F2EA',
-      ink: '#1F1B16',
-      ink2: '#5C554B',
-      line: '#E6DFD3',
-      surface: '#FFFFFF',
-      fontBody: "'Instrument Sans', sans-serif",
-    };
-  }
-  const computed = getComputedStyle(document.documentElement);
-  return {
-    income: computed.getPropertyValue('--income').trim() || '#2E7D5B',
-    incomeTint: computed.getPropertyValue('--income-tint').trim() || '#E4F2EA',
-    ink: computed.getPropertyValue('--ink').trim() || '#1F1B16',
-    ink2: computed.getPropertyValue('--ink-2').trim() || '#5C554B',
-    line: computed.getPropertyValue('--line').trim() || '#E6DFD3',
-    surface: computed.getPropertyValue('--surface').trim() || '#FFFFFF',
-    fontBody: computed.getPropertyValue('--font-body').trim() || "'Instrument Sans', sans-serif",
-  };
-}
-
-/**
  * WeeklyActivityChart Component (SPEC Section 4 rule 6, Section 5 & 6)
  * - Renders 7-day daily Income vs Expense lines
- * - Restyles Chart.js from design tokens (CSS variables via getComputedStyle)
+ * - Restyles Chart.js from shared chart theme module (src/ui/chartTheme.ts)
  * - Light grid lines in --line, no chart border
  * - Custom HTML tooltip with grouped rupee values
  * - Animates 600ms easeOutQuart on first render only; updates use animation false
  * - Visually hidden data table for screen readers
  */
 export function WeeklyActivityChart({ transactions }: WeeklyActivityChartProps) {
-  const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
-  const prefersReduced = useReducedMotion();
-
-  // Read design tokens from CSS variables
-  const themeTokens = useMemo(() => getThemeTokens(), []);
-
-  // Mark first render complete asynchronously after mount
-  useEffect(() => {
-    const handle = requestAnimationFrame(() => {
-      setIsFirstRender(false);
-    });
-    return () => cancelAnimationFrame(handle);
-  }, []);
+  const { themeTokens, animation } = useChartTheme();
 
   // Cleanup tooltips on unmount
   useEffect(() => {
-    return () => {
-      if (typeof document !== 'undefined') {
-        const tooltips = document.querySelectorAll('.chartjs-custom-tooltip');
-        tooltips.forEach((t) => t.remove());
-      }
-    };
+    return () => cleanupChartTooltips();
   }, []);
 
   // Compute 7 days series
@@ -153,17 +109,10 @@ export function WeeklyActivityChart({ transactions }: WeeklyActivityChartProps) 
   }, [daysData, themeTokens]);
 
   const chartOptions = useMemo<ChartOptions<'line'>>(() => {
-    const shouldAnimate = !prefersReduced && isFirstRender;
-
     return {
       responsive: true,
       maintainAspectRatio: false,
-      animation: shouldAnimate
-        ? {
-            duration: 600,
-            easing: 'easeOutQuart',
-          }
-        : false,
+      animation,
       interaction: {
         mode: 'index',
         intersect: false,
@@ -296,7 +245,7 @@ export function WeeklyActivityChart({ transactions }: WeeklyActivityChartProps) 
         },
       },
     };
-  }, [daysData, themeTokens, prefersReduced, isFirstRender]);
+  }, [daysData, themeTokens, animation]);
 
   return (
     <div className="relative w-full h-full">
