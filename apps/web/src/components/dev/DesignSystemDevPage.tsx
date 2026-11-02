@@ -1,8 +1,67 @@
 import React, { useState } from 'react';
 import * as Icons from '../icons';
+import {
+  Button,
+  TextInput,
+  AmountInput,
+  SegmentedControl,
+  Dropdown,
+  DatePicker,
+  DayOfMonthPicker,
+  Card,
+  Badge,
+  ProgressBar,
+  Skeleton,
+  Banner,
+  EmptyState,
+  ToastContainerUI,
+  ConfirmDialog,
+  type ToastItemUI,
+} from '../ui';
 
 export function DesignSystemDevPage() {
   const [playAnim, setPlayAnim] = useState(false);
+
+  // Phase 2 Primitives Showcase Interactive States
+  const [btnLoading, setBtnLoading] = useState(false);
+  const [textVal, setTextVal] = useState('Groceries shopping');
+  const [textErr, setTextErr] = useState(false);
+  const [amountVal, setAmountVal] = useState('125000');
+  const [amountErr, setAmountErr] = useState(false);
+  const [segmentedType, setSegmentedType] = useState('expense');
+  const [segmentedPreset, setSegmentedPreset] = useState('month');
+  const [dropdownVal, setDropdownVal] = useState('groceries');
+  const [dropdownErr, setDropdownErr] = useState(false);
+  const [dateVal, setDateVal] = useState('2026-11-02');
+  const [autopayDayVal, setAutopayDayVal] = useState<number | string>(15);
+  const [progressVal, setProgressVal] = useState(75);
+  const [toasts, setToasts] = useState<ToastItemUI[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    variant: 'primary' | 'danger';
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    variant: 'primary',
+    title: '',
+    message: '',
+  });
+
+  const triggerToast = (type: 'success' | 'error' | 'warning' | 'info') => {
+    const id = `t-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const messages = {
+      success: 'Transaction ₹1,250 recorded successfully.',
+      error: 'Failed to synchronize with server. Queued for retry.',
+      warning: 'You have reached 85% of your monthly entertainment budget.',
+      info: 'Offline mode active. Changes will sync automatically.',
+    };
+    setToasts((prev) => [...prev, { id, type, message: messages[type], duration: 4000 }]);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   const colors = [
     { token: '--bg', name: 'Background', hex: '#FAF7F2', textDark: true, use: 'App background' },
@@ -473,6 +532,527 @@ export function DesignSystemDevPage() {
               })}
           </div>
         </section>
+
+        {/* Section 6: Redesigned UI Primitives Showcase (Phase 2) */}
+        <section style={{ marginBottom: '64px', borderTop: '2px solid var(--line)', paddingTop: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', lineHeight: '32px', fontWeight: 600 }}>
+              6. Redesigned UI Primitives Showcase (SPEC Sections 3, 4, 5 & 7)
+            </h2>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--income)', background: 'var(--income-tint)', padding: '4px 10px', borderRadius: '999px' }}>
+              Phase 2 Primitives
+            </span>
+          </div>
+          <p style={{ color: 'var(--ink-2)', fontSize: '14px', marginBottom: '32px' }}>
+            Interactive demonstration of every primitive in all states. Built in <code style={{ color: 'var(--accent)', fontWeight: 600 }}>src/components/ui/</code> with typed named exports.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            {/* 1. Buttons */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600 }}>1. Button Primitives</h3>
+                  <p style={{ color: 'var(--ink-2)', fontSize: '13px' }}>
+                    Primary (--accent), Secondary, Ghost, Danger (--danger). Sizes md (40px) and lg (44px). Width-locking loading spinner.
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setBtnLoading((prev) => !prev)}
+                >
+                  {btnLoading ? 'Stop Loading' : 'Simulate Loading'}
+                </Button>
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
+                <Button variant="primary" size="md" loading={btnLoading}>
+                  Primary Action
+                </Button>
+                <Button variant="secondary" size="md" loading={btnLoading}>
+                  Secondary Action
+                </Button>
+                <Button variant="ghost" size="md" loading={btnLoading}>
+                  Ghost Button
+                </Button>
+                <Button variant="danger" size="md" loading={btnLoading}>
+                  Danger Action
+                </Button>
+                <Button variant="primary" size="md" disabled>
+                  Disabled (45% Opacity)
+                </Button>
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', width: '100%' }}>Sizes & Icons:</span>
+                <Button variant="primary" size="lg" icon={<Icons.PlusIcon size={18} />}>
+                  Large Primary (44px)
+                </Button>
+                <Button variant="secondary" size="lg" icon={<Icons.ArrowRightIcon size={18} />} iconPosition="right">
+                  Large Secondary
+                </Button>
+                <Button variant="danger" size="md" icon={<Icons.TrashIcon size={16} />}>
+                  Delete Item
+                </Button>
+                <Button variant="ghost" size="md" icon={<Icons.EditIcon size={16} />}>
+                  Edit Record
+                </Button>
+              </div>
+            </div>
+
+            {/* 2. Text Input & Amount Input */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600 }}>2. TextInput & AmountInput</h3>
+                  <p style={{ color: 'var(--ink-2)', fontSize: '13px' }}>
+                    Label above (never floating), error state with shake and message, ₹ prefix, live Indian grouping (1,25,000), inputmode decimal.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    onClick={() => setTextErr((prev) => !prev)}
+                  >
+                    Toggle Text Error
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    onClick={() => setAmountErr((prev) => !prev)}
+                  >
+                    Toggle Amount Error
+                  </Button>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                {/* Standard Text Input */}
+                <TextInput
+                  label="Description / Payee"
+                  placeholder="e.g. Swiggy, Uber, Rent"
+                  value={textVal}
+                  onChange={(e) => setTextVal(e.target.value)}
+                  error={textErr ? 'Description must be at least 3 characters' : undefined}
+                  helperText="Enter merchant or purpose of transaction"
+                  leftAddon={<Icons.TagIcon size={18} />}
+                />
+
+                {/* Amount Input */}
+                <AmountInput
+                  label="Amount (Indian Grouping)"
+                  value={amountVal}
+                  onChange={(formatted) => setAmountVal(formatted)}
+                  error={amountErr ? 'Amount cannot exceed ₹5,00,000' : undefined}
+                  helperText="Supports live typing or pasting (e.g. 1,25,000 or 125000)"
+                />
+
+                {/* Disabled State Input */}
+                <TextInput
+                  label="Disabled Account Input"
+                  value="HDFC Salary Account (Locked)"
+                  disabled
+                  helperText="Disabled input has 45% opacity and no focus"
+                  leftAddon={<Icons.LockIcon size={18} />}
+                />
+              </div>
+            </div>
+
+            {/* 3. Segmented Control */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600, marginBottom: '4px' }}>3. SegmentedControl</h3>
+              <p style={{ color: 'var(--ink-2)', fontSize: '13px', marginBottom: '20px' }}>
+                Sliding indicator via translateX, arrow-key navigation (Left/Right/Home/End), role radiogroup.
+              </p>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
+                <div>
+                  <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', marginBottom: '8px' }}>
+                    Type Selector (Expense / Income):
+                  </span>
+                  <SegmentedControl
+                    value={segmentedType}
+                    onChange={setSegmentedType}
+                    options={[
+                      { value: 'expense', label: 'Expense', icon: <Icons.ArrowDownIcon size={16} /> },
+                      { value: 'income', label: 'Income', icon: <Icons.ArrowUpIcon size={16} /> },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', marginBottom: '8px' }}>
+                    Date Preset Filter (3 Segments):
+                  </span>
+                  <SegmentedControl
+                    value={segmentedPreset}
+                    onChange={setSegmentedPreset}
+                    options={[
+                      { value: 'week', label: 'This Week' },
+                      { value: 'month', label: 'This Month' },
+                      { value: '30d', label: 'Last 30 Days' },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', marginBottom: '8px' }}>
+                    Disabled SegmentedControl:
+                  </span>
+                  <SegmentedControl
+                    value="all"
+                    disabled
+                    onChange={() => {}}
+                    options={[
+                      { value: 'all', label: 'All Accounts' },
+                      { value: 'bank', label: 'Bank Only' },
+                    ]}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Dropdown & Pickers */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600 }}>4. Dropdown, DatePicker & DayOfMonthPicker</h3>
+                  <p style={{ color: 'var(--ink-2)', fontSize: '13px' }}>
+                    Replacing custom selector look: 40px options with check, 180° rotating chevron, open upward detection, month slide, today dot, and filled-circle selection.
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="md"
+                  onClick={() => setDropdownErr((prev) => !prev)}
+                >
+                  Toggle Dropdown Error
+                </Button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
+                {/* Category Dropdown */}
+                <Dropdown
+                  label="Category Selection"
+                  value={dropdownVal}
+                  onChange={setDropdownVal}
+                  hasError={dropdownErr}
+                  errorMessage={dropdownErr ? 'Please select a valid category' : undefined}
+                  options={[
+                    { value: 'groceries', label: 'Groceries', icon: <Icons.ShoppingCartIcon size={16} /> },
+                    { value: 'dining', label: 'Dining Out', icon: <Icons.UtensilsIcon size={16} /> },
+                    { value: 'entertainment', label: 'Entertainment', icon: <Icons.FilmIcon size={16} /> },
+                    { value: 'utilities', label: 'Utilities & Bills', icon: <Icons.ZapIcon size={16} /> },
+                    { value: 'transport', label: 'Transport & Fuel', icon: <Icons.CarIcon size={16} /> },
+                    { value: 'health', label: 'Health & Medical', icon: <Icons.HeartPulseIcon size={16} /> },
+                  ]}
+                />
+
+                {/* DatePicker */}
+                <DatePicker
+                  label="Transaction Date"
+                  value={dateVal}
+                  onChange={setDateVal}
+                />
+
+                {/* DayOfMonthPicker (Autopay) */}
+                <DayOfMonthPicker
+                  label="Autopay Deduction Day"
+                  value={autopayDayVal}
+                  onChange={setAutopayDayVal}
+                />
+              </div>
+            </div>
+
+            {/* 5. Cards & Badges */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600, marginBottom: '4px' }}>5. Card & Badge Primitives</h3>
+              <p style={{ color: 'var(--ink-2)', fontSize: '13px', marginBottom: '20px' }}>
+                Static vs interactive cards (hover -2px elevation), and category badge color pairs assigned by deterministic hash (SPEC Section 3).
+              </p>
+
+              {/* Cards row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+                <Card>
+                  <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-3)' }}>Static Card</span>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 600, marginTop: '6px' }}>₹1,25,000</div>
+                  <p style={{ fontSize: '13px', color: 'var(--ink-2)', marginTop: '4px' }}>Does not move or elevate on hover (preserves layout stability).</p>
+                </Card>
+
+                <Card interactive onClick={() => alert('Interactive card clicked!')}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--accent)' }}>Interactive Card</span>
+                    <Icons.ArrowRightIcon size={16} className="text-accent" />
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 600, marginTop: '6px' }}>Click to Inspect</div>
+                  <p style={{ fontSize: '13px', color: 'var(--ink-2)', marginTop: '4px' }}>Hover lifts 2px and elevates shadow from shadow-1 to shadow-2.</p>
+                </Card>
+              </div>
+
+              {/* Badges showcase */}
+              <div>
+                <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', marginBottom: '12px' }}>
+                  Stable Category Hash Badges (8 SPEC Palettes):
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                  <Badge category="Groceries" />
+                  <Badge category="Dining Out" />
+                  <Badge category="Electronics" />
+                  <Badge category="Healthcare" />
+                  <Badge category="Education" />
+                  <Badge category="Travel" />
+                  <Badge category="Investments" />
+                  <Badge category="Entertainment" />
+                </div>
+
+                <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', marginBottom: '12px' }}>
+                  System Semantic Badges:
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <Badge variant="income" icon={<Icons.TrendingUpIcon size={14} />}>+₹45,000 Received</Badge>
+                  <Badge variant="warning" icon={<Icons.AlertTriangleIcon size={14} />}>80% Limit Reached</Badge>
+                  <Badge variant="danger" icon={<Icons.AlertCircleIcon size={14} />}>Over Budget Limit</Badge>
+                  <Badge variant="accent">Current Plan</Badge>
+                  <Badge variant="neutral">Archived</Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Progress Bar */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600 }}>6. ProgressBar Primitive</h3>
+                  <p style={{ color: 'var(--ink-2)', fontSize: '13px' }}>
+                    8px track, scaleX fill (600ms), threshold tick mark, and three-colour behavior (--accent below, --warning at threshold, --danger over limit).
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-2)' }}>Adjust: {progressVal}%</span>
+                  <input
+                    type="range"
+                    min="10"
+                    max="130"
+                    value={progressVal}
+                    onChange={(e) => setProgressVal(Number(e.target.value))}
+                    style={{ width: '120px' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: '6px' }}>
+                    Interactive Dynamic Progress:
+                  </span>
+                  <ProgressBar
+                    value={progressVal * 500}
+                    max={50000}
+                    threshold={0.8}
+                    showLabel
+                    label="Monthly Discretionary Budget"
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                      State 1: Normal (&lt; 80%)
+                    </span>
+                    <ProgressBar value={22000} max={50000} threshold={0.8} showLabel label="Dining Out" />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--warning)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                      State 2: At Threshold (80% - 100%)
+                    </span>
+                    <ProgressBar value={42500} max={50000} threshold={0.8} showLabel label="Shopping" />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--danger)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                      State 3: Over Limit (&gt; 100%)
+                    </span>
+                    <ProgressBar value={58000} max={50000} threshold={0.8} showLabel label="Entertainment" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Skeleton & Reduced Motion */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600, marginBottom: '4px' }}>7. Skeleton Primitive</h3>
+              <p style={{ color: 'var(--ink-2)', fontSize: '13px', marginBottom: '20px' }}>
+                Surface-2 blocks with warm shimmer sweep (1.4s linear repeating). Shimmer automatically halts under prefers-reduced-motion.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                {/* Card Skeleton */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)' }}>Card Layout Skeleton:</span>
+                  <div style={{ padding: '16px', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <Skeleton variant="circular" width={40} height={40} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <Skeleton variant="text" width="60%" height={14} />
+                        <Skeleton variant="text" width="40%" height={12} />
+                      </div>
+                    </div>
+                    <Skeleton variant="rectangular" width="100%" height={24} />
+                    <Skeleton variant="text" width="80%" height={12} />
+                  </div>
+                </div>
+
+                {/* Table Row Skeleton */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)' }}>Transaction Row Skeleton:</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: 'var(--radius-btn)', border: '1px solid var(--line)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '60%' }}>
+                          <Skeleton variant="circular" width={28} height={28} />
+                          <Skeleton variant="text" width="70%" height={14} />
+                        </div>
+                        <Skeleton variant="text" width="60px" height={16} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 8. Banner & EmptyState */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600, marginBottom: '4px' }}>8. Banner & EmptyState</h3>
+              <p style={{ color: 'var(--ink-2)', fontSize: '13px', marginBottom: '20px' }}>
+                Anomaly banner (warning surface, 4px edge, Approve & Dismiss) and warm Haikei-style EmptyState.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '28px' }}>
+                {/* Warning Anomaly Banner */}
+                <Banner
+                  variant="warning"
+                  title="Unusual Expense Detected"
+                  message="₹14,500 charged under Electronics (3.2x higher than your 3-month median)."
+                  actions={
+                    <>
+                      <Button variant="secondary" size="md" onClick={() => alert('Approved')}>
+                        Approve
+                      </Button>
+                      <Button variant="ghost" size="md" className="text-danger hover:bg-danger-tint" onClick={() => alert('Dismissed')}>
+                        Dismiss
+                      </Button>
+                    </>
+                  }
+                />
+
+                {/* Info & Danger Banners */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <Banner
+                    variant="info"
+                    title="Offline Sync Active"
+                    message="2 transactions pending sync when connectivity resumes."
+                    onDismiss={() => alert('Banner dismissed')}
+                  />
+                  <Banner
+                    variant="danger"
+                    title="Budget Exceeded"
+                    message="Entertainment has exceeded monthly limit by ₹2,400."
+                  />
+                </div>
+              </div>
+
+              {/* EmptyState */}
+              <div style={{ paddingTop: '20px', borderTop: '1px solid var(--line)' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: '16px' }}>
+                  EmptyState Component:
+                </span>
+                <EmptyState
+                  title="No transactions found"
+                  description="You have no expenses or income recorded for this period. Add your first transaction to start tracking."
+                  action={
+                    <Button variant="primary" size="md" icon={<Icons.PlusIcon size={16} />}>
+                      Add Transaction
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+
+            {/* 9. Toasts & Confirm Dialogs */}
+            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line)', padding: '24px', boxShadow: 'var(--shadow-1)' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 600, marginBottom: '4px' }}>9. Toast & ConfirmDialog System</h3>
+              <p style={{ color: 'var(--ink-2)', fontSize: '13px', marginBottom: '20px' }}>
+                Timer bar (scaleX 1 to 0), pauses on hover and keyboard focus, stacks max 3 with 8px gaps, Escape key closes, and focus trapping.
+              </p>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                <Button variant="secondary" size="md" onClick={() => triggerToast('success')}>
+                  Trigger Success Toast
+                </Button>
+                <Button variant="secondary" size="md" onClick={() => triggerToast('error')}>
+                  Trigger Error Toast
+                </Button>
+                <Button variant="secondary" size="md" onClick={() => triggerToast('warning')}>
+                  Trigger Warning Toast
+                </Button>
+                <Button variant="secondary" size="md" onClick={() => triggerToast('info')}>
+                  Trigger Info Toast
+                </Button>
+
+                <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--line)' }} />
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() =>
+                    setConfirmDialog({
+                      isOpen: true,
+                      variant: 'primary',
+                      title: 'Save Budget Changes?',
+                      message: 'This will update your monthly budget limit to ₹50,000 across all devices.',
+                    })
+                  }
+                >
+                  Open Safe Confirm
+                </Button>
+
+                <Button
+                  variant="danger"
+                  size="md"
+                  onClick={() =>
+                    setConfirmDialog({
+                      isOpen: true,
+                      variant: 'danger',
+                      title: 'Delete Autopay Plan?',
+                      message: 'Are you sure you want to delete Netflix autopay? This action cannot be undone.',
+                    })
+                  }
+                >
+                  Open Destructive Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Global Toast Container UI */}
+        <ToastContainerUI toasts={toasts} onDismiss={dismissToast} />
+
+        {/* Global Confirm Dialog UI */}
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          variant={confirmDialog.variant}
+          confirmText={confirmDialog.variant === 'danger' ? 'Delete' : 'Confirm'}
+          cancelText="Cancel"
+          onConfirm={() => {
+            alert('Confirmed action!');
+            setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+          }}
+          onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        />
       </div>
     </div>
   );
