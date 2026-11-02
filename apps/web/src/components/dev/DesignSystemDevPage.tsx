@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   WalletIcon,
   ArrowDownIcon,
@@ -40,8 +41,25 @@ import {
   MoreHorizontalIcon,
   GoogleIcon,
 } from '../common/icons';
+import { Button } from '../common/Button';
+import { TextInput, AmountInput } from '../common/Input';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { Badge, CategoryBadge } from '../common/Badge';
+import { Card, MetricCard } from '../common/Card';
+import { SkeletonCard, SkeletonTableRow } from '../common/Skeleton';
+import { ProgressBar } from '../common/ProgressBar';
+import { CustomSelect } from '../common/CustomSelect';
+import { CustomDatePicker } from '../common/CustomDatePicker';
+import { AutopayDayPicker } from '../common/AutopayDayPicker';
 
 export function DesignSystemDevPage({ onBack }: { onBack?: () => void }) {
+  const [segmentVal, setSegmentVal] = useState<'income' | 'expense'>('expense');
+  const [selectVal, setSelectVal] = useState('food');
+  const [dateVal, setDateVal] = useState('2026-11-02');
+  const [dayVal, setDayVal] = useState<number | string>(5);
+  const [amountVal, setAmountVal] = useState<number | string>(125000);
+  const [textVal, setTextVal] = useState('');
+
   const colorTokens = [
     { name: '--bg', hex: '#FAF7F2', varName: 'bg-bg text-ink' },
     { name: '--surface', hex: '#FFFFFF', varName: 'bg-surface text-ink border border-line' },
@@ -62,14 +80,14 @@ export function DesignSystemDevPage({ onBack }: { onBack?: () => void }) {
   ];
 
   const categoryTokens = [
-    { name: 'terracotta', bg: '#F3DCD2', ink: '#8A3A1F' },
-    { name: 'olive', bg: '#E8EBCF', ink: '#55601A' },
-    { name: 'teal', bg: '#D7ECE9', ink: '#1E5F58' },
-    { name: 'rose', bg: '#F5DCE3', ink: '#8A2A47' },
-    { name: 'sand', bg: '#EFE3CB', ink: '#7A5A12' },
-    { name: 'sky', bg: '#DCE8F5', ink: '#245A8C' },
-    { name: 'moss', bg: '#DDEBD9', ink: '#2F6A32' },
-    { name: 'slate', bg: '#E3E6EA', ink: '#3C4654' },
+    'Food & Dining',
+    'Shopping',
+    'Utilities',
+    'Entertainment',
+    'Salary',
+    'Investments',
+    'Healthcare',
+    'Travel',
   ];
 
   const icons = [
@@ -116,24 +134,152 @@ export function DesignSystemDevPage({ onBack }: { onBack?: () => void }) {
   ];
 
   return (
-    <div className="min-h-screen bg-bg text-ink p-8 max-w-6xl mx-auto space-y-12">
+    <div className="min-h-screen bg-bg text-ink p-6 md:p-10 max-w-6xl mx-auto space-y-12">
       <header className="flex justify-between items-center border-b border-line pb-6">
         <div>
           <span className="text-caption text-ink-3 uppercase tracking-wider font-semibold">Dev-Only Preview</span>
-          <h1 className="font-display text-page-title text-ink font-semibold">Design System Foundations</h1>
-          <p className="text-body-sm text-ink-2 mt-1">Tokens, typography, motion patterns, and SVG icon system</p>
+          <h1 className="font-display text-page-title text-ink font-semibold">Design System & Primitives (Phase 2)</h1>
+          <p className="text-body-sm text-ink-2 mt-1">Tokens, typography, motion patterns, and redesigned primitives</p>
         </div>
         {onBack && (
-          <button
-            onClick={onBack}
-            className="interactive-btn px-4 py-2 bg-surface border border-line-strong rounded-btn text-body-sm font-medium hover:border-ink cursor-pointer"
-          >
+          <Button variant="secondary" onClick={onBack}>
             Back to App
-          </button>
+          </Button>
         )}
       </header>
 
-      {/* Colors */}
+      {/* Buttons */}
+      <section className="space-y-4">
+        <h2 className="text-section-title font-display font-semibold">Buttons</h2>
+        <div className="flex flex-wrap items-center gap-3 bg-surface p-6 rounded-card border border-line shadow-warm-1">
+          <Button variant="primary" leftIcon={<PlusIcon size={16} />}>Primary Button</Button>
+          <Button variant="secondary">Secondary Button</Button>
+          <Button variant="ghost">Ghost Button</Button>
+          <Button variant="danger" leftIcon={<TrashIcon size={16} />}>Danger Button</Button>
+          <Button variant="primary" isLoading>Loading</Button>
+          <Button variant="primary" disabled>Disabled</Button>
+        </div>
+      </section>
+
+      {/* Inputs & Amount Input */}
+      <section className="space-y-4">
+        <h2 className="text-section-title font-display font-semibold">Inputs & Amount Input</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface p-6 rounded-card border border-line shadow-warm-1">
+          <TextInput
+            label="Transaction Description"
+            placeholder="e.g. Grocery shopping"
+            value={textVal}
+            onChange={(e) => setTextVal(e.target.value)}
+            hint="Standard input with 44px height, line-strong border, and focus ring"
+          />
+          <AmountInput
+            label="Amount (Indian Grouping)"
+            value={amountVal}
+            onChange={(val) => setAmountVal(val)}
+          />
+          <TextInput
+            label="Input with Error"
+            defaultValue="Invalid Input"
+            error="Please enter a valid description"
+          />
+          <div className="space-y-1.5">
+            <label className="text-caption font-medium text-ink-2">Type Segmented Control</label>
+            <div>
+              <SegmentedControl
+                options={[
+                  { value: 'expense', label: 'Expense', icon: <ArrowUpIcon size={16} /> },
+                  { value: 'income', label: 'Income', icon: <ArrowDownIcon size={16} /> },
+                ]}
+                value={segmentVal}
+                onChange={setSegmentVal}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dropdown, Date Picker & Day Picker */}
+      <section className="space-y-4">
+        <h2 className="text-section-title font-display font-semibold">Dropdowns & Pickers</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-surface p-6 rounded-card border border-line shadow-warm-1">
+          <div className="space-y-1.5">
+            <label className="text-caption font-medium text-ink-2">Custom Select</label>
+            <CustomSelect
+              value={selectVal}
+              onChange={setSelectVal}
+              options={[
+                { value: 'food', label: 'Food & Dining' },
+                { value: 'shopping', label: 'Shopping' },
+                { value: 'bills', label: 'Bills & Utilities' },
+                { value: 'salary', label: 'Salary Income' },
+              ]}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-caption font-medium text-ink-2">Custom Date Picker</label>
+            <CustomDatePicker value={dateVal} onChange={setDateVal} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-caption font-medium text-ink-2">Autopay Day-of-Month Picker</label>
+            <AutopayDayPicker value={dayVal} onChange={setDayVal} />
+          </div>
+        </div>
+      </section>
+
+      {/* Cards, Metric Cards & Progress */}
+      <section className="space-y-4">
+        <h2 className="text-section-title font-display font-semibold">Cards & Budget Progress</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <MetricCard
+            label="Total Balance"
+            figure="₹1,25,000"
+            delta={{ text: '+12.4%', type: 'income' }}
+            secondaryText="Indian numbering system formatting"
+            icon={<WalletIcon size={20} />}
+          />
+          <MetricCard
+            label="Monthly Expenses"
+            figure="₹42,850"
+            delta={{ text: '-4.2%', type: 'danger' }}
+            secondaryText="Target limit: ₹50,000"
+            icon={<ArrowUpIcon size={20} />}
+          />
+          <Card className="p-6 space-y-4">
+            <span className="text-body-sm font-medium text-ink-2">Budget Goal Progress</span>
+            <ProgressBar value={42850} max={50000} thresholdPercent={80} showLabels />
+            <p className="text-caption text-ink-3">8px track with threshold indicator and automatic warning/danger tints.</p>
+          </Card>
+        </div>
+      </section>
+
+      {/* Category Badges & Generic Badges */}
+      <section className="space-y-4">
+        <h2 className="text-section-title font-display font-semibold">Category Badges & Status Pills</h2>
+        <div className="flex flex-wrap gap-2.5 bg-surface p-6 rounded-card border border-line shadow-warm-1">
+          {categoryTokens.map((cat) => (
+            <CategoryBadge key={cat} category={cat} />
+          ))}
+          <Badge variant="accent">Active Plan</Badge>
+          <Badge variant="income">Income</Badge>
+          <Badge variant="warning">Near Limit</Badge>
+          <Badge variant="danger">Over Budget</Badge>
+        </div>
+      </section>
+
+      {/* Skeletons */}
+      <section className="space-y-4">
+        <h2 className="text-section-title font-display font-semibold">Loading Skeletons (Warm Shimmer)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SkeletonCard />
+          <div className="bg-surface border border-line rounded-card overflow-hidden shadow-warm-1">
+            <SkeletonTableRow />
+            <SkeletonTableRow />
+            <SkeletonTableRow />
+          </div>
+        </div>
+      </section>
+
+      {/* Colors & Icons */}
       <section className="space-y-4">
         <h2 className="text-section-title font-display font-semibold">Color Tokens</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
@@ -147,72 +293,6 @@ export function DesignSystemDevPage({ onBack }: { onBack?: () => void }) {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Category Badges */}
-      <section className="space-y-4">
-        <h2 className="text-section-title font-display font-semibold">Category Badge Palette (8 Muted Pairs)</h2>
-        <div className="flex flex-wrap gap-3">
-          {categoryTokens.map((cat) => (
-            <span
-              key={cat.name}
-              className="px-3 py-1 rounded-full text-caption font-medium capitalize"
-              style={{ backgroundColor: cat.bg, color: cat.ink }}
-            >
-              {cat.name}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* Typography Scale */}
-      <section className="space-y-4">
-        <h2 className="text-section-title font-display font-semibold">Typography Scale</h2>
-        <div className="bg-surface p-6 rounded-card border border-line space-y-4 shadow-warm-1">
-          <div className="border-b border-line pb-3">
-            <span className="text-caption text-ink-3">Hero Display (48px / 52px, 600) — Indian Grouping Tabular Figure</span>
-            <div className="font-display text-hero font-semibold text-ink tabular-nums">₹1,25,000.00</div>
-          </div>
-          <div className="border-b border-line pb-3">
-            <span className="text-caption text-ink-3">Page Title (28px / 36px, 600)</span>
-            <div className="font-display text-page-title font-semibold text-ink">Monthly Flow Overview</div>
-          </div>
-          <div className="border-b border-line pb-3">
-            <span className="text-caption text-ink-3">Section Title (20px / 28px, 600)</span>
-            <div className="font-display text-section-title font-semibold text-ink">Recent Transactions</div>
-          </div>
-          <div className="border-b border-line pb-3">
-            <span className="text-caption text-ink-3">Body (16px / 24px, 400 & 500)</span>
-            <div className="text-body text-ink">Regular UI text with standard contrast for high readability.</div>
-          </div>
-          <div className="border-b border-line pb-3">
-            <span className="text-caption text-ink-3">Body Small (14px / 20px, 400 & 500)</span>
-            <div className="text-body-sm text-ink-2">Secondary metadata, category chips, and filter options.</div>
-          </div>
-          <div>
-            <span className="text-caption text-ink-3">Caption (12px / 16px, 400)</span>
-            <div className="text-caption text-ink-3">Form labels, footnotes, timestamps, and badges.</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Shapes & Elevation */}
-      <section className="space-y-4">
-        <h2 className="text-section-title font-display font-semibold">Elevations & Shapes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-surface p-6 rounded-card border border-line shadow-warm-1">
-            <span className="text-body-sm font-semibold text-ink">Elevation 1 (Resting Card)</span>
-            <p className="text-caption text-ink-2 mt-1">Used for standard dashboard cards and table surfaces.</p>
-          </div>
-          <div className="interactive-card bg-surface p-6 rounded-card border border-line shadow-warm-1 cursor-pointer">
-            <span className="text-body-sm font-semibold text-ink">Elevation 2 (Interactive Hover)</span>
-            <p className="text-caption text-ink-2 mt-1">Hover over me! Lifts 2px with shadow-warm-2.</p>
-          </div>
-          <div className="bg-surface p-6 rounded-card border border-line shadow-warm-3">
-            <span className="text-body-sm font-semibold text-ink">Elevation 3 (Modal / Dialog)</span>
-            <p className="text-caption text-ink-2 mt-1">High-focus modal dialogs and slide-over panels.</p>
-          </div>
         </div>
       </section>
 
