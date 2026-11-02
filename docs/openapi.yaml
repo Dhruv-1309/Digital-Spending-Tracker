@@ -1,0 +1,416 @@
+openapi: 3.1.0
+info:
+  title: MoneyTracker API
+  description: Owned full-stack personal finance REST API with integer paise precision, statistical anomaly detection, and offline synchronization.
+  version: 3.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local Development Server
+  - url: https://api.moneytracker.app
+    description: Production Server
+
+paths:
+  /health:
+    get:
+      summary: Liveness Probe
+      description: Returns service status, uptime, and current ISO timestamp.
+      responses:
+        '200':
+          description: Service is alive
+  /ready:
+    get:
+      summary: Readiness Probe
+      description: Checks PostgreSQL database connectivity.
+      responses:
+        '200':
+          description: Database is connected and ready
+        '503':
+          description: Database connection failed
+
+  /api/v1/users/me:
+    get:
+      summary: Current User Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile details
+    patch:
+      summary: Update User Profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                timezone:
+                  type: string
+      responses:
+        '200':
+          description: Updated user profile
+    delete:
+      summary: Delete User Account
+      description: Cascades deletion of all user transactions, categories, autopay plans, budget limits, and idempotency records.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Account and all associated data permanently deleted
+
+  /api/v1/transactions:
+    get:
+      summary: List Transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: month
+          in: query
+          schema:
+            type: string
+            example: '2026-11'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of transactions
+    post:
+      summary: Create Transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionInput'
+      responses:
+        '201':
+          description: Transaction created
+        '400':
+          description: Validation error
+
+  /api/v1/transactions/{id}:
+    patch:
+      summary: Update Transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction updated
+    delete:
+      summary: Soft-delete Transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction marked deleted
+
+  /api/v1/transactions/import:
+    post:
+      summary: Batch Import Transactions
+      description: Deduplicates against user transactions based on SHA-256 row hash.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ImportRow'
+      responses:
+        '200':
+          description: Batch import summary
+
+  /api/v1/transactions/export:
+    get:
+      summary: Export Transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv-basic, csv-detailed, json-backup]
+            default: csv-detailed
+      responses:
+        '200':
+          description: Export stream
+
+  /api/v1/categories:
+    get:
+      summary: List Categories
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Built-in and user custom categories
+    post:
+      summary: Create Custom Category
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, name]
+              properties:
+                type:
+                  type: string
+                  enum: [income, expense]
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Custom category created
+
+  /api/v1/autopay:
+    get:
+      summary: List Autopay Plans
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User autopay recurring schedules
+    post:
+      summary: Create Autopay Plan
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAutopayInput'
+      responses:
+        '201':
+          description: Autopay plan created
+
+  /api/v1/autopay/upcoming:
+    get:
+      summary: Upcoming Autopay Agenda
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Upcoming recurring executions
+
+  /api/v1/budget:
+    get:
+      summary: Get Budget Goal
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user monthly expense limit
+    put:
+      summary: Upsert Budget Goal
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monthlyExpenseLimitPaise]
+              properties:
+                monthlyExpenseLimitPaise:
+                  type: integer
+                thresholdPercent:
+                  type: integer
+                  default: 80
+      responses:
+        '200':
+          description: Budget goal updated
+
+  /api/v1/dashboard/summary:
+    get:
+      summary: Consolidated Dashboard Metrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Consolidated totals, daily series, weekday stats, and budget status
+
+  /api/v1/anomalies:
+    get:
+      summary: Flagged Statistical Anomalies
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Expenses where Z-score exceeded 2.0
+
+  /api/v1/anomalies/{id}/approve:
+    post:
+      summary: Approve Anomaly
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Anomaly approved
+
+  /api/v1/sync/changes:
+    get:
+      summary: Delta Sync Changes
+      description: Returns entity changes since client timestamp cursor.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Delta changes list
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateTransactionInput:
+      type: object
+      required: [type, amountPaise, category, paymentMethod, date]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [income, expense]
+        amountPaise:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          default: INR
+        category:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [cash, card, bank_transfer, upi, wallet, other]
+        description:
+          type: string
+        date:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+        autopayId:
+          type: string
+          format: uuid
+          nullable: true
+
+    ImportRow:
+      type: object
+      required: [date, type, category, amountPaise, paymentMethod]
+      properties:
+        date:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        category:
+          type: string
+        amountPaise:
+          type: integer
+        paymentMethod:
+          type: string
+          enum: [cash, card, bank_transfer, upi, wallet, other]
+        description:
+          type: string
+
+    CreateAutopayInput:
+      type: object
+      required: [name, amountPaise, type, category, paymentMethod, day]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        amountPaise:
+          type: integer
+        type:
+          type: string
+          enum: [income, expense]
+        category:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [cash, card, bank_transfer, upi, wallet, other]
+        day:
+          type: integer
+          minimum: 1
+          maximum: 31
+        active:
+          type: boolean
+          default: true
