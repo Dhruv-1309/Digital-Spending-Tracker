@@ -82,3 +82,23 @@
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
+
+/* Route Cross-Fade Transition (SPEC Section 4, 5 & 6) */
+@keyframes routeCrossFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.route-fade-content {
+  animation: routeCrossFade 160ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-fade-content {
+    animation: none !important;
+  }
+}

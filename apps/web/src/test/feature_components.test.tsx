@@ -149,7 +149,7 @@ describe('Feature Components', () => {
     renderWithProviders(<AppLayout />, mockUser, { currentTab: 'dashboard' });
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
     expect(screen.getByText('MoneyTracker')).toBeInTheDocument();
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0);
   });
 
   it('NavigationTabs triggers setCurrentTab on tab click', () => {

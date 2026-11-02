@@ -10,6 +10,10 @@ export interface ToastItemUI {
   type: ToastType;
   message: React.ReactNode;
   duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export interface ToastProps {
@@ -111,6 +115,19 @@ export function Toast({ toast, onDismiss, className = '' }: ToastProps) {
 
       <div className="flex-1 text-sm font-sans text-ink leading-snug break-words">
         {toast.message}
+        {toast.action && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toast.action?.onClick();
+              onDismiss(toast.id);
+            }}
+            className="ml-2 font-medium text-accent underline hover:no-underline focus-visible:outline-none"
+          >
+            {toast.action.label}
+          </button>
+        )}
       </div>
 
       <button
@@ -157,7 +174,8 @@ export function ToastContainerUI({
 
   return (
     <div
-      id="toastContainerUI"
+      id="toastContainer"
+      data-testid="toast-container"
       aria-live="polite"
       aria-atomic="true"
       className={`fixed z-[100] pointer-events-none flex flex-col gap-2 p-4 bottom-4 right-4 sm:bottom-6 sm:right-6 max-sm:top-4 max-sm:inset-x-0 max-sm:items-center max-sm:p-3 ${className}`}

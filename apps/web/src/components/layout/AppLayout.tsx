@@ -4,8 +4,7 @@ import { useTracker } from '../../hooks/useTracker';
 import { ToastContainer } from '../common/ToastContainer';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { AuthModal } from '../auth/AuthModal';
-import { Header } from './Header';
-import { NavigationTabs } from './NavigationTabs';
+import { AppShell } from './AppShell';
 import { DashboardTab } from '../dashboard/DashboardTab';
 import { AddTransactionTab } from '../transactions/AddTransactionTab';
 import { TransactionsTab } from '../transactions/TransactionsTab';
@@ -13,6 +12,12 @@ import { AutopayTab } from '../autopay/AutopayTab';
 import { AnalyticsTab } from '../analytics/AnalyticsTab';
 import { ProfileModal } from '../profile/ProfileModal';
 
+/**
+ * AppLayout (Phase 3 App Shell)
+ * Wraps all existing screens inside the AppShell component without modifying
+ * individual screen content yet. Swapped ToastContainer and ConfirmModal to
+ * the new Toast and ConfirmDialog primitives while preserving context APIs.
+ */
 export function AppLayout() {
   const { user } = useAuth();
   const { currentTab } = useTracker();
@@ -27,16 +32,15 @@ export function AppLayout() {
         <AuthModal />
       ) : (
         <>
-          <div id="appContainer" className="container">
-            <Header onOpenProfile={() => setIsProfileOpen(true)} />
-            <NavigationTabs />
-
-            {currentTab === 'dashboard' && <DashboardTab />}
-            {currentTab === 'add-transaction' && <AddTransactionTab />}
-            {currentTab === 'transactions' && <TransactionsTab />}
-            {currentTab === 'autopay' && <AutopayTab />}
-            {currentTab === 'analytics' && <AnalyticsTab />}
-          </div>
+          <AppShell onOpenProfile={() => setIsProfileOpen(true)}>
+            <div id="appContainer" className="w-full">
+              {currentTab === 'dashboard' && <DashboardTab />}
+              {currentTab === 'add-transaction' && <AddTransactionTab />}
+              {currentTab === 'transactions' && <TransactionsTab />}
+              {currentTab === 'autopay' && <AutopayTab />}
+              {currentTab === 'analytics' && <AnalyticsTab />}
+            </div>
+          </AppShell>
 
           <ProfileModal
             isOpen={isProfileOpen}
@@ -47,3 +51,5 @@ export function AppLayout() {
     </>
   );
 }
+
+export default AppLayout;
