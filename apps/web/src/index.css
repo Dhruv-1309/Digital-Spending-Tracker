@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus ring: 2 px --accent with a 2 px --surface gap, on :focus-visible only */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Display font utilities */
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Tabular numbers for amounts, dates, and tables */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Prefers-reduced-motion rules (SPEC Section 4 rule 9) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transform: none !important;
+    transition-duration: 120ms !important;
+  }
+}
+
 @layer utilities {
   .animation-delay-2000 {
     animation-delay: 2s;
