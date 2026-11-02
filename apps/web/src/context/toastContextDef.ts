@@ -1,9 +1,14 @@
 import { createContext } from 'react';
-import type { ToastItem, ToastType } from '../types';
+import type { ToastItem, ToastType, ToastAction } from '../types';
 
 export interface ToastContextValue {
   toasts: ToastItem[];
-  showToast: (message: string, type?: ToastType, duration?: number) => void;
+  showToast: (
+    message: string,
+    type?: ToastType,
+    duration?: number,
+    action?: ToastAction,
+  ) => void;
   dismissToast: (id: string) => void;
 }
 

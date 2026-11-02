@@ -78,6 +78,18 @@ function ToastElement({ toast, onDismiss }: ToastElementProps) {
       <div className="flex items-center gap-3 p-3.5">
         <div className="toast__icon shrink-0">{getIcon(toast.type)}</div>
         <div className="toast__content flex-1 text-body-sm font-medium text-ink">{toast.message}</div>
+        {toast.action && (
+          <button
+            type="button"
+            className="px-2.5 py-1 text-caption font-semibold text-accent hover:bg-accent-tint rounded-btn transition-colors shrink-0"
+            onClick={() => {
+              toast.action?.onClick();
+              onDismiss(toast.id);
+            }}
+          >
+            {toast.action.label}
+          </button>
+        )}
         <button
           type="button"
           className="toast__close p-1 rounded-btn hover:bg-surface-2 text-ink-3 hover:text-ink transition-colors shrink-0"

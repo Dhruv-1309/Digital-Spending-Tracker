@@ -214,7 +214,7 @@ export function AppLayout() {
                 ✕
               </button>
             </div>
-            <AddTransactionTab />
+            <AddTransactionTab onSuccess={() => setIsSlideoverOpen(false)} />
           </div>
         </div>
       )}
