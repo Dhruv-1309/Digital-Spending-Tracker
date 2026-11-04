@@ -28,11 +28,15 @@ import {
   AlertCircleIcon,
   PlusIcon,
   RefreshCwIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
+  SparklesIcon,
+  FlameIcon,
 } from '../icons';
 
 /**
  * Loading Skeleton Layout for Dashboard
- * Skeletons that match the final layout for the hero, budget, chart and rows.
+ * Skeletons that match the final layout for the hero, micro-insights, budget, chart, and rows.
  */
 function DashboardSkeleton() {
   return (
@@ -50,6 +54,17 @@ function DashboardSkeleton() {
           </div>
         </div>
       </Card>
+
+      {/* 3-Column Micro-Insights Capsules Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="p-4 flex flex-col gap-2">
+            <Skeleton variant="text" width={100} height={14} />
+            <Skeleton variant="rectangular" width={140} height={28} className="rounded-btn" />
+            <Skeleton variant="text" width={120} height={12} />
+          </Card>
+        ))}
+      </div>
 
       {/* Budget Goal Skeleton */}
       <Card className="p-5 sm:p-6">
@@ -100,6 +115,8 @@ function DashboardSkeleton() {
  * - Hero Card: Current balance as largest figure in display font, tabular nums, Indian grouping,
  *   useCountUp hook (800ms ease-out) animating from previous value, final value in DOM immediately.
  *   Beside figure, two chips for month's income and expenses.
+ *   Subtle decorative Haikei fluid geometry background overlay.
+ * - Micro-Insight Stat Capsules: Net savings, Top category, and Daily burn rate.
  * - Budget section: ProgressBar with threshold tick, 3-color behavior, label showing spent of limit and %,
  *   edit limit ghost button revealing form in place with CSS grid 0fr->1fr.
  * - Anomaly banner above hero when present using Banner with Approve and Dismiss actions.
@@ -163,6 +180,53 @@ export function DashboardTab() {
       })
       .reduce((sum, t) => sum + t.amount, 0);
   }, [transactions]);
+
+  // Net Savings & Rate
+  const netSavingsThisMonth = currentMonthIncome - currentMonthExpenses;
+  const savingsRate = currentMonthIncome > 0
+    ? Math.round((netSavingsThisMonth / currentMonthIncome) * 100)
+    : 0;
+
+  // Top Spending Category This Month
+  const topCategory = useMemo(() => {
+    const categoryMap = new Map<string, number>();
+    const { start, end } = getCurrentMonthRange();
+    transactions.forEach((t) => {
+      if (t.type === 'expense') {
+        const d = new Date(t.date);
+        if (d >= start && d <= end) {
+          categoryMap.set(t.category, (categoryMap.get(t.category) || 0) + t.amount);
+        }
+      }
+    });
+    if (categoryMap.size === 0) return null;
+    let highestCat = '';
+    let highestAmount = 0;
+    categoryMap.forEach((amt, cat) => {
+      if (amt > highestAmount) {
+        highestAmount = amt;
+        highestCat = cat;
+      }
+    });
+    const sharePercent = currentMonthExpenses > 0
+      ? Math.round((highestAmount / currentMonthExpenses) * 100)
+      : 0;
+    return { category: highestCat, amount: highestAmount, sharePercent };
+  }, [transactions, currentMonthExpenses]);
+
+  // Daily Burn Rate & Pace
+  const dailyBurnRate = useMemo(() => {
+    const today = new Date().getDate();
+    const daysElapsed = Math.max(1, today);
+    const avgPerDay = Math.round(currentMonthExpenses / daysElapsed);
+    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const daysRemaining = Math.max(0, daysInMonth - today);
+    const remainingBudget = (budgetGoal.monthlyExpenseLimit || 0) - currentMonthExpenses;
+    const safeDailyBudget = remainingBudget > 0 && daysRemaining > 0
+      ? Math.round(remainingBudget / daysRemaining)
+      : null;
+    return { avgPerDay, safeDailyBudget, daysRemaining };
+  }, [currentMonthExpenses, budgetGoal.monthlyExpenseLimit]);
 
   // Budget Status & Progress
   const budgetStatus = useMemo(
@@ -290,7 +354,7 @@ export function DashboardTab() {
       id="dashboard"
       className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6"
     >
-      {/* 3. Anomaly Banners (above Hero when present) */}
+      {/* Anomaly Banners (above Hero when present) */}
       {unapprovedAnomalies.length > 0 && (
         <div
           id="anomalyAlertSection"
@@ -355,14 +419,68 @@ export function DashboardTab() {
 
       {/* 1. Hero Card: Current Balance & Month Chips */}
       <Card
-        className="p-6 sm:p-8 animate-section-entrance"
+        className="relative overflow-hidden p-6 sm:p-8 animate-section-entrance border border-line shadow-1 bg-surface"
         style={{ '--i': 1 } as React.CSSProperties}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Subtle decorative Haikei fluid geometry background overlay */}
+        <div
+          className="absolute -top-12 -right-12 w-72 sm:w-96 h-48 sm:h-56 pointer-events-none select-none opacity-20 dark:opacity-10 overflow-hidden"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 400 200"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-full object-cover"
+          >
+            <path
+              d="M0 80C100 20 200 140 300 70C350 35 380 50 400 60V200H0V80Z"
+              fill="url(#hero-wave-grad)"
+              opacity="0.6"
+            />
+            <path
+              d="M0 120C80 90 180 170 280 110C340 70 370 90 400 95V200H0V120Z"
+              fill="url(#hero-wave-grad-2)"
+              opacity="0.8"
+            />
+            <circle cx="340" cy="50" r="40" fill="url(#hero-wave-grad)" opacity="0.3" />
+            <defs>
+              <linearGradient
+                id="hero-wave-grad"
+                x1="0"
+                y1="0"
+                x2="400"
+                y2="200"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stopColor="var(--accent)" stopOpacity="0.4" />
+                <stop offset="1" stopColor="var(--income)" stopOpacity="0.25" />
+              </linearGradient>
+              <linearGradient
+                id="hero-wave-grad-2"
+                x1="0"
+                y1="100"
+                x2="400"
+                y2="200"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stopColor="var(--accent)" stopOpacity="0.2" />
+                <stop offset="1" stopColor="var(--accent)" stopOpacity="0.05" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
-            <span className="text-sm font-medium text-ink-2 mb-1 block">
-              Current Balance
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-income-tint text-income border border-income/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-income animate-pulse" />
+                Live Balance
+              </span>
+              <span className="text-xs text-ink-3">Total Net Worth</span>
+            </div>
+
             <div
               id="balance"
               className="font-display font-semibold tabular-nums text-4xl sm:text-5xl lg:text-[48px] leading-tight lg:leading-[52px] tracking-tight"
@@ -382,37 +500,129 @@ export function DashboardTab() {
           </div>
 
           {/* Two chips for month's income and expenses beside the figure */}
-          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          <div className="flex flex-wrap items-center gap-2.5 sm:ml-auto">
             <div
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-chip bg-income-tint text-income text-xs sm:text-sm font-medium shadow-1"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-chip bg-income-tint text-income text-xs sm:text-sm font-medium border border-income/20 shadow-1 transition-transform duration-fast hover:-translate-y-0.5"
               title="Current Month Total Income"
             >
-              <ArrowUpIcon size={14} className="shrink-0 text-income" />
-              <span className="text-ink-2">Income:</span>
-              <span id="totalIncome" className="tabular-nums font-semibold text-income">
-                +{formatCurrency(currentMonthIncome)}
-              </span>
+              <div className="w-6 h-6 rounded-full bg-income/10 flex items-center justify-center shrink-0">
+                <ArrowUpIcon size={14} className="text-income" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] uppercase tracking-wider text-ink-2 font-medium">Income</span>
+                <span id="totalIncome" className="tabular-nums font-semibold text-income">
+                  +{formatCurrency(currentMonthIncome)}
+                </span>
+              </div>
             </div>
 
             <div
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-chip bg-surface-2 text-ink-2 text-xs sm:text-sm font-medium border border-line/60"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-chip bg-surface-2 text-ink-2 text-xs sm:text-sm font-medium border border-line shadow-1 transition-transform duration-fast hover:-translate-y-0.5"
               title="Current Month Total Expenses"
             >
-              <ArrowDownIcon size={14} className="shrink-0 text-ink-2" />
-              <span className="text-ink-2">Expenses:</span>
-              <span id="totalExpenses" className="tabular-nums font-semibold text-ink">
-                {formatCurrency(currentMonthExpenses)}
-              </span>
+              <div className="w-6 h-6 rounded-full bg-ink/5 flex items-center justify-center shrink-0">
+                <ArrowDownIcon size={14} className="text-ink-2" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] uppercase tracking-wider text-ink-2 font-medium">Expenses</span>
+                <span id="totalExpenses" className="tabular-nums font-semibold text-ink">
+                  {formatCurrency(currentMonthExpenses)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* 2. Budget Goal Section: ProgressBar & In-Place Reveal Form */}
+      {/* 2. Micro-Insight Stat Capsules (Skiper UI / Animata pattern) */}
+      <div
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 animate-section-entrance"
+        style={{ '--i': 2 } as React.CSSProperties}
+      >
+        {/* Net Monthly Savings Capsule */}
+        <Card className="p-4 bg-surface border border-line hover:border-line-strong transition-all duration-base">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-ink-2">Net Monthly Savings</span>
+            <div className={`p-1.5 rounded-full ${netSavingsThisMonth >= 0 ? 'bg-income-tint text-income' : 'bg-danger-tint text-danger'}`}>
+              {netSavingsThisMonth >= 0 ? <TrendingUpIcon size={14} /> : <TrendingDownIcon size={14} />}
+            </div>
+          </div>
+          <div className="text-xl sm:text-2xl font-display font-semibold tabular-nums text-ink">
+            {formatCurrency(netSavingsThisMonth)}
+          </div>
+          <div className="text-xs text-ink-3 mt-1 flex items-center gap-1">
+            {currentMonthIncome > 0 ? (
+              <span className={`font-medium ${savingsRate >= 20 ? 'text-income' : 'text-warning'}`}>
+                {savingsRate}% savings rate
+              </span>
+            ) : (
+              <span>No income this month</span>
+            )}
+            <span>• this month</span>
+          </div>
+        </Card>
+
+        {/* Top Spending Category Capsule */}
+        <Card className="p-4 bg-surface border border-line hover:border-line-strong transition-all duration-base">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-ink-2">Top Spending Category</span>
+            <div className="p-1.5 rounded-full bg-accent-tint text-accent">
+              <SparklesIcon size={14} />
+            </div>
+          </div>
+          {topCategory ? (
+            <>
+              <div className="flex items-center gap-2 mt-0.5">
+                <Badge category={topCategory.category} className="text-xs">
+                  {topCategory.category}
+                </Badge>
+                <span className="text-base sm:text-lg font-display font-semibold tabular-nums text-ink">
+                  {formatCurrency(topCategory.amount)}
+                </span>
+              </div>
+              <div className="text-xs text-ink-3 mt-1.5">
+                {topCategory.sharePercent}% of total monthly spend
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-base sm:text-lg font-display font-semibold text-ink-2">
+                No spend recorded
+              </div>
+              <div className="text-xs text-ink-3 mt-1">
+                Zero expenses logged this month
+              </div>
+            </>
+          )}
+        </Card>
+
+        {/* Daily Burn Rate & Pace Capsule */}
+        <Card className="p-4 bg-surface border border-line hover:border-line-strong transition-all duration-base">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-ink-2">Daily Burn Rate</span>
+            <div className="p-1.5 rounded-full bg-amber-500/10 text-amber-600">
+              <FlameIcon size={14} />
+            </div>
+          </div>
+          <div className="text-xl sm:text-2xl font-display font-semibold tabular-nums text-ink">
+            {formatCurrency(dailyBurnRate.avgPerDay)}
+            <span className="text-xs font-sans font-normal text-ink-3 ml-1">/ day</span>
+          </div>
+          <div className="text-xs text-ink-3 mt-1">
+            {dailyBurnRate.safeDailyBudget !== null ? (
+              <span>Safe pace: <strong className="text-ink-2 font-medium">{formatCurrency(dailyBurnRate.safeDailyBudget)}/day</strong> remaining</span>
+            ) : (
+              <span>{dailyBurnRate.daysRemaining} days remaining in month</span>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* 3. Budget Goal Section: ProgressBar & In-Place Reveal Form */}
       <Card
         id="budgetGoalCard"
-        className="p-5 sm:p-6 animate-section-entrance"
-        style={{ '--i': 2 } as React.CSSProperties}
+        className="p-5 sm:p-6 animate-section-entrance border border-line shadow-1 bg-surface"
+        style={{ '--i': 3 } as React.CSSProperties}
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -460,8 +670,17 @@ export function DashboardTab() {
         />
 
         {/* Budget Footer & Accessible Metadata */}
-        <div className="flex items-center justify-between text-xs text-ink-3 mt-2">
+        <div className="flex flex-wrap items-center justify-between text-xs text-ink-3 mt-2.5 gap-2">
           <span id="budgetGoalMeta">{budgetStatus.metaText}</span>
+          {budgetGoal.monthlyExpenseLimit > 0 && (
+            <span className="text-xs text-ink-2">
+              {budgetGoal.monthlyExpenseLimit - currentMonthExpenses >= 0 ? (
+                <>Remaining: <strong className="text-income font-medium">{formatCurrency(budgetGoal.monthlyExpenseLimit - currentMonthExpenses)}</strong></>
+              ) : (
+                <>Over budget by: <strong className="text-danger font-medium">{formatCurrency(currentMonthExpenses - budgetGoal.monthlyExpenseLimit)}</strong></>
+              )}
+            </span>
+          )}
           <span id="budgetGoalChip" className="sr-only">
             {budgetStatus.statusChip}
           </span>
@@ -485,7 +704,7 @@ export function DashboardTab() {
             <form
               id="budgetGoalForm"
               onSubmit={handleSaveBudget}
-              className="pt-4 mt-4 border-t border-line flex flex-col gap-4"
+              className="pt-4 mt-4 border-t border-line flex flex-col gap-4 bg-surface-2/40 -mx-5 -mb-5 p-5 rounded-b-card"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <TextInput
@@ -543,14 +762,17 @@ export function DashboardTab() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Weekly Activity Chart in a Card with Title */}
         <Card
-          className="lg:col-span-7 xl:col-span-8 p-5 sm:p-6 animate-section-entrance"
-          style={{ '--i': 3 } as React.CSSProperties}
+          className="lg:col-span-7 xl:col-span-8 p-5 sm:p-6 animate-section-entrance border border-line shadow-1 bg-surface"
+          style={{ '--i': 4 } as React.CSSProperties}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold text-base sm:text-lg text-ink flex items-center gap-2">
               <BarChartIcon size={20} className="text-ink-2" />
               Weekly Activity
             </h3>
+            <span className="text-xs text-ink-3 hidden sm:inline-block">
+              Daily income & expenses
+            </span>
           </div>
           <div className="h-64 sm:h-72 w-full">
             <WeeklyActivityChart transactions={transactions} />
@@ -559,8 +781,8 @@ export function DashboardTab() {
 
         {/* Recent Transactions: 5 compact rows */}
         <Card
-          className="lg:col-span-5 xl:col-span-4 p-5 sm:p-6 flex flex-col h-full animate-section-entrance"
-          style={{ '--i': 4 } as React.CSSProperties}
+          className="lg:col-span-5 xl:col-span-4 p-5 sm:p-6 flex flex-col h-full animate-section-entrance border border-line shadow-1 bg-surface"
+          style={{ '--i': 5 } as React.CSSProperties}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold text-base sm:text-lg text-ink flex items-center gap-2">
@@ -590,7 +812,7 @@ export function DashboardTab() {
               return (
                 <div
                   key={tx.id}
-                  className="group flex items-center justify-between py-2.5 px-1 transition-colors duration-fast hover:bg-surface-2/60 rounded-btn"
+                  className="group flex items-center justify-between py-2.5 px-2 transition-all duration-fast hover:bg-surface-2 rounded-btn"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Badge category={tx.category} className="shrink-0">
