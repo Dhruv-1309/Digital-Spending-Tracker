@@ -196,7 +196,7 @@ export function AuthModal() {
   return (
     <div
       id="authModal"
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-md overflow-y-auto"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md overflow-y-auto overscroll-contain"
     >
       {/* Split Layout Modal Card with spring entrance animation */}
       <m.div
@@ -206,7 +206,7 @@ export function AuthModal() {
         className="relative bg-surface rounded-card border border-line/90 shadow-3 w-full max-w-4xl overflow-hidden flex flex-col md:flex-row my-auto transition-all"
       >
         {/* Left Panel: Desktop Split Screen / Mobile Header Strip (High Contrast Brand Experience) */}
-        <div className="relative w-full md:w-5/12 p-6 sm:p-8 md:p-10 flex flex-col justify-between shrink-0 border-b md:border-b-0 md:border-r border-line/80 overflow-hidden bg-slate-950 text-white">
+        <div className="relative w-full md:w-5/12 p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col justify-between shrink-0 border-b md:border-b-0 md:border-r border-line/80 overflow-hidden bg-slate-950 text-white">
           {/* Layered Wave SVG Art (Direct Data URI ensures 100% reliable load with zero 404s) */}
           <img
             id="authWaveImg"
@@ -228,49 +228,49 @@ export function AuthModal() {
 
           {/* Top Section: Brand Identity */}
           <div className="relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-btn bg-accent text-white flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.45)] border border-blue-400/30 shrink-0">
-                <WalletIcon size={22} />
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-btn bg-accent text-white flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.45)] border border-blue-400/30 shrink-0">
+                <WalletIcon size={20} />
               </div>
               <div>
-                <span className="font-display text-xl font-bold block text-white leading-tight tracking-tight">
+                <span className="font-display text-lg sm:text-xl font-bold block text-white leading-tight tracking-tight">
                   MoneyTracker
                 </span>
-                <span className="text-[11px] font-medium text-blue-200/80 block uppercase tracking-wider">
+                <span className="text-[10px] sm:text-[11px] font-medium text-blue-200/80 block uppercase tracking-wider">
                   Personal Finance
                 </span>
               </div>
             </div>
 
             {/* PRD Vision Statement */}
-            <div className="mt-6 md:mt-8">
-              <p className="font-display text-xl md:text-2xl font-bold text-white leading-snug tracking-tight">
+            <div className="mt-3 sm:mt-6 md:mt-8">
+              <p className="font-display text-base sm:text-xl md:text-2xl font-bold text-white leading-snug tracking-tight">
                 No trackers, no bank logins.
               </p>
-              <p className="text-xs sm:text-sm text-slate-300/90 mt-2 hidden md:block leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-300/90 mt-1.5 hidden md:block leading-relaxed">
                 Privacy-first personal finance tracking that stays on your device.
               </p>
             </div>
           </div>
 
-          {/* Middle Section: Skiper UI Live Component Preview Card (Desktop only) */}
-          <div className="relative z-10 my-6 hidden md:block">
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3.5 shadow-2 text-white">
-              <div className="flex items-center justify-between text-xs mb-2.5 pb-2 border-b border-white/10">
-                <span className="flex items-center gap-1.5 text-blue-200 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          {/* Middle Section: Skiper UI Live Component Preview Card (Desktop & Tablet only) */}
+          <div className="relative z-10 my-4 sm:my-6 hidden md:block">
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 sm:p-3.5 shadow-2 text-white">
+              <div className="flex items-center justify-between text-xs mb-2.5 pb-2 border-b border-white/10 gap-2">
+                <span className="flex items-center gap-1.5 text-blue-200 font-medium truncate">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                   Live Sync Active
                 </span>
-                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-pill text-slate-300 font-mono">
+                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-pill text-slate-300 font-mono whitespace-nowrap shrink-0">
                   100% On-Device
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-white">Grocery & Supplies</p>
-                  <p className="text-[11px] text-slate-300">Today • 4:15 PM • UPI</p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-white truncate">Grocery & Supplies</p>
+                  <p className="text-[11px] text-slate-300 truncate">Today • 4:15 PM • UPI</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <span className="text-sm font-bold text-emerald-300 tabular-nums">
                     ₹1,450.00
                   </span>
@@ -280,25 +280,25 @@ export function AuthModal() {
             </div>
 
             {/* Trust feature pills */}
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] text-slate-300 bg-white/5 border border-white/10 px-2.5 py-1 rounded-pill">
-                <CheckIcon size={12} className="text-emerald-400" /> Zero Trackers
+            <div className="mt-2.5 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2">
+              <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-300 bg-white/5 border border-white/10 px-2 sm:px-2.5 py-1 rounded-pill whitespace-nowrap">
+                <CheckIcon size={12} className="text-emerald-400 shrink-0" /> Zero Trackers
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] text-slate-300 bg-white/5 border border-white/10 px-2.5 py-1 rounded-pill">
-                <LockIcon size={11} className="text-blue-300" /> AES-256 Encrypted
+              <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-300 bg-white/5 border border-white/10 px-2 sm:px-2.5 py-1 rounded-pill whitespace-nowrap">
+                <LockIcon size={11} className="text-blue-300 shrink-0" /> AES-256 Encrypted
               </span>
             </div>
           </div>
 
           {/* Bottom Security Footnote */}
-          <div className="relative z-10 flex items-center gap-2 text-xs text-slate-300/90 pt-3 md:pt-0">
-            <ShieldIcon size={15} className="text-blue-400 shrink-0" />
-            <span className="font-medium">Client-side privacy & secure sync</span>
+          <div className="relative z-10 flex items-center gap-2 text-xs text-slate-300/90 pt-2 sm:pt-3 md:pt-0">
+            <ShieldIcon size={14} className="text-blue-400 shrink-0" />
+            <span className="font-medium text-[11px] sm:text-xs">Client-side privacy & secure sync</span>
           </div>
         </div>
 
         {/* Right Panel: Clean, High-Contrast Interactive Form Area */}
-        <div className="w-full md:w-7/12 p-6 sm:p-8 md:p-10 bg-surface flex flex-col justify-center">
+        <div className="w-full md:w-7/12 p-4 sm:p-6 md:p-8 lg:p-10 bg-surface flex flex-col justify-center">
           {/* Mode Switch: SegmentedControl */}
           <SegmentedControl
             id="authModeControl"
@@ -311,12 +311,12 @@ export function AuthModal() {
               setAuthMode(val as 'signin' | 'signup');
               setStatusMessage(null);
             }}
-            className="w-full mb-6"
+            className="w-full mb-4 sm:mb-6"
           />
 
           {/* Mode Header */}
-          <div className="mb-6">
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-ink mb-1 tracking-tight">
+          <div className="mb-4 sm:mb-6">
+            <h2 className="font-display text-lg sm:text-2xl font-bold text-ink mb-1 tracking-tight">
               {authMode === 'signup' ? 'Create your account' : 'Sign in with email'}
             </h2>
             <p className="text-xs sm:text-sm text-ink-2">
@@ -331,7 +331,7 @@ export function AuthModal() {
             <div
               id="authError"
               role={statusMessage.type === 'error' ? 'alert' : 'status'}
-              className={`p-3.5 rounded-btn text-xs sm:text-sm mb-5 border flex items-center gap-2.5 transition-all duration-fast ${
+              className={`p-3 sm:p-3.5 rounded-btn text-xs sm:text-sm mb-4 sm:mb-5 border flex items-center gap-2.5 transition-all duration-fast ${
                 statusMessage.type === 'error'
                   ? 'bg-danger-tint text-danger border-danger/30'
                   : 'bg-income-tint text-income border-income/30'
@@ -351,7 +351,7 @@ export function AuthModal() {
           )}
 
           {/* Main Auth Form */}
-          <form id="authForm" onSubmit={handleEmailSubmit} className="space-y-4" noValidate>
+          <form id="authForm" onSubmit={handleEmailSubmit} className="space-y-3.5 sm:space-y-4" noValidate>
             {/* Email Field */}
             <TextInput
               id="authEmail"
@@ -383,7 +383,7 @@ export function AuthModal() {
                   id="togglePassword"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="text-ink-3 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded p-1 transition-colors"
+                  className="text-ink-3 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded p-1.5 transition-colors touch-manipulation min-w-[32px] min-h-[32px] flex items-center justify-center"
                 >
                   {showPassword ? (
                     <EyeOffIcon size={18} id="eyeIcon" />
@@ -397,7 +397,7 @@ export function AuthModal() {
 
             {/* Animata Interactive Password Strength Indicator (Sign Up Mode) */}
             {authMode === 'signup' && passwordLength > 0 && (
-              <div className="p-2.5 rounded-btn bg-surface-2 border border-line text-xs space-y-1.5 animate-fadeIn">
+              <div className="p-2 sm:p-2.5 rounded-btn bg-surface-2 border border-line text-xs space-y-1.5 animate-fadeIn">
                 <div className="flex items-center justify-between text-[11px] text-ink-2 font-medium">
                   <span>Password strength:</span>
                   <span
@@ -443,7 +443,7 @@ export function AuthModal() {
 
             {/* Forgot Password Toggle (Sign in mode) */}
             {authMode === 'signin' && (
-              <div className="flex items-center justify-between -mt-1">
+              <div className="flex items-center justify-between -mt-1 gap-2">
                 {import.meta.env.DEV ? (
                   <button
                     type="button"
@@ -460,7 +460,7 @@ export function AuthModal() {
                   type="button"
                   id="forgotPasswordBtn"
                   onClick={() => setIsResetOpen((prev) => !prev)}
-                  className="text-xs text-accent hover:underline font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded transition-colors"
+                  className="text-xs text-accent hover:underline font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded transition-colors whitespace-nowrap ml-auto"
                 >
                   {isResetOpen ? 'Close password reset' : 'Forgot password?'}
                 </button>
@@ -475,7 +475,7 @@ export function AuthModal() {
               size="lg"
               loading={loading}
               disabled={loading || googleLoading}
-              className="w-full justify-center text-sm font-semibold mt-2 shadow-1 hover:shadow-2 active:scale-[0.99] transition-all"
+              className="w-full justify-center text-sm font-semibold mt-2 shadow-1 hover:shadow-2 active:scale-[0.99] transition-all min-h-[44px]"
               icon={<ArrowRightIcon size={16} id="signInIcon" />}
               iconPosition="right"
             >
@@ -489,7 +489,7 @@ export function AuthModal() {
           {isResetOpen && (
             <div
               id="resetPasswordSection"
-              className="mt-4 p-4 rounded-card bg-surface-2 border border-line space-y-3 animate-fadeIn"
+              className="mt-3.5 sm:mt-4 p-3.5 sm:p-4 rounded-card bg-surface-2 border border-line space-y-3 animate-fadeIn"
             >
               <p className="text-xs sm:text-sm text-ink-2 font-medium">
                 Enter your email to receive a password reset link:
@@ -513,7 +513,7 @@ export function AuthModal() {
                   variant="primary"
                   size="md"
                   loading={resetLoading}
-                  className="w-full sm:w-auto shrink-0"
+                  className="w-full sm:w-auto shrink-0 min-h-[40px]"
                 >
                   Send Reset Link
                 </Button>
@@ -522,7 +522,7 @@ export function AuthModal() {
           )}
 
           {/* Or Divider */}
-          <div className="relative flex py-5 items-center">
+          <div className="relative flex py-3.5 sm:py-5 items-center">
             <div className="flex-grow border-t border-line" />
             <span className="shrink-0 mx-3 text-xs text-ink-3 font-medium">
               Or continue with
@@ -539,7 +539,7 @@ export function AuthModal() {
             loading={googleLoading}
             disabled={loading || googleLoading}
             onClick={handleGoogleSignIn}
-            className="w-full justify-center gap-2.5 font-medium border-line hover:border-line-strong hover:bg-surface-2 active:scale-[0.99] transition-all"
+            className="w-full justify-center gap-2.5 font-medium border-line hover:border-line-strong hover:bg-surface-2 active:scale-[0.99] transition-all min-h-[44px]"
             icon={<GoogleIcon size={18} id="googleIcon" />}
           >
             <span id="googleSignInText">Continue with Google</span>
