@@ -132,11 +132,11 @@ export function Button({
 
       {/* Content wrapper: hidden visually when loading but preserves natural width */}
       <span
-        className={`inline-flex items-center justify-center gap-2 ${loading ? 'invisible pointer-events-none' : 'visible'}`}
+        className={`inline-flex items-center justify-center gap-2 whitespace-nowrap ${loading ? 'invisible pointer-events-none' : 'visible'}`}
       >
-        {icon && iconPosition === 'left' && <span className="inline-flex shrink-0">{icon}</span>}
-        {children && <span>{children}</span>}
-        {icon && iconPosition === 'right' && <span className="inline-flex shrink-0">{icon}</span>}
+        {icon && iconPosition === 'left' && <span className="inline-flex items-center shrink-0">{icon}</span>}
+        {children && <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{children}</span>}
+        {icon && iconPosition === 'right' && <span className="inline-flex items-center shrink-0">{icon}</span>}
       </span>
     </button>
   );

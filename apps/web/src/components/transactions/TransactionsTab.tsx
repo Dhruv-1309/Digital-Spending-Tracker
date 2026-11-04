@@ -426,13 +426,12 @@ export function TransactionsTab() {
               type="button"
               variant="secondary"
               size="md"
+              icon={<MoreHorizontalIcon size={16} />}
               onClick={() => setIsMoreMenuOpen((prev) => !prev)}
               aria-label="More options"
               aria-expanded={isMoreMenuOpen}
-              className="gap-1.5"
             >
-              <MoreHorizontalIcon size={18} />
-              <span>More</span>
+              More
             </Button>
 
             {/* Hidden CSV file input */}
@@ -508,11 +507,10 @@ export function TransactionsTab() {
             type="button"
             variant="primary"
             size="md"
+            icon={<PlusIcon size={16} />}
             onClick={handleOpenAdd}
-            className="gap-1.5"
           >
-            <PlusIcon size={18} />
-            <span>New</span>
+            New
           </Button>
         </div>
       </div>
