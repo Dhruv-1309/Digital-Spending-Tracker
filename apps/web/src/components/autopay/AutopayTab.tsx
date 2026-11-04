@@ -20,7 +20,48 @@ import {
   ArrowUpIcon,
   RefreshCwIcon,
   AlertCircleIcon,
+  UtensilsIcon,
+  ShoppingCartIcon,
+  LandmarkIcon,
+  WalletIcon,
+  ZapIcon,
+  CarIcon,
+  FilmIcon,
+  HeartPulseIcon,
+  TagIcon,
 } from '../icons';
+
+/**
+ * Category Icon Resolver: renders crisp thematic SVG icons for common recurring plans.
+ */
+function getCategoryIcon(category: string, size = 16) {
+  const norm = (category || '').toLowerCase();
+  if (norm.includes('food') || norm.includes('dining') || norm.includes('restaurant') || norm.includes('cafe')) {
+    return <UtensilsIcon size={size} />;
+  }
+  if (norm.includes('grocer') || norm.includes('supermarket') || norm.includes('market') || norm.includes('shopping')) {
+    return <ShoppingCartIcon size={size} />;
+  }
+  if (norm.includes('salary') || norm.includes('freelance') || norm.includes('income') || norm.includes('paycheck') || norm.includes('retainer')) {
+    return <LandmarkIcon size={size} />;
+  }
+  if (norm.includes('invest') || norm.includes('dividend') || norm.includes('mutual')) {
+    return <WalletIcon size={size} />;
+  }
+  if (norm.includes('utilit') || norm.includes('bill') || norm.includes('electric') || norm.includes('water') || norm.includes('storage') || norm.includes('cloud')) {
+    return <ZapIcon size={size} />;
+  }
+  if (norm.includes('travel') || norm.includes('transport') || norm.includes('train') || norm.includes('cab') || norm.includes('flight')) {
+    return <CarIcon size={size} />;
+  }
+  if (norm.includes('subscript') || norm.includes('stream') || norm.includes('entertain') || norm.includes('movie') || norm.includes('netflix') || norm.includes('spotify')) {
+    return <FilmIcon size={size} />;
+  }
+  if (norm.includes('health') || norm.includes('gym') || norm.includes('fitness') || norm.includes('med')) {
+    return <HeartPulseIcon size={size} />;
+  }
+  return <TagIcon size={size} />;
+}
 
 /**
  * Loading Skeleton Layout for Autopay Screen (SPEC Section 5 & 6)
@@ -98,6 +139,7 @@ function AutopaySkeleton() {
  * Autopay Screen (SPEC Section 3, 4, 5, 6 & Prompt Requirements)
  * 1. Flow banner at the top: large figure (green when positive, --danger when negative),
  *    with income and expense totals as chips. Values come from existing projection logic.
+ *    Embedded with subtle Haikei geometric wave overlay.
  * 2. Plan cards: name, amount, day label (the 5th, or Last day), category Badge,
  *    next deduction date from existing logic, Active/Paused switch with role switch and
  *    aria-checked, animated knob (translateX, 200ms), and same pause behavior. Delete keeps confirm dialog.
@@ -195,14 +237,67 @@ export function AutopayTab() {
       {/* 1. Flow banner at the top (SPEC Section 6 & Prompt Item 1) */}
       <Card
         data-testid="autopay-flow-banner"
-        className="p-5 sm:p-6 lg:p-8 bg-surface border border-line shadow-1 transition-all duration-base"
+        className="relative overflow-hidden p-5 sm:p-6 lg:p-8 bg-surface border border-line shadow-1 transition-all duration-base"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Subtle decorative Haikei fluid geometry background overlay */}
+        <div
+          className="absolute -top-10 -right-10 w-72 sm:w-96 h-44 sm:h-52 pointer-events-none select-none opacity-20 dark:opacity-10 overflow-hidden"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 400 200"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-full object-cover"
+          >
+            <path
+              d="M0 70C110 30 190 130 290 80C340 50 370 70 400 75V200H0V70Z"
+              fill="url(#autopay-wave-grad)"
+              opacity="0.6"
+            />
+            <path
+              d="M0 110C90 80 170 160 270 115C330 85 365 105 400 108V200H0V110Z"
+              fill="url(#autopay-wave-grad-2)"
+              opacity="0.8"
+            />
+            <defs>
+              <linearGradient
+                id="autopay-wave-grad"
+                x1="0"
+                y1="0"
+                x2="400"
+                y2="200"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stopColor="var(--accent)" stopOpacity="0.35" />
+                <stop offset="1" stopColor="var(--income)" stopOpacity="0.25" />
+              </linearGradient>
+              <linearGradient
+                id="autopay-wave-grad-2"
+                x1="0"
+                y1="100"
+                x2="400"
+                y2="200"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stopColor="var(--accent)" stopOpacity="0.2" />
+                <stop offset="1" stopColor="var(--accent)" stopOpacity="0.05" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
-            <span className="text-xs sm:text-sm font-medium text-ink-2 uppercase tracking-wider block mb-1">
-              Projected Monthly Flow
-            </span>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-income-tint text-income border border-income/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-income animate-pulse" />
+                Automatic Cashflow Pulse
+              </span>
+              <span className="text-xs text-ink-3">Projected Net Flow</span>
+            </div>
+
+            <div className="flex items-baseline gap-2 mt-1">
               <span
                 data-testid="autopay-net-flow"
                 className={`font-display font-semibold text-3xl sm:text-4xl lg:text-5xl tabular-nums ${
@@ -215,7 +310,7 @@ export function AutopayTab() {
                   ? `-₹${Math.abs(netFlow).toLocaleString('en-IN')}`
                   : '₹0'}
               </span>
-              <span className="text-xs sm:text-sm text-ink-3">/ month</span>
+              <span className="text-xs sm:text-sm text-ink-3 font-sans">/ month</span>
             </div>
             {/* Backward compatibility id for tests/legacy selectors */}
             <span id="autopayTotalAmount" className="sr-only">
@@ -227,16 +322,20 @@ export function AutopayTab() {
           <div className="flex flex-wrap items-center gap-2.5">
             <div
               data-testid="autopay-income-chip"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-chip bg-income-tint text-income text-xs sm:text-sm font-medium tabular-nums border border-income/20"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-chip bg-income-tint text-income text-xs sm:text-sm font-medium tabular-nums border border-income/20 shadow-1 transition-transform duration-fast hover:-translate-y-0.5"
             >
-              <ArrowDownIcon size={14} className="text-income" />
+              <div className="w-5 h-5 rounded-full bg-income/10 flex items-center justify-center shrink-0">
+                <ArrowDownIcon size={12} className="text-income" />
+              </div>
               <span>Income: +₹{flowSummary.income.toLocaleString('en-IN')}</span>
             </div>
             <div
               data-testid="autopay-expense-chip"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-chip bg-surface-2 text-ink text-xs sm:text-sm font-medium tabular-nums border border-line"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-chip bg-surface-2 text-ink text-xs sm:text-sm font-medium tabular-nums border border-line shadow-1 transition-transform duration-fast hover:-translate-y-0.5"
             >
-              <ArrowUpIcon size={14} className="text-ink-2" />
+              <div className="w-5 h-5 rounded-full bg-ink/5 flex items-center justify-center shrink-0">
+                <ArrowUpIcon size={12} className="text-ink-2" />
+              </div>
               <span>Expenses: -₹{flowSummary.expense.toLocaleString('en-IN')}</span>
             </div>
           </div>
@@ -266,12 +365,12 @@ export function AutopayTab() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Left Column: Recurring Plans List (SPEC Section 6 & Prompt Item 2) */}
           <section className="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
-              <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center justify-between pb-2 border-b border-line gap-2.5">
+              <div className="flex items-center gap-2">
                 <h2 className="font-display font-semibold text-lg sm:text-xl text-ink">
                   Your Recurring Plans
                 </h2>
-                <span className="px-2 py-0.5 rounded-chip text-xs font-medium bg-surface-2 text-ink-2 border border-line">
+                <span className="px-2 py-0.5 rounded-chip text-xs font-semibold bg-surface-2 text-ink-2 border border-line tabular-nums">
                   {autopays.length}
                 </span>
                 {/* Accessible hidden heading for backward test compatibility */}
@@ -279,10 +378,13 @@ export function AutopayTab() {
               </div>
               <Button
                 variant="primary"
+                size="md"
                 onClick={handleOpenSlideOver}
                 icon={<PlusIcon size={16} />}
+                aria-label="Add Recurring Plan"
               >
-                Add Recurring Plan
+                <span className="hidden sm:inline">Add Recurring Plan</span>
+                <span className="sm:hidden">Add Plan</span>
               </Button>
             </div>
 
@@ -302,25 +404,33 @@ export function AutopayTab() {
                     style={{ '--i': Math.min(index, 6) } as React.CSSProperties}
                   >
                     <div className="flex flex-col gap-3">
-                      {/* Top Row: Name, Badge, Amount */}
+                      {/* Top Row: Icon Glyph + Name + Category Badge + Amount */}
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2 min-w-0">
-                          <h4 className="font-sans font-semibold text-base sm:text-lg text-ink truncate">
-                            {plan.name}
-                          </h4>
-                          <Badge category={plan.category}>{plan.category}</Badge>
-                          <span
-                            className={`px-2 py-0.5 rounded-chip text-[11px] font-medium uppercase tracking-wider ${
-                              isIncome
-                                ? 'bg-income-tint text-income'
-                                : 'bg-surface-2 text-ink-2'
-                            }`}
-                          >
-                            {isIncome ? 'Income' : 'Expense'}
-                          </span>
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                          <div className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center shrink-0 text-ink-2 border border-line/60 mt-0.5">
+                            {getCategoryIcon(plan.category, 15)}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
+                            <h4 className="font-sans font-semibold text-base sm:text-lg text-ink truncate">
+                              {plan.name}
+                            </h4>
+                            <Badge category={plan.category} className="shrink-0 text-xs">
+                              {plan.category}
+                            </Badge>
+                            <span
+                              className={`px-2 py-0.5 rounded-chip text-[10px] font-semibold uppercase tracking-wider shrink-0 ${
+                                isIncome
+                                  ? 'bg-income-tint text-income border border-income/20'
+                                  : 'bg-surface-2 text-ink-2 border border-line'
+                              }`}
+                            >
+                              {isIncome ? 'Income' : 'Expense'}
+                            </span>
+                          </div>
                         </div>
+
                         <div
-                          className={`font-display font-semibold text-lg sm:text-xl tabular-nums shrink-0 ${
+                          className={`font-display font-semibold text-lg sm:text-xl tabular-nums shrink-0 ml-2 ${
                             isIncome ? 'text-income' : 'text-ink'
                           }`}
                         >
@@ -334,14 +444,14 @@ export function AutopayTab() {
                           data-testid={`autopay-day-label-${plan.id}`}
                           className="inline-flex items-center gap-1.5"
                         >
-                          <CalendarDayIcon size={15} className="text-ink-3 shrink-0" />
+                          <CalendarDayIcon size={14} className="text-ink-3 shrink-0" />
                           <span>{nextDeduction.dayLabel} of each month</span>
                         </span>
                         <span
                           data-testid={`autopay-next-deduction-${plan.id}`}
                           className="inline-flex items-center gap-1.5 text-ink-3 tabular-nums"
                         >
-                          <ClockIcon size={15} className="text-ink-3 shrink-0" />
+                          <ClockIcon size={14} className="text-ink-3 shrink-0" />
                           <span>Next deduction: {nextDeduction.formattedDue}</span>
                         </span>
                       </div>
@@ -353,8 +463,8 @@ export function AutopayTab() {
                         </p>
                       )}
 
-                      {/* Bottom Row: Active/Paused Switch & Delete Button */}
-                      <div className="flex items-center justify-between pt-2 border-t border-line/60">
+                      {/* Bottom Row: Active/Paused Switch & Delete Button (Zero mobile overflow) */}
+                      <div className="flex items-center justify-between pt-2.5 border-t border-line/60 gap-2">
                         {/* Real Switch Button with Animated Knob (translateX, 200ms) */}
                         <div className="flex items-center gap-2.5">
                           <button
@@ -387,9 +497,9 @@ export function AutopayTab() {
                           onClick={() => handleDelete(plan.id)}
                           title="Delete"
                           aria-label={`Delete autopay ${plan.name}`}
-                          className="p-2 rounded-btn text-ink-3 hover:text-danger hover:bg-danger-tint/50 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          className="p-1.5 rounded-chip text-ink-3 hover:text-danger hover:bg-danger-tint/50 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
                         >
-                          <TrashIcon size={16} />
+                          <TrashIcon size={15} />
                         </button>
                       </div>
                     </div>
@@ -406,7 +516,7 @@ export function AutopayTab() {
                 <h2 className="font-display font-semibold text-lg sm:text-xl text-ink">
                   Upcoming This Month
                 </h2>
-                <span className="px-2 py-0.5 rounded-chip text-xs font-medium bg-surface-2 text-ink-2 border border-line">
+                <span className="px-2 py-0.5 rounded-chip text-xs font-semibold bg-surface-2 text-ink-2 border border-line tabular-nums">
                   {upcomingItems.length}
                 </span>
               </div>
@@ -433,11 +543,11 @@ export function AutopayTab() {
                           }`}
                           style={{ '--i': Math.min(index, 6) } as React.CSSProperties}
                         >
-                          {/* Timeline Dot */}
+                          {/* Timeline Dot with Pulse on Today */}
                           <div
                             className={`absolute -left-[19px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-surface ${
                               isToday
-                                ? 'bg-accent ring-4 ring-accent-tint'
+                                ? 'bg-accent ring-4 ring-accent-tint animate-pulse'
                                 : 'bg-line-strong'
                             }`}
                           />

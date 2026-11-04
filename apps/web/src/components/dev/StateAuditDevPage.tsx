@@ -215,11 +215,11 @@ export function StateAuditDevPage() {
               {/* Dev Toolbar */}
               <div
                 id="auditToolbar"
-                className="sticky top-0 z-50 bg-surface border-b border-line px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs"
+                className="sticky top-0 z-50 bg-surface border-b border-line px-3 sm:px-4 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs max-w-full overflow-hidden"
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-accent uppercase tracking-wider">State Audit:</span>
-                  <div className="flex items-center gap-1 bg-surface-2 p-1 rounded-btn">
+                <div className="flex items-center gap-2 max-w-full overflow-x-auto pb-0.5 min-w-0 w-full sm:w-auto">
+                  <span className="font-semibold text-accent uppercase tracking-wider shrink-0">State Audit:</span>
+                  <div className="flex items-center gap-1 bg-surface-2 p-1 rounded-btn shrink-0">
                     {screens.map((s) => (
                       <button
                         key={s}
@@ -228,7 +228,7 @@ export function StateAuditDevPage() {
                           setScreen(s);
                           window.location.hash = `#audit?screen=${s}&state=${state}`;
                         }}
-                        className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors ${
+                        className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors shrink-0 ${
                           screen === s ? 'bg-accent text-white' : 'text-ink-2 hover:text-ink'
                         }`}
                       >
@@ -238,9 +238,9 @@ export function StateAuditDevPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-ink-3">State:</span>
-                  <div className="flex items-center gap-1 bg-surface-2 p-1 rounded-btn">
+                <div className="flex items-center gap-2 shrink-0 max-w-full overflow-x-auto">
+                  <span className="text-ink-3 shrink-0">State:</span>
+                  <div className="flex items-center gap-1 bg-surface-2 p-1 rounded-btn shrink-0">
                     {states.map((st) => (
                       <button
                         key={st}
@@ -249,7 +249,7 @@ export function StateAuditDevPage() {
                           setState(st);
                           window.location.hash = `#audit?screen=${screen}&state=${st}`;
                         }}
-                        className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors ${
+                        className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors shrink-0 ${
                           state === st ? 'bg-accent text-white' : 'text-ink-2 hover:text-ink'
                         }`}
                       >
@@ -259,7 +259,7 @@ export function StateAuditDevPage() {
                   </div>
                   <a
                     href="#design"
-                    className="ml-2 text-accent hover:underline font-medium"
+                    className="ml-auto sm:ml-2 text-accent hover:underline font-medium shrink-0"
                   >
                     Tokens &rarr;
                   </a>
