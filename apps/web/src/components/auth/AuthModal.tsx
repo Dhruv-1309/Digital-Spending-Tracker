@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react';
+import React, { useState } from 'react';
 import { m } from 'motion/react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -16,9 +16,7 @@ import {
   WalletIcon,
   ArrowRightIcon,
   ShieldIcon,
-  SparklesIcon,
   CheckIcon,
-  ZapIcon,
 } from '../icons';
 import authWaveUrl from '../../assets/art/auth-wave.svg';
 
