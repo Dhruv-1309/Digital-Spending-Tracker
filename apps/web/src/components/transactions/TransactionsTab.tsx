@@ -9,6 +9,7 @@ import { SegmentedControl } from '../ui/SegmentedControl';
 import { TextInput } from '../ui/TextInput';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
+import { Card } from '../ui/Card';
 import { TransactionSlideOver } from './TransactionSlideOver';
 import {
   filterTransactions,
@@ -32,9 +33,49 @@ import {
   XIcon,
   RefreshCwIcon,
   AlertCircleIcon,
+  CalendarIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  UtensilsIcon,
+  ShoppingCartIcon,
+  LandmarkIcon,
+  WalletIcon,
+  ZapIcon,
+  CarIcon,
+  FilmIcon,
+  TagIcon,
 } from '../icons';
 import { EASING } from '../../ui/motion';
 import type { Transaction, TransactionSortOption } from '../../types';
+
+/**
+ * Category Icon Resolver: renders crisp, thematic SVG icons for common categories.
+ */
+function getCategoryIcon(category: string, size = 15) {
+  const norm = (category || '').toLowerCase();
+  if (norm.includes('food') || norm.includes('dining') || norm.includes('restaurant') || norm.includes('cafe')) {
+    return <UtensilsIcon size={size} />;
+  }
+  if (norm.includes('grocer') || norm.includes('supermarket') || norm.includes('market') || norm.includes('shopping')) {
+    return <ShoppingCartIcon size={size} />;
+  }
+  if (norm.includes('salary') || norm.includes('freelance') || norm.includes('income') || norm.includes('paycheck')) {
+    return <LandmarkIcon size={size} />;
+  }
+  if (norm.includes('invest') || norm.includes('dividend') || norm.includes('mutual')) {
+    return <WalletIcon size={size} />;
+  }
+  if (norm.includes('utilit') || norm.includes('bill') || norm.includes('electric') || norm.includes('water')) {
+    return <ZapIcon size={size} />;
+  }
+  if (norm.includes('travel') || norm.includes('transport') || norm.includes('train') || norm.includes('cab') || norm.includes('flight')) {
+    return <CarIcon size={size} />;
+  }
+  if (norm.includes('subscript') || norm.includes('stream') || norm.includes('entertain') || norm.includes('movie')) {
+    return <FilmIcon size={size} />;
+  }
+  return <TagIcon size={size} />;
+}
 
 export function TransactionsTab() {
   const {
@@ -145,6 +186,22 @@ export function TransactionsTab() {
       sortBy,
     );
   }, [activeTransactions, searchQuery, typeFilter, monthFilter, sortBy]);
+
+  // Filtered cashflow summary metrics
+  const filteredMetrics = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    filtered.forEach((t) => {
+      if (t.type === 'income') income += t.amount;
+      else if (t.type === 'expense') expense += t.amount;
+    });
+    return {
+      income,
+      expense,
+      net: income - expense,
+      count: filtered.length,
+    };
+  }, [filtered]);
 
   // 10-per-page pagination
   const { paginatedItems, totalPages, totalItems } = useMemo(() => {
@@ -342,7 +399,7 @@ export function TransactionsTab() {
   const selectedMonthOption = monthOptions.find((m) => m.value === monthFilter);
 
   return (
-    <div id="transactions" className="tab-content active space-y-6 pb-12">
+    <div id="transactions" className="tab-content active space-y-6 pb-12 w-full max-w-full">
       {/* Scroll anchor for pagination */}
       <div ref={listTopRef} />
 
@@ -460,8 +517,45 @@ export function TransactionsTab() {
         </div>
       </div>
 
-      {/* Sticky Filter Bar (Under top bar) */}
-      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-bg/95 backdrop-blur-sm border-y border-line space-y-3">
+      {/* Filtered Financial Summary Strip (Skiper UI / Realtime Colors Pattern) */}
+      {transactions.length > 0 && (
+        <Card className="p-3.5 sm:p-4 bg-surface border border-line shadow-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="flex flex-col">
+            <span className="text-[11px] uppercase tracking-wider text-ink-3 font-medium flex items-center gap-1">
+              <ArrowUpIcon size={12} className="text-income" /> Filtered Inflow
+            </span>
+            <span className="text-base sm:text-lg font-semibold text-income tabular-nums mt-0.5">
+              +{formatCurrency(filteredMetrics.income)}
+            </span>
+          </div>
+
+          <div className="flex flex-col">
+            <span className="text-[11px] uppercase tracking-wider text-ink-3 font-medium flex items-center gap-1">
+              <ArrowDownIcon size={12} className="text-ink-2" /> Filtered Outflow
+            </span>
+            <span className="text-base sm:text-lg font-semibold text-ink tabular-nums mt-0.5">
+              -{formatCurrency(filteredMetrics.expense)}
+            </span>
+          </div>
+
+          <div className="flex flex-col col-span-2 sm:col-span-1 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l border-line sm:pl-4">
+            <span className="text-[11px] uppercase tracking-wider text-ink-3 font-medium">
+              Net Filtered Flow
+            </span>
+            <span
+              className={`text-base sm:text-lg font-semibold tabular-nums mt-0.5 ${
+                filteredMetrics.net >= 0 ? 'text-income' : 'text-danger'
+              }`}
+            >
+              {filteredMetrics.net >= 0 ? '+' : ''}
+              {formatCurrency(filteredMetrics.net)}
+            </span>
+          </div>
+        </Card>
+      )}
+
+      {/* Sticky Filter Bar */}
+      <div className="sticky top-16 z-20 px-3.5 sm:px-5 py-3 rounded-card bg-surface/90 backdrop-blur-md border border-line shadow-1 space-y-3">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[200px]">
@@ -552,7 +646,7 @@ export function TransactionsTab() {
             <span className="text-xs text-ink-3 font-medium">Filters:</span>
 
             {searchQuery.trim() !== '' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface border border-line text-ink">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface-2 border border-line text-ink">
                 <span>Search: &ldquo;{searchQuery}&rdquo;</span>
                 <button
                   type="button"
@@ -569,7 +663,7 @@ export function TransactionsTab() {
             )}
 
             {typeFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface border border-line text-ink">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface-2 border border-line text-ink">
                 <span>Type: {typeFilter === 'income' ? 'Income' : 'Expenses'}</span>
                 <button
                   type="button"
@@ -586,7 +680,7 @@ export function TransactionsTab() {
             )}
 
             {monthFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface border border-line text-ink">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-chip text-xs bg-surface-2 border border-line text-ink">
                 <span>Month: {selectedMonthOption?.label || monthFilter}</span>
                 <button
                   type="button"
@@ -720,7 +814,10 @@ export function TransactionsTab() {
               <div key={group.date} className="space-y-2">
                 {/* Date Header with Day's Total */}
                 <div className="flex items-center justify-between px-1 text-xs font-semibold uppercase tracking-wider text-ink-3">
-                  <span>{group.formattedDate}</span>
+                  <span className="flex items-center gap-1.5">
+                    <CalendarIcon size={13} className="text-ink-3" />
+                    <span>{group.formattedDate}</span>
+                  </span>
                   <span
                     className={`tabular-nums ${
                       group.dayTotal > 0
@@ -751,15 +848,20 @@ export function TransactionsTab() {
                         layout
                         transition={{ layout: { duration: 0.24, ease: [0.2, 0, 0, 1] } }}
                         key={tx.id}
-                        className="group relative p-3.5 sm:px-5 hover:bg-surface-2/60 transition-colors duration-fast"
+                        className="group relative p-3 sm:px-4 hover:bg-surface-2/60 transition-colors duration-fast"
                       >
                         {/* ====================================================================
                             Desktop Layout (>= 641px): Single-Line Row
                             ==================================================================== */}
                         <div className="hidden sm:flex items-center justify-between gap-4">
-                          {/* Left: Badge, Description, Payment Method, Auto Tag */}
-                          <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                            <Badge category={tx.category}>{tx.category}</Badge>
+                          {/* Left: Category Icon Glyph, Badge, Description, Payment Method, Auto Tag */}
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center shrink-0 text-ink-2 border border-line/60">
+                              {getCategoryIcon(tx.category)}
+                            </div>
+                            <Badge category={tx.category} className="shrink-0">
+                              {tx.category}
+                            </Badge>
                             <span className="text-sm font-medium text-ink truncate max-w-xs md:max-w-md">
                               {tx.description || tx.category}
                             </span>
@@ -809,15 +911,18 @@ export function TransactionsTab() {
                         </div>
 
                         {/* ====================================================================
-                            Mobile Layout (< 641px): Two-Line Card
-                            Line 1: Category Badge + Description (left), Tabular Amount (right)
-                            Line 2: Payment Method + Auto tag (left), Edit & Delete buttons (right)
+                            Mobile Layout (< 641px): Two-Line Card with Glyphs & Zero Clipping
                             ==================================================================== */}
                         <div className="flex sm:hidden flex-col gap-2">
-                          {/* Line 1 */}
+                          {/* Line 1: Glyph + Badge + Description (left), Tabular Amount (right) */}
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <Badge category={tx.category}>{tx.category}</Badge>
+                              <div className="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center shrink-0 text-ink-2 border border-line/60">
+                                {getCategoryIcon(tx.category, 13)}
+                              </div>
+                              <Badge category={tx.category} className="shrink-0 text-xs">
+                                {tx.category}
+                              </Badge>
                               <span className="text-sm font-medium text-ink truncate">
                                 {tx.description || tx.category}
                               </span>
@@ -832,9 +937,9 @@ export function TransactionsTab() {
                             </span>
                           </div>
 
-                          {/* Line 2 */}
+                          {/* Line 2: Payment Method + Auto tag (left), Edit & Delete buttons (right) */}
                           <div className="flex items-center justify-between gap-2 text-xs text-ink-3 pt-0.5">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                               <span className="capitalize">{methodDisplay}</span>
                               {isAuto && tx.source === 'autopay' && (
                                 <span className="px-1.5 py-0.5 rounded-chip text-[10px] font-semibold bg-accent-tint text-accent uppercase tracking-wide">
@@ -844,7 +949,7 @@ export function TransactionsTab() {
                             </div>
 
                             {/* Mobile action buttons (always visible on touch) */}
-                            <div className="flex items-center gap-1.5">
+                            <div className="row-action-btn flex items-center gap-1.5 shrink-0">
                               <button
                                 type="button"
                                 onClick={(e) => handleOpenEdit(tx, e)}
