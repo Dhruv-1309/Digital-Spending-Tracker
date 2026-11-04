@@ -250,6 +250,16 @@ export function AuthModal() {
               <p className="text-xs sm:text-sm text-slate-300/90 mt-1.5 hidden md:block leading-relaxed">
                 Privacy-first personal finance tracking that stays on your device.
               </p>
+              {/* Mobile Trust Badges (ensures mobile users get the full feature visibility) */}
+              <div className="flex md:hidden items-center gap-2 mt-2.5 pt-2 border-t border-white/10 text-[11px] text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  <CheckIcon size={12} className="text-emerald-400" /> Zero Trackers
+                </span>
+                <span className="text-white/30">•</span>
+                <span className="inline-flex items-center gap-1">
+                  <LockIcon size={11} className="text-blue-300" /> 100% On-Device
+                </span>
+              </div>
             </div>
           </div>
 
@@ -544,6 +554,15 @@ export function AuthModal() {
           >
             <span id="googleSignInText">Continue with Google</span>
           </Button>
+
+          {/* Mobile Footer Trust Note */}
+          <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between text-[11px] text-ink-3 md:hidden">
+            <span className="flex items-center gap-1.5 font-medium">
+              <ShieldIcon size={13} className="text-accent shrink-0" />
+              Client-side encrypted
+            </span>
+            <span>No bank logins required</span>
+          </div>
         </div>
       </m.div>
     </div>
