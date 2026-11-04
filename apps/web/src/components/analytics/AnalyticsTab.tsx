@@ -41,6 +41,10 @@ import {
   AreaChartIcon,
   HourglassIcon,
   FlameIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
+  WalletIcon,
+  ListCheckIcon,
 } from '../icons';
 
 const PRESET_OPTIONS: SegmentedOption[] = [
@@ -607,37 +611,73 @@ export function AnalyticsTab() {
       ) : (
         <>
           {/* Summary Metric Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" id="analyticsSummaryGrid">
-            <Card className="p-4 space-y-1">
-              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Income</span>
-              <div id="analyticsIncome" className="text-xl sm:text-2xl font-semibold text-income tabular-nums">
-                ₹{formatIndianGrouping(summary.income)}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4" id="analyticsSummaryGrid">
+            {/* 1. Income */}
+            <Card className="p-4 sm:p-5 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-ink-2 uppercase tracking-wider">Income</span>
+                <div className="w-7 h-7 rounded-full bg-income-tint text-income flex items-center justify-center shrink-0 border border-income/20">
+                  <TrendingUpIcon size={14} />
+                </div>
+              </div>
+              <div>
+                <div id="analyticsIncome" className="font-display text-2xl sm:text-3xl font-semibold text-income tabular-nums">
+                  ₹{formatIndianGrouping(summary.income)}
+                </div>
+                <span className="text-[11px] text-ink-3 mt-1 block font-sans">Period inflow</span>
               </div>
             </Card>
 
-            <Card className="p-4 space-y-1">
-              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Expenses</span>
-              <div id="analyticsExpenses" className="text-xl sm:text-2xl font-semibold text-ink tabular-nums">
-                ₹{formatIndianGrouping(summary.expenses)}
+            {/* 2. Expenses */}
+            <Card className="p-4 sm:p-5 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-ink-2 uppercase tracking-wider">Expenses</span>
+                <div className="w-7 h-7 rounded-full bg-danger-tint text-danger flex items-center justify-center shrink-0 border border-danger/20">
+                  <TrendingDownIcon size={14} />
+                </div>
+              </div>
+              <div>
+                <div id="analyticsExpenses" className="font-display text-2xl sm:text-3xl font-semibold text-ink tabular-nums">
+                  ₹{formatIndianGrouping(summary.expenses)}
+                </div>
+                <span className="text-[11px] text-ink-3 mt-1 block font-sans">Period outflow</span>
               </div>
             </Card>
 
-            <Card className="p-4 space-y-1">
-              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Net</span>
-              <div
-                id="analyticsNet"
-                className={`text-xl sm:text-2xl font-semibold tabular-nums ${
-                  summary.net >= 0 ? 'text-income' : 'text-danger'
-                }`}
-              >
-                ₹{formatIndianGrouping(summary.net)}
+            {/* 3. Net */}
+            <Card className="p-4 sm:p-5 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-ink-2 uppercase tracking-wider">Net</span>
+                <div className="w-7 h-7 rounded-full bg-accent-tint text-accent flex items-center justify-center shrink-0 border border-accent/20">
+                  <WalletIcon size={14} />
+                </div>
+              </div>
+              <div>
+                <div
+                  id="analyticsNet"
+                  className={`font-display text-2xl sm:text-3xl font-semibold tabular-nums ${
+                    summary.net >= 0 ? 'text-income' : 'text-danger'
+                  }`}
+                >
+                  ₹{formatIndianGrouping(summary.net)}
+                </div>
+                <span className="text-[11px] text-ink-3 mt-1 block font-sans">Net savings</span>
               </div>
             </Card>
 
-            <Card className="p-4 space-y-1">
-              <span className="text-xs font-medium text-ink-2 uppercase tracking-wide">Transactions</span>
-              <div id="analyticsCount" className="text-xl sm:text-2xl font-semibold text-ink tabular-nums">
-                {summary.count}
+            {/* 4. Transactions */}
+            <Card className="p-4 sm:p-5 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-ink-2 uppercase tracking-wider">Transactions</span>
+                <div className="w-7 h-7 rounded-full bg-surface-2 text-ink-2 flex items-center justify-center shrink-0 border border-line">
+                  <ListCheckIcon size={14} />
+                </div>
+              </div>
+              <div>
+                <div id="analyticsCount" className="font-display text-2xl sm:text-3xl font-semibold text-ink tabular-nums">
+                  {summary.count}
+                </div>
+                <span className="text-[11px] text-ink-3 mt-1 block font-sans">Total records</span>
               </div>
             </Card>
           </div>
@@ -645,13 +685,18 @@ export function AnalyticsTab() {
           {/* Grid: Daily Expenses & Category Doughnut */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 4. Daily Expenses Card */}
-            <Card className="p-5 flex flex-col justify-between">
+            <Card className="p-5 sm:p-6 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-accent">
-                    <BarChartIcon size={20} />
+                <div className="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-line">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-accent-tint text-accent flex items-center justify-center shrink-0 border border-accent/20">
+                      <BarChartIcon size={16} />
+                    </div>
+                    <h3 className="font-display font-semibold text-ink text-base sm:text-lg">Daily Expenses</h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-chip text-xs font-medium bg-surface-2 text-ink-2 border border-line">
+                    Trend by day
                   </span>
-                  <h3 className="font-sans font-semibold text-ink text-base">Daily Expenses</h3>
                 </div>
 
                 {dailyData.labels.length === 0 ? (
@@ -688,19 +733,25 @@ export function AnalyticsTab() {
               </div>
 
               {/* 1 sentence underneath */}
-              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
-                {getDailyExpensesInsight(dailyData)}
-              </p>
+              <div className="mt-4 pt-3 border-t border-line/70 flex items-start gap-2 text-xs text-ink-2 font-sans leading-relaxed">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0 mt-1.5" />
+                <p>{getDailyExpensesInsight(dailyData)}</p>
+              </div>
             </Card>
 
             {/* 5. Category Doughnut Card with Linked Legend */}
-            <Card className="p-5 flex flex-col justify-between">
+            <Card className="p-5 sm:p-6 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-accent">
-                    <PieChartIcon size={20} />
+                <div className="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-line">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-accent-tint text-accent flex items-center justify-center shrink-0 border border-accent/20">
+                      <PieChartIcon size={16} />
+                    </div>
+                    <h3 className="font-display font-semibold text-ink text-base sm:text-lg">Expense by Category</h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-chip text-xs font-medium bg-surface-2 text-ink-2 border border-line">
+                    Distribution
                   </span>
-                  <h3 className="font-sans font-semibold text-ink text-base">Expense by Category</h3>
                 </div>
 
                 {categoryData.labels.length === 0 ? (
@@ -815,23 +866,24 @@ export function AnalyticsTab() {
               </div>
 
               {/* 1 sentence underneath */}
-              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
-                {getCategoryExpensesInsight(categoryData)}
-              </p>
+              <div className="mt-4 pt-3 border-t border-line/70 flex items-start gap-2 text-xs text-ink-2 font-sans leading-relaxed">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0 mt-1.5" />
+                <p>{getCategoryExpensesInsight(categoryData)}</p>
+              </div>
             </Card>
           </div>
 
           {/* Grid: 6. Forecast & 7. Money Runway */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 6. Forecast Card */}
-            <Card className="lg:col-span-2 p-5 flex flex-col justify-between">
+            <Card className="lg:col-span-2 p-5 sm:p-6 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-accent">
-                      <AreaChartIcon size={20} />
-                    </span>
-                    <h3 className="font-sans font-semibold text-ink text-base">
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-4 pb-2 border-b border-line">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-accent-tint text-accent flex items-center justify-center shrink-0 border border-accent/20">
+                      <AreaChartIcon size={16} />
+                    </div>
+                    <h3 className="font-display font-semibold text-ink text-base sm:text-lg">
                       Time Series Analysis - Expense Trends
                     </h3>
                   </div>
@@ -845,6 +897,7 @@ export function AnalyticsTab() {
                             ? 'warning'
                             : 'danger'
                       }
+                      className="text-xs"
                     >
                       Confidence: {forecast.confidence.toUpperCase()}
                     </Badge>
@@ -895,7 +948,7 @@ export function AnalyticsTab() {
                     {/* Stats Box */}
                     <div
                       id="timeSeriesStats"
-                      className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-surface-2 rounded-btn text-xs font-sans"
+                      className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-surface-2/70 border border-line/60 rounded-btn text-xs font-sans"
                     >
                       <div>
                         <span className="text-ink-3 block">Total Period</span>
@@ -923,20 +976,27 @@ export function AnalyticsTab() {
               </div>
 
               {/* 1 sentence underneath */}
-              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
-                {getForecastInsight(forecast)}
-              </p>
+              <div className="mt-4 pt-3 border-t border-line/70 flex items-start gap-2 text-xs text-ink-2 font-sans leading-relaxed">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0 mt-1.5" />
+                <p>{getForecastInsight(forecast)}</p>
+              </div>
             </Card>
 
             {/* 7. Money Runway Card */}
-            <Card className="p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-accent">
-                      <HourglassIcon size={20} />
-                    </span>
-                    <h3 className="font-sans font-semibold text-ink text-base">Money Runway</h3>
+            <Card className="relative overflow-hidden p-5 sm:p-6 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
+              {/* Decorative subtle aura background overlay */}
+              <div
+                className="absolute -top-10 -right-10 w-44 h-44 rounded-full pointer-events-none select-none opacity-10 bg-gradient-to-br from-accent to-income blur-xl"
+                aria-hidden="true"
+              />
+
+              <div className="relative z-10">
+                <div className="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-line">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-accent-tint text-accent flex items-center justify-center shrink-0 border border-accent/20">
+                      <HourglassIcon size={16} />
+                    </div>
+                    <h3 className="font-display font-semibold text-ink text-base sm:text-lg">Money Runway</h3>
                   </div>
                   <Badge
                     variant={
@@ -948,6 +1008,7 @@ export function AnalyticsTab() {
                             ? 'warning'
                             : 'income'
                     }
+                    className="text-xs"
                   >
                     {runway.daysRemaining === Infinity
                       ? 'Sustainable'
@@ -960,10 +1021,10 @@ export function AnalyticsTab() {
                 </div>
 
                 {/* Days remaining large figure */}
-                <div className="my-6">
+                <div className="my-5">
                   <div className="flex items-baseline gap-2">
                     <span
-                      className={`font-display text-4xl sm:text-5xl font-semibold tabular-nums ${
+                      className={`font-display text-4xl sm:text-5xl font-semibold tabular-nums tracking-tight ${
                         runway.daysRemaining <= 7
                           ? 'text-danger'
                           : runway.daysRemaining <= 30
@@ -980,7 +1041,7 @@ export function AnalyticsTab() {
                 </div>
 
                 {/* Metrics list */}
-                <div className="space-y-3 pt-2 border-t border-line text-xs font-sans">
+                <div className="space-y-3 pt-3 border-t border-line text-xs font-sans">
                   <div className="flex items-center justify-between">
                     <span className="text-ink-2">Estimated Depletion</span>
                     <span className="font-semibold text-ink tabular-nums">
@@ -1033,22 +1094,25 @@ export function AnalyticsTab() {
               </div>
 
               {/* 1 sentence underneath */}
-              <p className="mt-4 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
-                {getRunwayInsight(runway)}
-              </p>
+              <div className="relative z-10 mt-4 pt-3 border-t border-line/70 flex items-start gap-2 text-xs text-ink-2 font-sans leading-relaxed">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0 mt-1.5" />
+                <p>{getRunwayInsight(runway)}</p>
+              </div>
             </Card>
           </div>
 
           {/* 8. Weekday Heatmap Card */}
-          <Card className="p-5 flex flex-col justify-between">
+          <Card className="p-5 sm:p-6 bg-surface border border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong hover:shadow-2 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-accent">
-                  <FlameIcon size={20} />
-                </span>
-                <h3 className="font-sans font-semibold text-ink text-base">
-                  Spending Heatmap - Day of Week Analysis
-                </h3>
+              <div className="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-line">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-accent-tint text-accent flex items-center justify-center shrink-0 border border-accent/20">
+                    <FlameIcon size={16} />
+                  </div>
+                  <h3 className="font-display font-semibold text-ink text-base sm:text-lg">
+                    Spending Heatmap - Day of Week Analysis
+                  </h3>
+                </div>
               </div>
 
               {dayOfWeekData.isEmpty ? (
@@ -1090,7 +1154,7 @@ export function AnalyticsTab() {
                   {/* Quick stats box */}
                   <div
                     id="dayOfWeekStats"
-                    className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-surface-2 rounded-btn text-xs font-sans mb-3"
+                    className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-surface-2/70 border border-line/60 rounded-btn text-xs font-sans mb-3"
                   >
                     <div>
                       <span className="text-ink-3 block">Highest Day</span>
@@ -1122,9 +1186,10 @@ export function AnalyticsTab() {
             </div>
 
             {/* 1 sentence underneath (existing insight sentence) */}
-            <p className="mt-3 pt-3 border-t border-line text-xs text-ink-2 font-sans leading-relaxed">
-              {getWeekdayExpensesInsight(dayOfWeekData)}
-            </p>
+            <div className="mt-3 pt-3 border-t border-line/70 flex items-start gap-2 text-xs text-ink-2 font-sans leading-relaxed">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0 mt-1.5" />
+              <p>{getWeekdayExpensesInsight(dayOfWeekData)}</p>
+            </div>
           </Card>
         </>
       )}
