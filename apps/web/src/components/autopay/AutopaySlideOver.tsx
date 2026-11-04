@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { m, AnimatePresence } from 'motion/react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
@@ -224,11 +225,13 @@ export function AutopaySlideOver({
     }
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 overflow-hidden"
+          className="fixed inset-0 z-[60] overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-labelledby="autopay-form-title"
@@ -251,7 +254,7 @@ export function AutopaySlideOver({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: '100%' } : { x: '100%' }}
             transition={{ duration: 0.32, ease: EASING.out }}
-            className={`fixed inset-x-0 bottom-0 max-h-[92vh] rounded-t-card sm:inset-y-0 sm:right-0 sm:left-auto sm:bottom-auto sm:max-h-full sm:w-full sm:max-w-md sm:rounded-none bg-surface shadow-3 flex flex-col border-t sm:border-t-0 sm:border-l border-line z-50 overflow-hidden ${
+            className={`fixed inset-x-0 bottom-0 max-h-[92vh] rounded-t-card sm:inset-y-0 sm:right-0 sm:left-auto sm:bottom-auto sm:max-h-full sm:w-full sm:max-w-md sm:rounded-none bg-surface shadow-3 flex flex-col border-t sm:border-t-0 sm:border-l border-line z-[60] overflow-hidden ${
               type === 'income' ? 'sm:border-l-income' : ''
             }`}
             onKeyDown={(e: React.KeyboardEvent) => {
@@ -412,7 +415,8 @@ export function AutopaySlideOver({
           </m.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 export default AutopaySlideOver;
