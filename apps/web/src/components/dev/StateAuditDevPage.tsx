@@ -113,6 +113,12 @@ const mockBudget: BudgetGoal = {
 export function StateAuditDevPage() {
   const [screen, setScreen] = useState<AuditScreen>('dashboard');
   const [state, setState] = useState<AuditState>('populated');
+  const [sidebarMode, setSidebarMode] = useState<'expanded' | 'collapsed'>(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('sidebar=collapsed')) {
+      return 'collapsed';
+    }
+    return 'expanded';
+  });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Sync state from URL hash or query params
@@ -126,8 +132,11 @@ export function StateAuditDevPage() {
       }
       const s = params.get('screen') as AuditScreen | null;
       const st = params.get('state') as AuditState | null;
+      const sb = params.get('sidebar');
       if (s) setScreen(s);
       if (st) setState(st);
+      if (sb === 'collapsed') setSidebarMode('collapsed');
+      else if (sb === 'expanded') setSidebarMode('expanded');
     };
 
     parseUrl();
@@ -138,6 +147,7 @@ export function StateAuditDevPage() {
   const authValue: AuthContextValue = {
     user: screen === 'auth' ? null : mockUser,
     loading: screen === 'auth' && state === 'loading',
+    isAuthReady: true,
     signInWithEmail: async () => {},
     signInWithGoogle: async () => {},
     signUpWithEmail: async () => {},
@@ -169,27 +179,24 @@ export function StateAuditDevPage() {
   };
 
   const trackerValue: TrackerContextValue = {
-    currentTab: screen === 'auth' || screen === 'profile' ? 'dashboard' : screen,
-    setCurrentTab: (tab) => {
-      if (tab !== 'add-transaction') setScreen(tab as AuditScreen);
+    currentTab: screen === 'auth' || screen === 'profile' ? 'dashboard' : (screen as any),
+    setCurrentTab: (tab: any) => {
+      if (['dashboard', 'transactions', 'autopay', 'analytics'].includes(tab)) {
+        setScreen(tab);
+        window.location.hash = `#audit?screen=${tab}&state=${state}&sidebar=${sidebarMode}`;
+      }
     },
-    transactions:
-      state === 'empty' || state === 'loading'
-        ? []
-        : mockTransactions,
+    transactions: state === 'empty' ? [] : mockTransactions,
     categories: {
       income: ['Salary', 'Investments', 'Freelance'],
-      expense: ['Groceries', 'Food & Dining', 'Utilities', 'Shopping', 'Entertainment', 'Health'],
+      expense: ['Groceries', 'Food & Dining', 'Utilities', 'Shopping', 'Entertainment', 'Transport'],
     },
     approvedAnomalies: [],
-    autopays: state === 'empty' || state === 'loading' ? [] : mockAutopays,
+    autopays: state === 'empty' ? [] : mockAutopays,
     budgetGoal: mockBudget,
-    isOnline: true,
+    isOnline: state !== 'error',
     isLoading: state === 'loading',
-    loadError:
-      state === 'error'
-        ? `Failed to load ${screen} data from server. Please retry.`
-        : null,
+    pendingSyncCount: 0,
     addTransaction: async () => true,
     deleteTransaction: async () => true,
     importTransactions: async () => true,
@@ -200,7 +207,6 @@ export function StateAuditDevPage() {
     deleteAutopay: async () => true,
     toggleAutopay: async () => true,
     updateBudgetGoal: async () => true,
-    refreshData: async () => {},
   };
 
   const screens: AuditScreen[] = ['dashboard', 'transactions', 'autopay', 'analytics', 'auth', 'profile'];
@@ -211,7 +217,10 @@ export function StateAuditDevPage() {
       <ToastContext.Provider value={toastValue}>
         <ConfirmContext.Provider value={confirmValue}>
           <TrackerContext.Provider value={trackerValue}>
-            <div className="min-h-screen bg-bg text-ink flex flex-col">
+            <div
+              className="min-h-screen bg-bg text-ink flex flex-col"
+              style={{ '--shell-top-offset': '37px' } as React.CSSProperties}
+            >
               {/* Dev Toolbar */}
               <div
                 id="auditToolbar"
@@ -226,7 +235,7 @@ export function StateAuditDevPage() {
                         type="button"
                         onClick={() => {
                           setScreen(s);
-                          window.location.hash = `#audit?screen=${s}&state=${state}`;
+                          window.location.hash = `#audit?screen=${s}&state=${state}&sidebar=${sidebarMode}`;
                         }}
                         className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors shrink-0 ${
                           screen === s ? 'bg-accent text-white' : 'text-ink-2 hover:text-ink'
@@ -247,7 +256,7 @@ export function StateAuditDevPage() {
                         type="button"
                         onClick={() => {
                           setState(st);
-                          window.location.hash = `#audit?screen=${screen}&state=${st}`;
+                          window.location.hash = `#audit?screen=${screen}&state=${st}&sidebar=${sidebarMode}`;
                         }}
                         className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors shrink-0 ${
                           state === st ? 'bg-accent text-white' : 'text-ink-2 hover:text-ink'
@@ -257,6 +266,36 @@ export function StateAuditDevPage() {
                       </button>
                     ))}
                   </div>
+
+                  {/* Sidebar Expand / Collapse Toggle in Toolbar */}
+                  <span className="text-ink-3 shrink-0 ml-1">Sidebar:</span>
+                  <div className="flex items-center gap-1 bg-surface-2 p-1 rounded-btn shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSidebarMode('expanded');
+                        window.location.hash = `#audit?screen=${screen}&state=${state}&sidebar=expanded`;
+                      }}
+                      className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors shrink-0 ${
+                        sidebarMode === 'expanded' ? 'bg-accent text-white' : 'text-ink-2 hover:text-ink'
+                      }`}
+                    >
+                      Open
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSidebarMode('collapsed');
+                        window.location.hash = `#audit?screen=${screen}&state=${state}&sidebar=collapsed`;
+                      }}
+                      className={`px-2.5 py-1 rounded-chip font-medium capitalize transition-colors shrink-0 ${
+                        sidebarMode === 'collapsed' ? 'bg-accent text-white' : 'text-ink-2 hover:text-ink'
+                      }`}
+                    >
+                      Closed
+                    </button>
+                  </div>
+
                   <a
                     href="#design"
                     className="ml-auto sm:ml-2 text-accent hover:underline font-medium shrink-0"
@@ -272,7 +311,10 @@ export function StateAuditDevPage() {
                   <AuthModal />
                 ) : (
                   <>
-                    <AppShell onOpenProfile={() => setIsProfileOpen(true)}>
+                    <AppShell
+                      onOpenProfile={() => setIsProfileOpen(true)}
+                      defaultSidebarCollapsed={sidebarMode === 'collapsed'}
+                    >
                       <div id="auditContentContainer" className="w-full">
                         {screen === 'dashboard' && <DashboardTab />}
                         {screen === 'transactions' && <TransactionsTab />}

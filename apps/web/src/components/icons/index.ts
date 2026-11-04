@@ -72,3 +72,4 @@ export * from "./WifiOffIcon";
 export * from "./XIcon";
 export * from "./ZapIcon";
 export * from "./GoogleIcon";
+export * from "./PanelLeftIcon";

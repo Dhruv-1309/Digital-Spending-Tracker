@@ -554,4 +554,101 @@ describe('Phase 3: AppShell & Navigation', () => {
       expect(onOpenProfile).toHaveBeenCalled();
     });
   });
+
+  describe('8. Collapsible Sidebar & Reference-Style Compact Mode', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('collapses sidebar to reference image compact mode when clicking collapse button', () => {
+      const onOpenProfile = vi.fn();
+      renderWithProviders(
+        <AppShell onOpenProfile={onOpenProfile} defaultSidebarCollapsed={false}>
+          <div>Main Content</div>
+        </AppShell>,
+      );
+
+      const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
+      expect(sidebar).toHaveClass('w-[232px]');
+
+      // Click collapse toggle in sidebar header
+      const collapseBtn = screen.getByRole('button', { name: /Collapse sidebar/i });
+      fireEvent.click(collapseBtn);
+
+      // Sidebar collapses to w-14 compact rail
+      expect(sidebar).toHaveClass('w-14');
+
+      // Compact rail has brand chip and '+' button (matching reference image)
+      const brandChip = screen.getByTestId('rail-expand-btn');
+      expect(brandChip).toBeInTheDocument();
+      const quickAddBtn = screen.getByTestId('rail-quick-add-btn');
+      expect(quickAddBtn).toBeInTheDocument();
+
+      // Top bar displays collapsed header controls with capsule pill
+      const headerControls = screen.getByTestId('collapsed-header-controls');
+      expect(headerControls).toBeInTheDocument();
+
+      // Header has left offset adjusted to min-[1025px]:left-14
+      const header = screen.getByRole('banner', { name: /App Header/i });
+      expect(header).toHaveClass('min-[1025px]:left-14');
+    });
+
+    it('expands sidebar back to full width when clicking expand button in capsule pill', () => {
+      renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={true}>
+          <div>Main Content</div>
+        </AppShell>,
+      );
+
+      const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
+      expect(sidebar).toHaveClass('w-14');
+
+      // Click expand button inside the capsule pill
+      const expandBtn = screen.getByTestId('header-expand-btn');
+      fireEvent.click(expandBtn);
+
+      // Sidebar expands back to 232px
+      expect(sidebar).toHaveClass('w-[232px]');
+    });
+
+    it('clicking quick add in collapsed rail or header capsule opens add-transaction', () => {
+      const setCurrentTab = vi.fn();
+      renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={true}>
+          <div>Main Content</div>
+        </AppShell>,
+        mockUser,
+        { setCurrentTab },
+      );
+
+      // Quick add in rail
+      const railAddBtn = screen.getByTestId('rail-quick-add-btn');
+      fireEvent.click(railAddBtn);
+      expect(setCurrentTab).toHaveBeenCalledWith('add-transaction');
+
+      // Quick add in header capsule pill
+      const headerAddBtn = screen.getByTestId('header-quick-add-btn');
+      fireEvent.click(headerAddBtn);
+      expect(setCurrentTab).toHaveBeenCalledTimes(2);
+    });
+
+    it('toggles sidebar with Ctrl+B and Meta+B keyboard shortcut', () => {
+      renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={false}>
+          <div>Main Content</div>
+        </AppShell>,
+      );
+
+      const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
+      expect(sidebar).toHaveClass('w-[232px]');
+
+      // Ctrl+B collapses
+      fireEvent.keyDown(window, { key: 'b', ctrlKey: true });
+      expect(sidebar).toHaveClass('w-14');
+
+      // Meta+B expands
+      fireEvent.keyDown(window, { key: 'b', metaKey: true });
+      expect(sidebar).toHaveClass('w-[232px]');
+    });
+  });
 });
