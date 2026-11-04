@@ -555,12 +555,12 @@ describe('Phase 3: AppShell & Navigation', () => {
     });
   });
 
-  describe('8. Collapsible Sidebar & Reference-Style Compact Mode', () => {
+  describe('8. Collapsible Sidebar & Clean Full-Width Mode', () => {
     beforeEach(() => {
       localStorage.clear();
     });
 
-    it('collapses sidebar to reference image compact mode when clicking collapse button', () => {
+    it('hides sidebar and expands main content to full width when clicking collapse button', () => {
       const onOpenProfile = vi.fn();
       renderWithProviders(
         <AppShell onOpenProfile={onOpenProfile} defaultSidebarCollapsed={false}>
@@ -569,31 +569,23 @@ describe('Phase 3: AppShell & Navigation', () => {
       );
 
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
-      expect(sidebar).toHaveClass('w-[232px]');
+      expect(sidebar).toHaveClass('w-[232px]', 'translate-x-0');
 
-      // Click collapse toggle in sidebar header
-      const collapseBtn = screen.getByRole('button', { name: /Collapse sidebar/i });
+      // Click collapse button in sidebar header
+      const collapseBtn = screen.getByTestId('sidebar-collapse-btn');
       fireEvent.click(collapseBtn);
 
-      // Sidebar collapses to w-14 compact rail
-      expect(sidebar).toHaveClass('w-14');
+      // Sidebar slides off-screen (-translate-x-full)
+      expect(sidebar).toHaveClass('-translate-x-full');
 
-      // Compact rail has brand chip and '+' button (matching reference image)
-      const brandChip = screen.getByTestId('rail-expand-btn');
-      expect(brandChip).toBeInTheDocument();
-      const quickAddBtn = screen.getByTestId('rail-quick-add-btn');
-      expect(quickAddBtn).toBeInTheDocument();
-
-      // Top bar displays collapsed header controls with capsule pill
-      const headerControls = screen.getByTestId('collapsed-header-controls');
-      expect(headerControls).toBeInTheDocument();
-
-      // Header has left offset adjusted to min-[1025px]:left-14
+      // Header and main content expand to full width (left-0, pl-0)
       const header = screen.getByRole('banner', { name: /App Header/i });
-      expect(header).toHaveClass('min-[1025px]:left-14');
+      expect(header).toHaveClass('min-[1025px]:left-0');
+      const main = screen.getByRole('main');
+      expect(main).toHaveClass('min-[1025px]:pl-0');
     });
 
-    it('expands sidebar back to full width when clicking expand button in capsule pill', () => {
+    it('expands sidebar back when clicking toggle button in header', () => {
       renderWithProviders(
         <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={true}>
           <div>Main Content</div>
@@ -601,35 +593,16 @@ describe('Phase 3: AppShell & Navigation', () => {
       );
 
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
-      expect(sidebar).toHaveClass('w-14');
+      expect(sidebar).toHaveClass('-translate-x-full');
 
-      // Click expand button inside the capsule pill
-      const expandBtn = screen.getByTestId('header-expand-btn');
-      fireEvent.click(expandBtn);
+      // Click toggle button in header
+      const headerToggle = screen.getByTestId('header-sidebar-toggle');
+      fireEvent.click(headerToggle);
 
-      // Sidebar expands back to 232px
-      expect(sidebar).toHaveClass('w-[232px]');
-    });
-
-    it('clicking quick add in collapsed rail or header capsule opens add-transaction', () => {
-      const setCurrentTab = vi.fn();
-      renderWithProviders(
-        <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={true}>
-          <div>Main Content</div>
-        </AppShell>,
-        mockUser,
-        { setCurrentTab },
-      );
-
-      // Quick add in rail
-      const railAddBtn = screen.getByTestId('rail-quick-add-btn');
-      fireEvent.click(railAddBtn);
-      expect(setCurrentTab).toHaveBeenCalledWith('add-transaction');
-
-      // Quick add in header capsule pill
-      const headerAddBtn = screen.getByTestId('header-quick-add-btn');
-      fireEvent.click(headerAddBtn);
-      expect(setCurrentTab).toHaveBeenCalledTimes(2);
+      // Sidebar returns to screen
+      expect(sidebar).toHaveClass('translate-x-0');
+      const header = screen.getByRole('banner', { name: /App Header/i });
+      expect(header).toHaveClass('min-[1025px]:left-[232px]');
     });
 
     it('toggles sidebar with Ctrl+B and Meta+B keyboard shortcut', () => {
@@ -640,15 +613,15 @@ describe('Phase 3: AppShell & Navigation', () => {
       );
 
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
-      expect(sidebar).toHaveClass('w-[232px]');
+      expect(sidebar).toHaveClass('translate-x-0');
 
-      // Ctrl+B collapses
+      // Ctrl+B hides sidebar
       fireEvent.keyDown(window, { key: 'b', ctrlKey: true });
-      expect(sidebar).toHaveClass('w-14');
+      expect(sidebar).toHaveClass('-translate-x-full');
 
-      // Meta+B expands
+      // Meta+B shows sidebar
       fireEvent.keyDown(window, { key: 'b', metaKey: true });
-      expect(sidebar).toHaveClass('w-[232px]');
+      expect(sidebar).toHaveClass('translate-x-0');
     });
   });
 });

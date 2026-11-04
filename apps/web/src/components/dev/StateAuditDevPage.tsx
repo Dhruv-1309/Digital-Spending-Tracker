@@ -147,7 +147,6 @@ export function StateAuditDevPage() {
   const authValue: AuthContextValue = {
     user: screen === 'auth' ? null : mockUser,
     loading: screen === 'auth' && state === 'loading',
-    isAuthReady: true,
     signInWithEmail: async () => {},
     signInWithGoogle: async () => {},
     signUpWithEmail: async () => {},
