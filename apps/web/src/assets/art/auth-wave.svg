@@ -1,22 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 900" fill="none" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="wave-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E6EBFB" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#F3EEE6" stop-opacity="0.6" />
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19" />
+      <stop offset="45%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#1E1B4B" />
     </linearGradient>
-    <linearGradient id="wave-grad-2" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#2A4FD6" stop-opacity="0.15" />
-      <stop offset="100%" stop-color="#FAF7F2" stop-opacity="0.05" />
+
+    <!-- Wave 1: Deep Indigo Glow -->
+    <linearGradient id="wave-indigo" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.35" />
+      <stop offset="50%" stop-color="#3B82F6" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.1" />
     </linearGradient>
+
+    <!-- Wave 2: Cobalt Vibrant Accent -->
+    <linearGradient id="wave-cobalt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.45" />
+      <stop offset="70%" stop-color="#1D4ED8" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Wave 3: Subtle Emerald Accent (representing growth & finance) -->
+    <linearGradient id="wave-emerald" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.2" />
+      <stop offset="50%" stop-color="#059669" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#047857" stop-opacity="0.02" />
+    </linearGradient>
+
+    <!-- Ambient Radial Glow -->
+    <radialGradient id="radial-glow" cx="30%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.28" />
+      <stop offset="60%" stop-color="#6366F1" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#0B0F19" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Geometric Dot Grid Pattern (Haikei Mesh Style) -->
+    <pattern id="dot-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#64748B" fill-opacity="0.22" />
+    </pattern>
   </defs>
-  <!-- Background fill using palette --bg -->
-  <rect width="800" height="600" fill="#FAF7F2" />
-  <!-- Base subtle wave -->
-  <path d="M0,180 C200,120 320,260 520,200 C680,150 740,220 800,190 L800,600 L0,600 Z" fill="#F3EEE6" />
-  <!-- Mid subtle wave with tint -->
-  <path d="M0,280 C180,220 340,360 560,300 C700,260 760,330 800,310 L800,600 L0,600 Z" fill="url(#wave-grad-1)" />
-  <!-- Accent layered wave -->
-  <path d="M0,380 C160,330 280,440 480,390 C640,350 720,430 800,400 L800,600 L0,600 Z" fill="url(#wave-grad-2)" />
-  <!-- Foreground warm contour -->
-  <path d="M0,470 C220,430 360,520 580,480 C700,460 760,500 800,490 L800,600 L0,600 Z" fill="#E6DFD3" fill-opacity="0.5" />
+
+  <!-- Deep Canvas Base -->
+  <rect width="800" height="900" fill="url(#bg-grad)" />
+
+  <!-- Ambient Light Sphere -->
+  <rect width="800" height="900" fill="url(#radial-glow)" />
+
+  <!-- Geometric Grid Layer -->
+  <rect width="800" height="900" fill="url(#dot-grid)" />
+
+  <!-- Flowing Organic Haikei Waves -->
+  <!-- Wave Layer 1: Background broad curve -->
+  <path d="M0,320 C180,240 320,420 540,340 C700,280 760,370 800,350 L800,900 L0,900 Z" fill="url(#wave-indigo)" />
+
+  <!-- Wave Layer 2: Midground fluid ribbon -->
+  <path d="M0,480 C160,400 280,560 500,480 C680,410 740,520 800,490 L800,900 L0,900 Z" fill="url(#wave-cobalt)" />
+
+  <!-- Wave Layer 3: Foreground luminous emerald ridge -->
+  <path d="M0,640 C220,580 340,710 580,630 C720,580 760,670 800,640 L800,900 L0,900 Z" fill="url(#wave-emerald)" />
+
+  <!-- Delicate accent contour lines -->
+  <path d="M0,320 C180,240 320,420 540,340 C700,280 760,370 800,350" stroke="#60A5FA" stroke-width="1.5" stroke-opacity="0.3" fill="none" />
+  <path d="M0,480 C160,400 280,560 500,480 C680,410 740,520 800,490" stroke="#818CF8" stroke-width="1.2" stroke-opacity="0.25" fill="none" />
+  <path d="M0,640 C220,580 340,710 580,630 C720,580 760,670 800,640" stroke="#34D399" stroke-width="1" stroke-opacity="0.2" fill="none" />
 </svg>
