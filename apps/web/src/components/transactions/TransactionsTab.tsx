@@ -399,7 +399,7 @@ export function TransactionsTab() {
   const selectedMonthOption = monthOptions.find((m) => m.value === monthFilter);
 
   return (
-    <div id="transactions" className="tab-content active space-y-6 pb-12 w-full max-w-full">
+    <div id="transactions" className="tab-content active space-y-6 w-full">
       {/* Scroll anchor for pagination */}
       <div ref={listTopRef} />
 

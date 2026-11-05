@@ -570,9 +570,9 @@ export function AnalyticsTab() {
   }
 
   return (
-    <div id="analytics" className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    <div id="analytics" className="w-full space-y-6">
       {/* 1. Sticky Controls Bar (SPEC Section 6, Task 1) */}
-      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3.5 bg-bg/95 backdrop-blur-sm border-b border-line flex flex-wrap items-center justify-between gap-3">
+      <div className="sticky top-16 z-20 py-3.5 bg-bg/95 backdrop-blur-sm border-b border-line flex flex-wrap items-center justify-between gap-3">
         {/* Presets SegmentedControl with sliding indicator */}
         <div id="analyticsPresets" className="flex items-center">
           <SegmentedControl

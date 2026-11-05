@@ -201,7 +201,7 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
   };
 
   return (
-    <div id="add-transaction" className="tab-content active max-w-xl mx-auto py-4">
+    <div id="add-transaction" className="tab-content active max-w-xl mx-auto">
       <div className="bg-surface rounded-card border border-line p-6 shadow-1">
         <div className="mb-6">
           <h2 className="font-display text-2xl font-semibold text-ink">Add Transaction</h2>

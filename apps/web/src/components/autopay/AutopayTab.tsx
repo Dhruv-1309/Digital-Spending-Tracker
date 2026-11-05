@@ -68,7 +68,7 @@ function getCategoryIcon(category: string, size = 16) {
  */
 function AutopaySkeleton() {
   return (
-    <div className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+    <div className="w-full flex flex-col gap-6">
       {/* Flow Banner Skeleton */}
       <Card className="p-5 sm:p-6 lg:p-8 bg-surface border border-line shadow-1">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -232,7 +232,7 @@ export function AutopayTab() {
   return (
     <div
       id="autopay"
-      className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6"
+      className="w-full flex flex-col gap-6"
     >
       {/* 1. Flow banner at the top (SPEC Section 6 & Prompt Item 1) */}
       <Card

@@ -41,7 +41,7 @@ import {
  */
 function DashboardSkeleton() {
   return (
-    <div className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+    <div className="w-full flex flex-col gap-6">
       {/* Hero Card Skeleton */}
       <Card className="p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -330,7 +330,7 @@ export function DashboardTab() {
   // 3. Empty State: Warm illustration + Add your first transaction button
   if (transactions.length === 0) {
     return (
-      <div className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 animate-section-entrance">
+      <div className="w-full animate-section-entrance">
         <EmptyState
           title="No transactions recorded yet"
           description="Add your first transaction to start tracking your income, expenses, and monthly budget."
@@ -352,7 +352,7 @@ export function DashboardTab() {
   return (
     <div
       id="dashboard"
-      className="w-full max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6"
+      className="w-full flex flex-col gap-6"
     >
       {/* Anomaly Banners (above Hero when present) */}
       {unapprovedAnomalies.length > 0 && (
