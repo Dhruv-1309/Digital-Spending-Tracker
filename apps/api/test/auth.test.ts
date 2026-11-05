@@ -39,4 +39,47 @@ describe('Authentication & Identity Middleware (BE-1.1, BE-1.2)', () => {
     expect(inMemoryDb.users.length).toBe(1);
     expect(inMemoryDb.users[0].firebaseUid).toBe('user-100');
   });
+
+  describe('POST /auth/register signup rate limiting', () => {
+    it('permits initial valid registration requests with 200', async () => {
+      const res = await request(app)
+        .post('/auth/register')
+        .send({ email: 'newuser@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('rejects invalid email formats with 400 VALIDATION_ERROR', async () => {
+      const res = await request(app)
+        .post('/auth/register')
+        .send({ email: 'not-an-email' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('rate-limits rapid repeated signups from the same IP with 429 RATE_LIMIT_EXCEEDED', async () => {
+      const testIp = '198.51.100.42';
+
+      // Fire 5 allowed requests
+      for (let i = 0; i < 5; i++) {
+        const res = await request(app)
+          .post('/auth/register')
+          .set('X-Forwarded-For', testIp)
+          .send({ email: `user${i}@example.com` });
+        expect(res.status).toBe(200);
+      }
+
+      // 6th request from same IP exceeds rate limit
+      const blockedRes = await request(app)
+        .post('/auth/register')
+        .set('X-Forwarded-For', testIp)
+        .send({ email: 'user6@example.com' });
+
+      expect(blockedRes.status).toBe(429);
+      expect(blockedRes.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
+      expect(blockedRes.body.error.message).toMatch(/too many registration attempts/i);
+    });
+  });
 });

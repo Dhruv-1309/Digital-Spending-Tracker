@@ -388,6 +388,54 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
           <div key={currentTab} className="route-fade-content w-full">
             {children}
           </div>
+
+          {/* ====================================================================
+              Footer with Terms & Privacy links
+              ==================================================================== */}
+          <footer className="mt-12 pt-6 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-3">
+            <div>
+              <span>MoneyTracker • Personal Finance Manager</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <a
+                href="/terms"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (typeof window !== 'undefined') {
+                    window.location.hash = 'terms';
+                    try {
+                      window.history.pushState({}, '', '/terms');
+                    } catch {
+                      // Fallback
+                    }
+                    window.dispatchEvent(new Event('popstate'));
+                  }
+                }}
+                className="hover:text-ink transition-colors hover:underline"
+              >
+                Terms and Conditions
+              </a>
+              <span>•</span>
+              <a
+                href="/privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (typeof window !== 'undefined') {
+                    window.location.hash = 'privacy';
+                    try {
+                      window.history.pushState({}, '', '/privacy');
+                    } catch {
+                      // Fallback
+                    }
+                    window.dispatchEvent(new Event('popstate'));
+                  }
+                }}
+                className="hover:text-ink transition-colors hover:underline"
+              >
+                Privacy Policy
+              </a>
+            </div>
+          </footer>
         </div>
       </main>
 

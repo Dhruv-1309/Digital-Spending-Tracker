@@ -97,11 +97,47 @@ export async function signInWithEmail(
 export async function signUpWithEmail(
   email: string,
   password: string,
+  turnstileToken?: string,
 ): Promise<void> {
   const auth = getFirebaseAuth();
 
   if (password.length < 6) {
     throw new Error('Password must be at least 6 characters');
+  }
+
+  // Pre-flight spam protection & rate limiting check on backend POST /auth/register
+  try {
+    const apiBase =
+      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
+      'http://localhost:3000/api/v1';
+    const baseUrl = apiBase.replace(/\/api\/v1\/?$/, '');
+    const registerUrl = `${baseUrl}/auth/register`;
+
+    const res = await fetch(registerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, turnstileToken }),
+    });
+
+    if (res.status === 429) {
+      throw new Error('Too many registration attempts. Please wait a moment and try again.');
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      if (data?.error?.code === 'RATE_LIMIT_EXCEEDED') {
+        throw new Error('Too many registration attempts. Please wait a moment and try again.');
+      }
+      if (data?.error?.message) {
+        throw new Error(data.error.message);
+      }
+    }
+  } catch (rateErr: unknown) {
+    const msg = (rateErr as Error)?.message || '';
+    if (msg.includes('registration attempts') || msg.includes('verification')) {
+      throw rateErr;
+    }
+    // Network error or local offline mode: continue gracefully
   }
 
   try {

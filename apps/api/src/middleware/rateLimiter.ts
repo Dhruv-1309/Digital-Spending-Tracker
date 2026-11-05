@@ -4,7 +4,12 @@ import { AppError } from './errorHandler.js';
 
 function keyGenerator(req: Request): string {
   // Rate limit by authenticated user ID if present, otherwise by client IP (SEC-5)
-  return req.user?.id || req.ip || 'unknown';
+  if (req.user?.id) return req.user.id;
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
 function rateLimitHandler(req: Request, res: Response): void {
@@ -41,6 +46,30 @@ export const accountDeletionRateLimiter = rateLimit({
   max: 5, // 5 requests per hour for DELETE /me
   keyGenerator,
   handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const signupRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes window
+  max: 5, // max 5 signup attempts per 15 minutes per IP
+  keyGenerator: (req: Request) => {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string' && forwarded.length > 0) {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
+  handler: (req: Request, res: Response) => {
+    const requestId = req.id || 'unknown';
+    res.status(429).json({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many registration attempts. Please wait a moment and try again.',
+        requestId,
+      },
+    });
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

@@ -501,6 +501,51 @@ export function AuthModal() {
                 {authMode === 'signup' ? 'Create Account' : 'Get Started'}
               </span>
             </Button>
+
+            {/* Terms and Privacy agreement line for signup mode */}
+            {authMode === 'signup' && (
+              <p className="text-center text-[11px] sm:text-xs text-ink-3 pt-1">
+                By creating an account, you agree to our{' '}
+                <a
+                  href="/terms"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (typeof window !== 'undefined') {
+                      window.location.hash = 'terms';
+                      try {
+                        window.history.pushState({}, '', '/terms');
+                      } catch {
+                        // Fallback
+                      }
+                      window.dispatchEvent(new Event('popstate'));
+                    }
+                  }}
+                  className="text-accent underline hover:text-accent-hover font-medium"
+                >
+                  Terms and Conditions
+                </a>{' '}
+                and{' '}
+                <a
+                  href="/privacy"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (typeof window !== 'undefined') {
+                      window.location.hash = 'privacy';
+                      try {
+                        window.history.pushState({}, '', '/privacy');
+                      } catch {
+                        // Fallback
+                      }
+                      window.dispatchEvent(new Event('popstate'));
+                    }
+                  }}
+                  className="text-accent underline hover:text-accent-hover font-medium"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </p>
+            )}
           </form>
 
           {/* Password Reset Sub-panel (opens inline under the form) */}
@@ -563,13 +608,51 @@ export function AuthModal() {
             <span id="googleSignInText">Continue with Google</span>
           </Button>
 
-          {/* Mobile Footer Trust Note */}
-          <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between text-[11px] text-ink-3 md:hidden">
+          {/* Auth Card Footer with Trust Note & Legal Links */}
+          <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between text-[11px] text-ink-3">
             <span className="flex items-center gap-1.5 font-medium">
               <ShieldIcon size={13} className="text-accent shrink-0" />
-              Client-side encrypted
+              <span>Client-side encrypted</span>
             </span>
-            <span>No bank logins required</span>
+            <div className="flex items-center gap-2.5">
+              <a
+                href="/terms"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (typeof window !== 'undefined') {
+                    window.location.hash = 'terms';
+                    try {
+                      window.history.pushState({}, '', '/terms');
+                    } catch {
+                      // Fallback
+                    }
+                    window.dispatchEvent(new Event('popstate'));
+                  }
+                }}
+                className="hover:text-ink hover:underline transition-colors"
+              >
+                Terms
+              </a>
+              <span>•</span>
+              <a
+                href="/privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (typeof window !== 'undefined') {
+                    window.location.hash = 'privacy';
+                    try {
+                      window.history.pushState({}, '', '/privacy');
+                    } catch {
+                      // Fallback
+                    }
+                    window.dispatchEvent(new Event('popstate'));
+                  }
+                }}
+                className="hover:text-ink hover:underline transition-colors"
+              >
+                Privacy
+              </a>
+            </div>
           </div>
         </div>
       </m.div>

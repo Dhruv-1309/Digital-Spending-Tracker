@@ -14,6 +14,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 };
 
 import { healthRouter } from './routes/healthRoutes.js';
+import { authRouter } from './routes/authRoutes.js';
 import { userRouter } from './routes/userRoutes.js';
 import { transactionRouter } from './routes/transactionRoutes.js';
 import { categoryRouter } from './routes/categoryRoutes.js';
@@ -58,8 +59,10 @@ export function createApp() {
   // 5. Rate Limiting (SEC-5)
   app.use(generalRateLimiter);
 
-  // 6. Health Routes (Unauthenticated, BE-6.1)
+  // 6. Public & Health Routes (Unauthenticated, BE-6.1)
   app.use('/', healthRouter);
+  app.use('/auth', authRouter);
+  app.use('/api/v1/auth', authRouter);
 
   // 7. API v1 Endpoints (PRD §7)
   const apiV1 = express.Router();
