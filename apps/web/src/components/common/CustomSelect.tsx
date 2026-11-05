@@ -22,6 +22,7 @@ const defaultIcons: Record<string, string> = {
   income: 'arrow-up',
   expense: 'arrow-down',
   overall: 'chart-line',
+  weekly: 'calendar-week',
   monthly: 'calendar-alt',
   yearly: 'calendar',
   cash: 'money-bill-wave',

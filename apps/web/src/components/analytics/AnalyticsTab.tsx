@@ -54,9 +54,10 @@ const PRESET_OPTIONS: SegmentedOption[] = [
 ];
 
 const PERIOD_OPTIONS: DropdownOption[] = [
-  { value: 'overall', label: 'Overall' },
   { value: 'monthly', label: 'Monthly' },
+  { value: 'weekly', label: 'Weekly' },
   { value: 'yearly', label: 'Yearly' },
+  { value: 'overall', label: 'Overall' },
 ];
 
 const MONTH_OPTIONS: DropdownOption[] = [
@@ -82,10 +83,41 @@ export function AnalyticsTab() {
   const currentYearStr = String(now.getFullYear());
   const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
 
+  // Default month & year: current month/year if transactions exist in it or if empty;
+  // otherwise latest month with transactions
+  const defaultMonthYear = useMemo(() => {
+    if (transactions.length === 0) {
+      return { month: currentMonthStr, year: currentYearStr };
+    }
+    const currentMonthKey = `${currentYearStr}-${currentMonthStr}`;
+    const hasCurrentMonthTx = transactions.some(
+      (t) => t.date && t.date.startsWith(currentMonthKey),
+    );
+    if (hasCurrentMonthTx) {
+      return { month: currentMonthStr, year: currentYearStr };
+    }
+    const validDates = transactions
+      .map((t) => t.date)
+      .filter((d) => d && d.length >= 7)
+      .sort()
+      .reverse();
+    if (validDates.length > 0) {
+      const [y, m] = validDates[0].split('-');
+      return { month: m, year: y };
+    }
+    return { month: currentMonthStr, year: currentYearStr };
+  }, [transactions, currentMonthStr, currentYearStr]);
+
   const [preset, setPreset] = useState<AnalyticsPreset>(null);
-  const [period, setPeriod] = useState<AnalyticsPeriod>('overall');
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
-  const [selectedYear, setSelectedYear] = useState<string>(currentYearStr);
+  const [period, setPeriod] = useState<AnalyticsPeriod>('monthly');
+  const [selectedMonth, setSelectedMonth] = useState<string>(defaultMonthYear.month);
+  const [selectedYear, setSelectedYear] = useState<string>(defaultMonthYear.year);
+
+  // Sync if defaultMonthYear updates when transactions first load
+  useEffect(() => {
+    setSelectedMonth((prev) => (prev === currentMonthStr ? defaultMonthYear.month : prev));
+    setSelectedYear((prev) => (prev === currentYearStr ? defaultMonthYear.year : prev));
+  }, [defaultMonthYear, currentMonthStr, currentYearStr]);
 
   // Category Doughnut <-> Legend bidirectional hover state
   const [hoveredCategoryIndex, setHoveredCategoryIndex] = useState<number | null>(null);
@@ -576,7 +608,7 @@ export function AnalyticsTab() {
 
           <div
             id="analyticsYearWrap"
-            className={period === 'overall' ? 'hidden' : 'w-28'}
+            className={period !== 'monthly' && period !== 'yearly' ? 'hidden' : 'w-28'}
           >
             <Dropdown
               id="analyticsYear"

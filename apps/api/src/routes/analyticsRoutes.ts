@@ -13,7 +13,7 @@ analyticsRouter.get('/overview', async (req, res, next) => {
     const overview = await analyticsRepository.getAnalyticsOverview(
       req.user!.id,
       preset || null,
-      period || 'overall',
+      period || 'monthly',
       year,
       month,
     );

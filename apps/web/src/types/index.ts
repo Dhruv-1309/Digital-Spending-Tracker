@@ -121,7 +121,7 @@ export type NavTab =
   | 'analytics';
 
 export type AnalyticsPreset = 'this-week' | 'this-month' | 'last-30-days' | null;
-export type AnalyticsPeriod = 'overall' | 'monthly' | 'yearly';
+export type AnalyticsPeriod = 'overall' | 'monthly' | 'yearly' | 'weekly';
 
 export interface AnalyticsFilterState {
   preset: AnalyticsPreset;

@@ -62,6 +62,18 @@ export function getAnalyticsDateRange(
   }
 
   // Presets take precedence over custom dropdown filters
+  if (period === 'weekly') {
+    const today = new Date(refDate);
+    const day = today.getDay(); // 0 is Sunday
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    const monday = new Date(today.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(refDate);
+    endOfWeek.setHours(23, 59, 59, 999);
+    return { start: monday, end: endOfWeek };
+  }
+
   if (period === 'monthly') {
     const y = parseInt(year, 10) || refDate.getFullYear();
     const m = month !== 'all' ? parseInt(month, 10) - 1 : refDate.getMonth();
