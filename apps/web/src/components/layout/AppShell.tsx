@@ -173,6 +173,22 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
 
   const pageTitle = getPageTitle(currentTab);
 
+  const handleNavigateLegal = useCallback(
+    (path: string, hash: string) => (e: React.MouseEvent) => {
+      e.preventDefault();
+      if (typeof window !== 'undefined') {
+        window.location.hash = hash;
+        try {
+          window.history.pushState({}, '', path);
+        } catch {
+          // Fallback
+        }
+        window.dispatchEvent(new Event('popstate'));
+      }
+    },
+    [],
+  );
+
   return (
     <div className="min-h-screen bg-bg text-ink flex flex-col font-sans selection:bg-accent-tint selection:text-accent">
       {/* ====================================================================
@@ -290,6 +306,25 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
             <LogOutIcon size={16} className="shrink-0" />
             <span>Sign out</span>
           </button>
+
+          {/* Legal Links at Bottom of Left Rail */}
+          <div className="flex items-center justify-center gap-2 pt-2 px-1 text-[11px] text-ink-3 border-t border-line/60">
+            <a
+              href="/terms"
+              onClick={handleNavigateLegal('/terms', 'terms')}
+              className="hover:text-ink hover:underline transition-colors"
+            >
+              Terms
+            </a>
+            <span>•</span>
+            <a
+              href="/privacy"
+              onClick={handleNavigateLegal('/privacy', 'privacy')}
+              className="hover:text-ink hover:underline transition-colors"
+            >
+              Privacy
+            </a>
+          </div>
         </div>
       </aside>
 
@@ -380,57 +415,39 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
           ==================================================================== */}
       <main
         style={{ paddingTop: 'calc(4rem + var(--shell-top-offset, 0px))' }}
-        className={`flex-1 w-full pt-16 pb-20 min-[1025px]:pb-10 transition-[padding-left] duration-200 ease-out ${
+        className={`flex-1 w-full pt-16 pb-20 min-[1025px]:pb-10 transition-[padding-left] duration-200 ease-out flex flex-col ${
           isSidebarCollapsed ? 'min-[1025px]:pl-0' : 'min-[1025px]:pl-[232px]'
         }`}
       >
-        <div className="mx-auto max-w-content px-4 sm:px-6 lg:px-8 py-6">
-          <div key={currentTab} className="route-fade-content w-full">
+        <div className="mx-auto max-w-content w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col justify-between">
+          <div key={currentTab} className="route-fade-content w-full flex-1">
             {children}
           </div>
 
           {/* ====================================================================
-              Footer with Terms & Privacy links
+              Footer with Terms & Privacy links (Always at the bottom of the website)
               ==================================================================== */}
-          <footer className="mt-12 pt-6 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-3">
+          <footer
+            id="websiteFooter"
+            aria-label="Website Footer"
+            className="mt-12 pt-6 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-3"
+          >
             <div>
               <span>MoneyTracker • Personal Finance Manager</span>
             </div>
             <div className="flex items-center gap-4">
               <a
                 href="/terms"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (typeof window !== 'undefined') {
-                    window.location.hash = 'terms';
-                    try {
-                      window.history.pushState({}, '', '/terms');
-                    } catch {
-                      // Fallback
-                    }
-                    window.dispatchEvent(new Event('popstate'));
-                  }
-                }}
-                className="hover:text-ink transition-colors hover:underline"
+                onClick={handleNavigateLegal('/terms', 'terms')}
+                className="hover:text-ink transition-colors hover:underline font-medium"
               >
                 Terms and Conditions
               </a>
               <span>•</span>
               <a
                 href="/privacy"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (typeof window !== 'undefined') {
-                    window.location.hash = 'privacy';
-                    try {
-                      window.history.pushState({}, '', '/privacy');
-                    } catch {
-                      // Fallback
-                    }
-                    window.dispatchEvent(new Event('popstate'));
-                  }
-                }}
-                className="hover:text-ink transition-colors hover:underline"
+                onClick={handleNavigateLegal('/privacy', 'privacy')}
+                className="hover:text-ink transition-colors hover:underline font-medium"
               >
                 Privacy Policy
               </a>

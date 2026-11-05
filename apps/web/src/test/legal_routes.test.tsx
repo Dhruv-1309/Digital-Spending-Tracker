@@ -98,6 +98,22 @@ describe('Legal & Signup Protection Specifications', () => {
       const privacyLinks = screen.getAllByRole('link', { name: /Privacy Policy/i });
       expect(privacyLinks.length).toBeGreaterThan(0);
     });
+
+    it('renders website footer with Terms and Privacy at the bottom of AuthModal', () => {
+      render(
+        <AuthContext.Provider value={mockAuthContext}>
+          <ToastContext.Provider value={mockToastContext}>
+            <AuthModal />
+          </ToastContext.Provider>
+        </AuthContext.Provider>,
+      );
+
+      const footer = screen.getByRole('contentinfo', { name: /Website Footer/i });
+      expect(footer).toBeInTheDocument();
+      expect(footer).toHaveTextContent(/MoneyTracker • Personal Finance Manager/i);
+      expect(footer).toHaveTextContent(/Terms and Conditions/i);
+      expect(footer).toHaveTextContent(/Privacy Policy/i);
+    });
   });
 
   describe('Route Handling in App', () => {

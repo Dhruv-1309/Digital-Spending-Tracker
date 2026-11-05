@@ -204,14 +204,17 @@ export function AuthModal() {
   return (
     <div
       id="authModal"
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md overflow-y-auto overscroll-contain"
+      className="fixed inset-0 z-[10000] min-h-screen w-full flex flex-col justify-between items-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-md overflow-y-auto overscroll-contain"
     >
+      {/* Top spacer to balance layout */}
+      <div className="w-full shrink-0 h-1 sm:h-2" aria-hidden="true" />
+
       {/* Split Layout Modal Card with spring entrance animation */}
       <m.div
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-        className="relative bg-surface rounded-card border border-line/90 shadow-3 w-full max-w-4xl overflow-hidden flex flex-col md:flex-row my-auto transition-all"
+        className="relative bg-surface rounded-card border border-line/90 shadow-3 w-full max-w-4xl overflow-hidden flex flex-col md:flex-row my-auto transition-all shrink-0"
       >
         {/* Left Panel: Desktop Split Screen / Mobile Header Strip (High Contrast Brand Experience) */}
         <div className="relative w-full md:w-5/12 p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col justify-between shrink-0 border-b md:border-b-0 md:border-r border-line/80 overflow-hidden bg-slate-950 text-white">
@@ -656,6 +659,54 @@ export function AuthModal() {
           </div>
         </div>
       </m.div>
+
+      {/* Website Footer at the Bottom of the Website */}
+      <footer
+        id="authWebsiteFooter"
+        aria-label="Website Footer"
+        className="w-full max-w-4xl pt-4 pb-2 mt-3 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-400 shrink-0 border-t border-white/10"
+      >
+        <span className="font-medium text-slate-400">MoneyTracker • Personal Finance Manager</span>
+        <div className="flex items-center gap-4">
+          <a
+            href="/terms"
+            onClick={(e) => {
+              e.preventDefault();
+              if (typeof window !== 'undefined') {
+                window.location.hash = 'terms';
+                try {
+                  window.history.pushState({}, '', '/terms');
+                } catch {
+                  // Fallback
+                }
+                window.dispatchEvent(new Event('popstate'));
+              }
+            }}
+            className="text-slate-300 hover:text-white transition-colors hover:underline font-medium"
+          >
+            Terms and Conditions
+          </a>
+          <span className="text-slate-600">•</span>
+          <a
+            href="/privacy"
+            onClick={(e) => {
+              e.preventDefault();
+              if (typeof window !== 'undefined') {
+                window.location.hash = 'privacy';
+                try {
+                  window.history.pushState({}, '', '/privacy');
+                } catch {
+                  // Fallback
+                }
+                window.dispatchEvent(new Event('popstate'));
+              }
+            }}
+            className="text-slate-300 hover:text-white transition-colors hover:underline font-medium"
+          >
+            Privacy Policy
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }

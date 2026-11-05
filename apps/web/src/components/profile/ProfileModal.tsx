@@ -504,6 +504,49 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               </Button>
             </div>
           </Card>
+
+          {/* Legal Links Footer at Bottom of Profile Modal */}
+          <div className="pt-3 flex items-center justify-center gap-3 text-xs text-ink-3 border-t border-line/60">
+            <a
+              href="/terms"
+              onClick={(e) => {
+                e.preventDefault();
+                onClose();
+                if (typeof window !== 'undefined') {
+                  window.location.hash = 'terms';
+                  try {
+                    window.history.pushState({}, '', '/terms');
+                  } catch {
+                    // Fallback
+                  }
+                  window.dispatchEvent(new Event('popstate'));
+                }
+              }}
+              className="hover:text-ink hover:underline transition-colors"
+            >
+              Terms and Conditions
+            </a>
+            <span>•</span>
+            <a
+              href="/privacy"
+              onClick={(e) => {
+                e.preventDefault();
+                onClose();
+                if (typeof window !== 'undefined') {
+                  window.location.hash = 'privacy';
+                  try {
+                    window.history.pushState({}, '', '/privacy');
+                  } catch {
+                    // Fallback
+                  }
+                  window.dispatchEvent(new Event('popstate'));
+                }
+              }}
+              className="hover:text-ink hover:underline transition-colors"
+            >
+              Privacy Policy
+            </a>
+          </div>
         </div>
       </div>
     </div>
