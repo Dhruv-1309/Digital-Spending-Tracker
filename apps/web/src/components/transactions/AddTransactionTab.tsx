@@ -10,6 +10,7 @@ import { Button } from '../ui/Button';
 import { PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
+import { containsMathExpression, evaluateMathExpression } from '@moneytracker/shared';
 import type { TransactionType, PaymentMethod } from '../../types';
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
@@ -134,7 +135,15 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    const amtStr = numericAmount > 0 ? String(numericAmount) : amountStr.trim();
+    let finalAmount = numericAmount;
+    if (containsMathExpression(amountStr)) {
+      const evalRes = evaluateMathExpression(amountStr);
+      if (evalRes.isValid && evalRes.result !== null && evalRes.result > 0) {
+        finalAmount = evalRes.result;
+      }
+    }
+
+    const amtStr = finalAmount > 0 ? String(finalAmount) : amountStr.trim();
     const validation = validateTransactionForm({
       amount: amtStr,
       type,
@@ -161,7 +170,7 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
       }
 
       await addTransaction({
-        amount: numericAmount,
+        amount: finalAmount,
         type,
         date,
         category,

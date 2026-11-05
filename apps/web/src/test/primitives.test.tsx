@@ -227,6 +227,62 @@ describe('Redesigned UI Primitives (Phase 2)', () => {
 
       expect(handleChange).toHaveBeenCalledWith('1,25,000', 125000);
     });
+
+    it('AmountInput supports in-line math expressions (+, -, *, /, x) with live preview badge', () => {
+      const handleChange = vi.fn();
+      const { rerender } = renderWithMotion(
+        <AmountInput
+          label="Math Amount"
+          value="100 + 200 + 300"
+          onChange={handleChange}
+        />
+      );
+
+      // Verify live preview badge is shown
+      const badge = screen.getByTestId('math-preview-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveTextContent('=₹600');
+
+      // Test input change event with expression
+      const input = screen.getByLabelText('Math Amount') as HTMLInputElement;
+      fireEvent.change(input, { target: { value: '50 * 3 + 25' } });
+      expect(handleChange).toHaveBeenCalledWith('50 * 3 + 25', 175);
+
+      // Re-render with new value to verify badge updates
+      rerender(
+        <AmountInput
+          label="Math Amount"
+          value="50 * 3 + 25"
+          onChange={handleChange}
+        />
+      );
+      expect(screen.getByTestId('math-preview-badge')).toHaveTextContent('=₹175');
+    });
+
+    it('AmountInput resolves math expression to calculated total on blur and on Enter/=', () => {
+      const handleChange = vi.fn();
+      renderWithMotion(
+        <AmountInput
+          label="Resolve Amount"
+          value="1000 - 250"
+          onChange={handleChange}
+        />
+      );
+
+      const input = screen.getByLabelText('Resolve Amount');
+
+      // Blur should resolve to 750
+      fireEvent.blur(input);
+      expect(handleChange).toHaveBeenCalledWith('750', 750);
+
+      // KeyDown '=' should resolve
+      fireEvent.keyDown(input, { key: '=' });
+      expect(handleChange).toHaveBeenCalledWith('750', 750);
+
+      // KeyDown 'Enter' should resolve
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(handleChange).toHaveBeenCalledWith('750', 750);
+    });
   });
 
   /* ==========================================================================

@@ -377,6 +377,34 @@ describe('Phase 5: Transactions Redesign Screen', () => {
       expect(screen.getByLabelText('Close form')).toBeInTheDocument();
     });
 
+    it('allows entering math expressions (e.g. 100 + 200 + 300) in Amount and saves evaluated total', async () => {
+      const { trackerValue } = renderTransactions();
+
+      const newBtn = document.getElementById('txNewBtn');
+      fireEvent.click(newBtn!);
+
+      const dialog = screen.getByRole('dialog');
+      const amountInput = within(dialog).getByLabelText(/Amount/i);
+
+      fireEvent.change(amountInput, { target: { value: '100 + 200 + 300' } });
+      expect(within(dialog).getByTestId('math-preview-badge')).toHaveTextContent('=₹600');
+
+      // Select category so form is valid
+      const categorySelect = document.getElementById('txFormCategory');
+      fireEvent.change(categorySelect!, { target: { value: 'Food & Dining' } });
+
+      const saveBtn = within(dialog).getByRole('button', { name: /Save Transaction/i });
+      fireEvent.click(saveBtn);
+
+      await waitFor(() => {
+        expect(trackerValue.addTransaction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            amount: 600,
+          })
+        );
+      });
+    });
+
     it('clicking Edit on a row opens slide-over panel in edit mode pre-filled', () => {
       renderTransactions();
 

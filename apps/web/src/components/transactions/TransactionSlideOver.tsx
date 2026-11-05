@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 import { XIcon, PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
+import { containsMathExpression, evaluateMathExpression } from '@moneytracker/shared';
 import { EASING } from '../../ui/motion';
 import type { Transaction, TransactionType, PaymentMethod } from '../../types';
 
@@ -246,7 +247,15 @@ export function TransactionSlideOver({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    const amtStr = numericAmount > 0 ? String(numericAmount) : amountStr.trim();
+    let finalAmount = numericAmount;
+    if (containsMathExpression(amountStr)) {
+      const evalRes = evaluateMathExpression(amountStr);
+      if (evalRes.isValid && evalRes.result !== null && evalRes.result > 0) {
+        finalAmount = evalRes.result;
+      }
+    }
+
+    const amtStr = finalAmount > 0 ? String(finalAmount) : amountStr.trim();
     const validation = validateTransactionForm({
       amount: amtStr,
       type,
@@ -275,7 +284,7 @@ export function TransactionSlideOver({
 
       if (isEdit && initialData && updateTransaction) {
         await updateTransaction(initialData.id, {
-          amount: numericAmount,
+          amount: finalAmount,
           type,
           date,
           category,
@@ -285,7 +294,7 @@ export function TransactionSlideOver({
         showToast('Transaction updated successfully.', 'success');
       } else {
         await addTransaction({
-          amount: numericAmount,
+          amount: finalAmount,
           type,
           date,
           category,

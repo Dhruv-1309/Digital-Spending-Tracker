@@ -6,3 +6,4 @@ export * from './categories.js';
 export * from './formatters.js';
 export * from './transactions.js';
 export * from './validation.js';
+export * from './mathEvaluator.js';

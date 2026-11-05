@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 import { XIcon, PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateAutopayForm } from '../../lib/validation';
+import { containsMathExpression, evaluateMathExpression } from '@moneytracker/shared';
 import { EASING } from '../../ui/motion';
 import type { TransactionType } from '../../types';
 
@@ -177,7 +178,15 @@ export function AutopaySlideOver({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    const amtStr = numericAmount > 0 ? String(numericAmount) : amountStr.trim();
+    let finalAmount = numericAmount;
+    if (containsMathExpression(amountStr)) {
+      const evalRes = evaluateMathExpression(amountStr);
+      if (evalRes.isValid && evalRes.result !== null && evalRes.result > 0) {
+        finalAmount = evalRes.result;
+      }
+    }
+
+    const amtStr = finalAmount > 0 ? String(finalAmount) : amountStr.trim();
     const normalizedDay = day === 'last' ? 31 : Number(day);
 
     const validation = validateAutopayForm({
@@ -201,7 +210,7 @@ export function AutopaySlideOver({
       setIsSubmitting(true);
       const saved = await addAutopay({
         name: name.trim(),
-        amount: numericAmount,
+        amount: finalAmount,
         type,
         category,
         day: normalizedDay,
