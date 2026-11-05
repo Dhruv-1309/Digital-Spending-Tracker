@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 import { XIcon, PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
+import { toUserFriendlyError } from '../../lib/errorMessages';
 import { containsMathExpression, evaluateMathExpression } from '@moneytracker/shared';
 import { EASING } from '../../ui/motion';
 import type { Transaction, TransactionType, PaymentMethod } from '../../types';
@@ -308,8 +309,7 @@ export function TransactionSlideOver({
       onSuccess?.();
       handleClose();
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      showToast(error.message || 'Failed to save transaction.', 'error');
+      showToast(toUserFriendlyError(err, 'Failed to save transaction. Please try again.'), 'error');
     } finally {
       setIsSubmitting(false);
     }

@@ -177,21 +177,21 @@ export function evaluateMathExpression(input: string): MathEvaluationResult {
       return val;
     }
 
-    throw new Error(`Unexpected token: ${token.value}`);
+    throw new Error('Please check calculation format');
   }
 
   try {
     const value = parseExpression();
     if (pos < tokens.length) {
-      return { isValid: false, result: null, error: `Unexpected token at position ${pos}` };
+      return { isValid: false, result: null, error: 'Please check calculation format' };
     }
     if (!isFinite(value) || isNaN(value)) {
-      return { isValid: false, result: null, error: 'Calculation resulted in invalid number' };
+      return { isValid: false, result: null, error: 'Calculation resulted in an invalid number' };
     }
     // Round to 2 decimal places to eliminate floating point issues (e.g. 0.1 + 0.2 = 0.3)
     const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
     return { isValid: true, result: rounded };
   } catch (err: any) {
-    return { isValid: false, result: null, error: err.message || 'Evaluation error' };
+    return { isValid: false, result: null, error: err.message || 'Calculation error' };
   }
 }

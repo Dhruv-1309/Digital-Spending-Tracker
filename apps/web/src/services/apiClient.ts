@@ -60,10 +60,23 @@ export async function apiRequest<T = any>(
   }
 
   const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError(
+      0,
+      'NETWORK_ERROR',
+      'Unable to connect to the server. Please check your internet connection and try again.',
+      err,
+    );
+  }
 
   if (!response.ok) {
     let errorJson: any = null;
@@ -74,7 +87,24 @@ export async function apiRequest<T = any>(
     }
 
     const code = errorJson?.error?.code || 'API_ERROR';
-    const message = errorJson?.error?.message || `Request failed with status ${response.status}`;
+    let message = errorJson?.error?.message;
+    if (!message) {
+      if (response.status === 401) {
+        message = 'Your session has expired. Please sign in again to continue.';
+      } else if (response.status === 403) {
+        message = 'You do not have permission to perform this action.';
+      } else if (response.status === 404) {
+        message = 'The requested item could not be found.';
+      } else if (response.status === 409) {
+        message = 'This item already exists or conflicts with another record.';
+      } else if (response.status === 429) {
+        message = 'You are doing that a bit too fast. Please wait a moment and try again.';
+      } else if (response.status >= 500) {
+        message = 'Something went wrong on our end. Please try again in a few moments.';
+      } else {
+        message = 'The request could not be completed. Please try again.';
+      }
+    }
     const details = errorJson?.error?.details;
     throw new ApiError(response.status, code, message, details);
   }

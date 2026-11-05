@@ -29,7 +29,7 @@ export function authMiddleware(options: { checkRevoked?: boolean } = {}) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      next(new AppError(401, 'UNAUTHORIZED', 'Missing or malformed Authorization header with Bearer token'));
+      next(new AppError(401, 'UNAUTHORIZED', 'Please sign in to continue.'));
       return;
     }
 
@@ -61,7 +61,7 @@ export function authMiddleware(options: { checkRevoked?: boolean } = {}) {
 
       next();
     } catch (err) {
-      next(new AppError(401, 'UNAUTHORIZED', 'Invalid or expired Firebase ID token'));
+      next(new AppError(401, 'UNAUTHORIZED', 'Your session has expired. Please sign in again.'));
     }
   };
 }

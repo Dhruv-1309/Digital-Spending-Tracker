@@ -19,6 +19,7 @@ import { apiClient, mapDbTransactionToUi, mapDbAutopayToUi } from '../services/a
 import { syncQueue, type QueuedOperation } from '../services/syncQueue.js';
 import { isOnline as checkOnline, subscribeNetworkStatus } from '../services/network.js';
 import { DEFAULT_CATEGORIES } from '../lib/categories.js';
+import { toUserFriendlyError } from '../lib/errorMessages.js';
 import { rupeesToPaise } from '@moneytracker/shared';
 
 function generateClientId(): string {
@@ -63,7 +64,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
   // Rollback handler for terminal server errors
   const handleRollback = useCallback(
     (op: QueuedOperation, error: any) => {
-      showToast(`A pending change could not be synced: ${error.message || 'Validation error'}`, 'error', 4000);
+      const detail = toUserFriendlyError(error, 'Please review your details and try again.');
+      showToast(`We couldn't save an offline change: ${detail}`, 'error', 4500);
       // Revert optimistic changes
       if (op.entityType === 'transaction') {
         if (op.method === 'POST') {
@@ -232,7 +234,12 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         await triggerDrain();
       } catch (err: any) {
         console.warn('Failed to fetch data from API:', err);
-        setLoadError(err?.message || 'Failed to load data from server.');
+        setLoadError(
+          toUserFriendlyError(
+            err,
+            "We couldn't load your financial data right now. Please check your internet connection and try again.",
+          ),
+        );
       }
     }
 
@@ -333,7 +340,7 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         }
         return true;
       } catch (err: any) {
-        showToast(err.message || 'Failed to save transaction', 'error');
+        showToast(toUserFriendlyError(err, 'Failed to save transaction. Please try again.'), 'error');
         return false;
       }
     },

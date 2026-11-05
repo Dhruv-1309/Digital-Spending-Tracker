@@ -27,11 +27,11 @@ export function validateTransactionForm(input: TransactionFormInput): {
   const amount = Number(input.amount);
 
   if (!input.amount || isNaN(amount) || amount <= 0) {
-    errors.amount = 'Please enter a valid amount greater than 0';
+    errors.amount = 'Please enter an amount greater than 0';
   }
 
   if (!input.type || (input.type !== 'income' && input.type !== 'expense')) {
-    errors.type = 'Please select a valid transaction type';
+    errors.type = 'Please select whether this is an income or an expense';
   }
 
   if (!input.date) {
@@ -65,11 +65,11 @@ export function validateAutopayForm(input: AutopayFormInput): {
   }
 
   if (!input.amount || isNaN(amount) || amount <= 0) {
-    errors.amount = 'Please enter a valid amount greater than 0';
+    errors.amount = 'Please enter an amount greater than 0';
   }
 
   if (!input.type || (input.type !== 'income' && input.type !== 'expense')) {
-    errors.type = 'Please select recurring type';
+    errors.type = 'Please select whether this is an income or an expense';
   }
 
   if (!input.category || input.category.trim() === '') {
@@ -77,7 +77,7 @@ export function validateAutopayForm(input: AutopayFormInput): {
   }
 
   if (!input.day || isNaN(day) || day < 1 || day > 31) {
-    errors.day = 'Please select a valid day between 1 and 31';
+    errors.day = 'Please choose a day between 1 and 31';
   }
 
   return {
@@ -95,11 +95,11 @@ export function validateBudgetGoalForm(input: BudgetGoalFormInput): {
   const threshold = Number(input.thresholdPercent);
 
   if (isNaN(limit) || limit < 0) {
-    errors.monthlyLimit = 'Please enter a valid limit';
+    errors.monthlyLimit = 'Please enter a monthly limit of 0 or greater';
   }
 
   if (isNaN(threshold) || threshold < 1 || threshold > 100) {
-    errors.thresholdPercent = 'Threshold must be between 1 and 100%';
+    errors.thresholdPercent = 'Please enter an alert threshold between 1% and 100%';
   }
 
   return {

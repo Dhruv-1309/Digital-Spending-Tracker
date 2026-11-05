@@ -20,6 +20,7 @@ import {
   importTransactionsFromCsv,
 } from '../../lib/transactions';
 import { formatCurrency } from '../../lib/formatters';
+import { toUserFriendlyError } from '../../lib/errorMessages';
 import {
   SearchIcon,
   PlusIcon,
@@ -384,8 +385,7 @@ export function TransactionsTab() {
         );
       }
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      showToast(error.message || 'Failed to read CSV file.', 'error');
+      showToast(toUserFriendlyError(err, 'Failed to read CSV file. Please make sure it is a valid CSV.'), 'error');
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';

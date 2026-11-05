@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 import { XIcon, PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateAutopayForm } from '../../lib/validation';
+import { toUserFriendlyError } from '../../lib/errorMessages';
 import { containsMathExpression, evaluateMathExpression } from '@moneytracker/shared';
 import { EASING } from '../../ui/motion';
 import type { TransactionType } from '../../types';
@@ -227,8 +228,8 @@ export function AutopaySlideOver({
 
       onSuccess?.();
       handleClose();
-    } catch {
-      showToast('Failed to add autopay plan.', 'error');
+    } catch (err: unknown) {
+      showToast(toUserFriendlyError(err, 'Failed to add recurring plan. Please try again.'), 'error');
     } finally {
       setIsSubmitting(false);
     }

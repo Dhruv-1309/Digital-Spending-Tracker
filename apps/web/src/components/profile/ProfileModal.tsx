@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useToast } from '../../hooks/useToast';
+import { toUserFriendlyError } from '../../lib/errorMessages';
 import { Button } from '../ui/Button';
 import { TextInput } from '../ui/TextInput';
 import { Card } from '../ui/Card';
@@ -101,8 +102,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       showToast('Display name updated successfully.', 'success');
       setIsEditingName(false);
     } catch (err: unknown) {
-      const e = err as { message?: string };
-      showToast(e.message || 'Failed to update display name.', 'error');
+      showToast(toUserFriendlyError(err, 'Failed to update display name.'), 'error');
     } finally {
       setNameLoading(false);
     }
@@ -139,8 +139,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: unknown) {
-      const e = err as { message?: string };
-      const errMsg = e.message || 'Failed to update password.';
+      const errMsg = toUserFriendlyError(err, 'Failed to update password. Please try again.');
       setPassError(errMsg);
       showToast(errMsg, 'error');
     } finally {
@@ -176,15 +175,13 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       onClose();
       showToast('Your account has been deleted successfully.', 'success');
     } catch (err: unknown) {
-      const e = err as { message?: string; code?: string };
-      if (e.code === 'auth/requires-recent-login') {
-        showToast(
-          'For security reasons, please sign out and sign back in before deleting your account.',
-          'error'
-        );
-      } else {
-        showToast(e.message || 'Failed to delete account.', 'error');
-      }
+      showToast(
+        toUserFriendlyError(
+          err,
+          'Unable to delete account right now. Please try again or re-authenticate first.',
+        ),
+        'error',
+      );
     }
   };
 

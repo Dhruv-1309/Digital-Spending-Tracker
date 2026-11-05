@@ -40,7 +40,7 @@ export function errorHandler(
     res.status(400).json({
       error: {
         code: 'VALIDATION_ERROR',
-        message: 'Invalid request payload or parameters',
+        message: 'Please check your entered details and try again',
         details: err.errors,
         requestId,
       },
@@ -53,7 +53,7 @@ export function errorHandler(
     res.status(401).json({
       error: {
         code: 'UNAUTHORIZED',
-        message: 'Invalid, expired, or missing authentication token',
+        message: 'Your session has expired or is invalid. Please sign in again.',
         requestId,
       },
     });
@@ -65,7 +65,7 @@ export function errorHandler(
   res.status(500).json({
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: 'An internal server error occurred',
+      message: 'Something went wrong on our end. Please try again in a few moments.',
       requestId,
     },
   });

@@ -7,6 +7,7 @@ import { getCurrentMonthExpenses, getCurrentMonthRange, evaluateBudgetStatus } f
 import { detectSpendingAnomalies } from '../../lib/anomalies';
 import { formatCurrency } from '../../lib/formatters';
 import { validateBudgetGoalForm } from '../../lib/validation';
+import { toUserFriendlyError } from '../../lib/errorMessages';
 import {
   Card,
   Button,
@@ -276,8 +277,7 @@ export function DashboardTab() {
       showToast('Budget goal saved successfully.', 'success');
       setIsBudgetFormOpen(false);
     } catch (err: unknown) {
-      const errorObj = err as { message?: string };
-      showToast(errorObj.message || 'Failed to save budget goal.', 'error');
+      showToast(toUserFriendlyError(err, 'Unable to save budget goal. Please try again.'), 'error');
     } finally {
       setIsSavingBudget(false);
     }

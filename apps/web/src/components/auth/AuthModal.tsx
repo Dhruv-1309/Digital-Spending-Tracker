@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { m } from 'motion/react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
+import { toUserFriendlyError } from '../../lib/errorMessages';
 import { Button } from '../ui/Button';
 import { TextInput } from '../ui/TextInput';
 import { SegmentedControl } from '../ui/SegmentedControl';
@@ -136,10 +137,13 @@ export function AuthModal() {
         await signInWithEmail(cleanEmail, password);
       }
     } catch (err: unknown) {
-      const e = err as { message?: string };
       triggerError(
-        e.message ||
-          (authMode === 'signup' ? 'Registration failed' : 'Authentication failed')
+        toUserFriendlyError(
+          err,
+          authMode === 'signup'
+            ? 'Unable to create account. Please check your details and try again.'
+            : 'Unable to sign in. Please check your email and password.',
+        ),
       );
     } finally {
       setLoading(false);
@@ -152,8 +156,12 @@ export function AuthModal() {
       setGoogleLoading(true);
       await signInWithGoogle();
     } catch (err: unknown) {
-      const e = err as { message?: string };
-      triggerError(e.message || 'Google sign-in failed');
+      triggerError(
+        toUserFriendlyError(
+          err,
+          'Google sign-in was unsuccessful. Please try again or sign in with email.',
+        ),
+      );
     } finally {
       setGoogleLoading(false);
     }
@@ -176,8 +184,10 @@ export function AuthModal() {
       triggerSuccess('Password reset email sent! Check your inbox.');
       setIsResetOpen(false);
     } catch (err: unknown) {
-      const e = err as { message?: string };
-      const msg = e.message || 'Failed to send password reset email';
+      const msg = toUserFriendlyError(
+        err,
+        'Unable to send password reset email. Please try again.',
+      );
       showToast(msg, 'error');
       triggerError(msg);
     } finally {
