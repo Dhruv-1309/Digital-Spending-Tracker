@@ -8,11 +8,12 @@ import { DashboardTab } from '../dashboard/DashboardTab';
 import { TransactionsTab } from '../transactions/TransactionsTab';
 import { AutopayTab } from '../autopay/AutopayTab';
 import { AnalyticsTab } from '../analytics/AnalyticsTab';
+import { AddTransactionTab } from '../transactions/AddTransactionTab';
 import { AuthModal } from '../auth/AuthModal';
 import { ProfileModal } from '../profile/ProfileModal';
 import type { UserProfile, Transaction, AutopayPlan, BudgetGoal } from '../../types';
 
-export type AuditScreen = 'dashboard' | 'transactions' | 'autopay' | 'analytics' | 'auth' | 'profile';
+export type AuditScreen = 'dashboard' | 'transactions' | 'autopay' | 'analytics' | 'add-transaction' | 'auth' | 'profile';
 export type AuditState = 'loading' | 'empty' | 'error' | 'populated';
 
 const mockUser: UserProfile = {
@@ -208,7 +209,7 @@ export function StateAuditDevPage() {
     updateBudgetGoal: async () => true,
   };
 
-  const screens: AuditScreen[] = ['dashboard', 'transactions', 'autopay', 'analytics', 'auth', 'profile'];
+  const screens: AuditScreen[] = ['dashboard', 'transactions', 'autopay', 'analytics', 'add-transaction', 'auth', 'profile'];
   const states: AuditState[] = ['populated', 'loading', 'empty', 'error'];
 
   return (
@@ -319,6 +320,7 @@ export function StateAuditDevPage() {
                         {screen === 'transactions' && <TransactionsTab />}
                         {screen === 'autopay' && <AutopayTab />}
                         {screen === 'analytics' && <AnalyticsTab />}
+                        {screen === 'add-transaction' && <AddTransactionTab />}
                       </div>
                     </AppShell>
 
