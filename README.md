@@ -1,198 +1,208 @@
-# Digital Spending Tracker
+# Digital Spending Tracker (MoneyTracker)
 
-A modern, cloud-based personal finance management application that helps you track income and expenses with intelligent anomaly detection.
-
-## Features
-
-### 📊 **Financial Management**
-
-- Track income and expenses with detailed categorization
-- Real-time balance calculations
-- Custom category creation for personalized organization
-- Transaction history with search and filter capabilities
-
-### ☁️ **Cloud Storage**
-
-- Secure Firebase authentication (Email/Password)
-- Real-time data synchronization across devices
-- Access your financial data from anywhere
-- Automatic cloud backup
-
-### 🔍 **Anomaly Detection**
-
-- Statistical analysis using Z-score methodology
-- Automatically identifies unusual spending patterns
-- Category-based detection for accurate insights
-- Approve legitimate large transactions to reduce false alerts
-
-### 📈 **Analytics & Visualization**
-
-- Interactive charts powered by Chart.js
-- Expense breakdown by category (pie charts)
-- Time series analysis of spending trends
-- Day-of-week spending heatmap
-- **Money Runway Prediction** - Estimates when your balance will reach zero based on spending patterns
-- Comprehensive financial statistics
-
-### 🔄 **Autopay Management**
-
-- Set up recurring monthly payments
-- Track subscription and bill due dates
-- Automatic expense logging on scheduled days
-- Visual calendar-style date picker for selecting deduction day
-- Support for "Last day of month" scheduling
-
-### 💾 **Data Export**
-
-- Export transactions to Excel format
-- Complete transaction history backup
-- Easy data portability
-
-## Technology Stack
-
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Authentication**: Firebase Authentication
-- **Database**: Cloud Firestore
-- **Charts**: Chart.js
-- **Icons**: Font Awesome
-- **Hosting**: Static web hosting (any platform)
-
-## Anomaly Detection Algorithm
-
-The system uses statistical Z-score analysis to detect unusual spending:
-
-```
-Z-Score = (Transaction Amount - Category Mean) / Standard Deviation
-
-If Z-Score > 2: Transaction flagged as anomaly
-```
-
-### Detection Criteria
-
-- **Threshold**: Z-score > 2 (statistically significant)
-- **Minimum Data**: Requires at least 3 transactions per category
-- **Scope**: Analyzes expenses by category for accurate detection
-
-### How It Works
-
-1. Groups transactions by category
-2. Calculates mean and standard deviation for each category
-3. Compares each transaction to category statistics
-4. Flags transactions exceeding 2 standard deviations
-
-## Getting Started
-
-### Prerequisites
-
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- Firebase account (free tier available)
-- Basic understanding of Firebase setup
-
-### Installation
-
-1. **Clone or Download** the repository
-
-2. **Set up Firebase**:
-   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-   - Enable Email/Password Authentication
-   - Create a Firestore Database
-   - Get your Firebase configuration
-
-3. **Configure the App**:
-   - Copy `config.example.js` to `config.js`
-   - Fill in your Firebase credentials in `config.js`
-   - Do **not** commit `config.js` (it is ignored by `.gitignore`)
-
-   ```javascript
-   window.__APP_CONFIG__ = {
-     firebaseApiKey: "YOUR_API_KEY",
-     firebaseAuthDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-     firebaseProjectId: "YOUR_PROJECT_ID",
-     firebaseStorageBucket: "YOUR_PROJECT_ID.appspot.com",
-     firebaseMessagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-     firebaseAppId: "YOUR_APP_ID",
-   };
-   ```
-
-4. **Deploy**:
-   - Host on any static web server (Firebase Hosting, Netlify, Vercel, GitHub Pages, etc.)
-   - Or open `index.html` directly in your browser for local use
-
-### First Use
-
-1. Open the application in your browser
-2. Click "Create New Account"
-3. Enter your email and password (minimum 6 characters)
-4. Start tracking your finances!
-
-## Usage
-
-### Adding Transactions
-
-1. Navigate to "Add Transaction" tab
-2. Select type (Income/Expense)
-3. Choose or create a category
-4. Enter amount, description, and date
-5. Click "Add Transaction"
-
-### Viewing Analytics
-
-- **Dashboard**: Overview of total income, expenses, and balance
-- **Transactions**: Complete list with edit/delete options
-- **Analytics**: Visual charts and spending patterns
-
-### Managing Anomalies
-
-- Check the Dashboard for anomaly alerts
-- Review flagged transactions
-- Approve legitimate large purchases to prevent future alerts
-- System learns from your approval patterns
-
-## Security
-
-- All data is encrypted in transit (HTTPS)
-- Firebase Authentication ensures secure access
-- User data is isolated (each user can only access their own data)
-- Firestore security rules prevent unauthorized access
-- Never commit credentials in source files; keep runtime config in local `config.js`
-
-## Browser Compatibility
-
-- ✅ Chrome 90+
-- ✅ Firefox 88+
-- ✅ Safari 14+
-- ✅ Edge 90+
-
-## Project Structure
-
-```
-├── index.html              # Main application file
-├── FIREBASE_SETUP.md      # Detailed Firebase setup guide
-└── README.md              # This file
-```
-
-## Future Enhancements
-
-- [ ] Budget setting and tracking
-- [x] Recurring transaction automation (Autopay)
-- [ ] Multi-currency support
-- [ ] Mobile app version
-- [ ] Advanced reporting features
-- [ ] Category-specific spending limits
-- [x] Money runway prediction (Balance depletion forecast)
-- [ ] Export to PDF reports
-
-## License
-
-This project is available for personal and educational use.
-
-## Support
-
-For setup help, refer to `FIREBASE_SETUP.md` for detailed Firebase configuration instructions.
+A professional, privacy-first personal finance management platform engineered with an offline-first client architecture, exact integer financial arithmetic, recurring autopay orchestration, and statistical spending anomaly detection.
 
 ---
 
-**Version**: 2.1  
-**Last Updated**: January 2026  
-**Architecture**: Single Page Application (SPA)  
-**Status**: Production Ready
+## 1. System Architecture
+
+MoneyTracker is organized as an enterprise-grade TypeScript monorepo utilizing npm workspaces:
+
+```mermaid
+flowchart TD
+    subgraph Client["Frontend Client (apps/web)"]
+        UI["React 19 + TailwindCSS SPA"]
+        Context["TrackerContext (Optimistic State)"]
+        Queue["IndexedDB Offline Sync Queue"]
+        UI --> Context
+        Context <--> Queue
+    end
+
+    subgraph Shared["Shared Logic (packages/shared)"]
+        Math["Paise Integer Math Engine"]
+        Schemas["Zod Validation Schemas"]
+        Analytics["SMA Forecast & Runway Predictor"]
+        AutopayMath["Month Boundary / Leap Year Clamping"]
+    end
+
+    subgraph Backend["Backend API (apps/api)"]
+        Express["Express 5 REST API"]
+        RateLimit["Token-Bucket Rate Limiter"]
+        AuthMiddleware["Firebase JWT Verification"]
+        Prisma["Prisma ORM"]
+        Worker["pg-boss Autopay Scheduler"]
+        Express --> RateLimit --> AuthMiddleware --> Prisma
+        Worker --> Prisma
+    end
+
+    subgraph Data["Data & Identity Layer"]
+        PG[(PostgreSQL 15+ / Neon DB)]
+        FirebaseAuth["Firebase Auth (Identity Toolkit)"]
+    end
+
+    Client -->|HTTPS REST API /api/v1| Backend
+    Client -->|Client-side Token Exchange| FirebaseAuth
+    AuthMiddleware -->|Verify ID Token| FirebaseAuth
+    Client -.->|Pure Calculation Imports| Shared
+    Backend -.->|Validation & Math Imports| Shared
+    Prisma <-->|Connection Pool| PG
+    Worker <-->|Job Queue Tables| PG
+```
+
+---
+
+## 2. Monorepo Structure
+
+```text
+├── apps/
+│   ├── api/                     # Express 5 REST API service
+│   │   ├── prisma/              # Prisma database schema and migrations
+│   │   ├── src/
+│   │   │   ├── config/          # Environment variable validation
+│   │   │   ├── middleware/      # Rate limiting, tenant isolation, request logging
+│   │   │   ├── routes/          # API v1 routes (auth, sync, transactions, autopay)
+│   │   │   └── scheduler/       # pg-boss background recurring autopay processor
+│   │   └── test/                # Supertest & Vitest integration test suite
+│   └── web/                     # React 19 Single Page Application
+│       ├── public/              # Static assets, PWA manifest, security headers
+│       ├── src/
+│       │   ├── components/      # Accessible UI components (AppShell, Tabs, Modals)
+│       │   ├── context/         # Centralized state management & cache purging
+│       │   ├── lib/             # Client calculations & export formatters
+│       │   ├── services/        # Firebase Auth client, REST API client, SyncQueue
+│       │   └── test/            # Axe-core a11y tests, component tests, unit tests
+│       └── vercel.json          # Production static routing and CSP security headers
+├── packages/
+│   └── shared/                  # Universal business logic and schemas
+│       ├── src/
+│       │   ├── calculations/    # Integer paise math, budget status, runway, autopay
+│       │   └── schemas/         # Zod schemas for tenant isolation & payload validation
+│       └── test/                # 100% pure boundary test suite
+├── docs/                        # Planning, PRDs, specs, and readiness audits
+│   ├── readiness/               # Master audit checklist, backlog, and scorecards
+│   └── RUNBOOK.md               # DevOps operations, migrations, and disaster recovery
+└── .github/
+    └── workflows/
+        └── ci.yml               # GitHub Actions CI (lint, typecheck, test, build, audit)
+```
+
+---
+
+## 3. Key Core Features & Engineering Principles
+
+### 3.1 Exact Integer Arithmetic (Paise Precision)
+All monetary calculations are performed in integer **paise** (1 INR = 100 paise) using dedicated integer functions in `packages/shared/src/calculations/paise.ts`. Floating-point binary rounding errors (e.g., `0.1 + 0.2 !== 0.3`) are eliminated. Transactions enforce a strict ₹10,00,00,000 (10 Crore) validation ceiling.
+
+### 3.2 Offline-First Synchronization
+Mutations are applied optimistically to the local UI state and enqueued in an IndexedDB persistent queue (`apps/web/src/services/syncQueue.ts`). When connectivity resumes, operations replay sequentially against the `/api/v1/sync` endpoint with exponential backoff and automatic rollback on non-retryable errors.
+
+### 3.3 Robust Recurring Autopay Engine
+Supports recurring monthly subscriptions with intelligent month boundary and leap year clamping:
+- Schedules set for days 29, 30, or 31 automatically clamp to the last valid day of shorter months (e.g., February 28 or February 29 in leap years).
+- "Last day of month" autopay options compute exact month-end dates across timezone boundaries.
+- Managed by `pg-boss` background job queues in `apps/api/src/scheduler/autopayScheduler.ts`.
+
+### 3.4 Statistical Spending Anomaly Detection
+Detects unusual expenses using category-specific Z-score statistical evaluation:
+$$\text{Z-Score} = \frac{x - \mu}{\sigma}$$
+Expenses exceeding 2 standard deviations ($\sigma > 2$) with at least 3 historical records trigger contextual alerts. Users can approve verified high-value transactions, training the engine to adapt to legitimate spending patterns.
+
+### 3.5 Security Hardening & Zero-Trust Tenant Isolation
+- **CSP & Headers:** Strict Content Security Policy (`frame-ancestors 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Permissions-Policy`).
+- **CSV Injection Protection:** Sanitizes formula prefixes (`=`, `+`, `-`, `@`, `\t`, `\r`) per OWASP CWE-1236 guidelines.
+- **Tenant Isolation:** Enforced via Firebase ID token verification and Prisma queries keyed strictly to the authenticated `userId`.
+- **Rate Limiting:** Token-bucket rate limiter per IP address and authenticated user ID.
+
+---
+
+## 4. Getting Started
+
+### 4.1 Prerequisites
+- **Node.js:** `>= 20.18.0` (Node 22 LTS recommended)
+- **npm:** `>= 10.0.0`
+- **PostgreSQL:** `15+` (Local Postgres or [Neon](https://neon.tech/) Serverless Postgres)
+- **Firebase Project:** Web app credentials for Firebase Authentication
+
+### 4.2 Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/moneytracker.git
+   cd moneytracker
+   ```
+
+2. **Install monorepo dependencies:**
+   ```bash
+   npm ci
+   ```
+
+3. **Configure Environment Variables:**
+
+   **Backend (`apps/api/.env`):**
+   ```bash
+   PORT=4000
+   NODE_ENV=development
+   DATABASE_URL="postgresql://user:password@localhost:5432/moneytracker?schema=public"
+   FIREBASE_PROJECT_ID="your-firebase-project-id"
+   CORS_ORIGIN="http://localhost:5173"
+   LOG_LEVEL="info"
+   ```
+
+   **Frontend (`apps/web/.env`):**
+   ```bash
+   VITE_API_URL="http://localhost:4000/api/v1"
+   VITE_FIREBASE_API_KEY="your-api-key"
+   VITE_FIREBASE_AUTH_DOMAIN="your-app.firebaseapp.com"
+   VITE_FIREBASE_PROJECT_ID="your-firebase-project-id"
+   VITE_FIREBASE_STORAGE_BUCKET="your-app.appspot.com"
+   VITE_FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
+   VITE_FIREBASE_APP_ID="your-app-id"
+   ```
+
+4. **Initialize Database:**
+   ```bash
+   npm --workspace=@moneytracker/api run prisma:generate
+   npm --workspace=@moneytracker/api run prisma:migrate
+   ```
+
+5. **Start Development Servers:**
+   ```bash
+   npm run dev
+   ```
+   - Frontend UI: `http://localhost:5173`
+   - Backend API: `http://localhost:4000/healthz`
+
+---
+
+## 5. Development & Testing Scripts
+
+| Command | Purpose |
+| :--- | :--- |
+| `npm run dev` | Runs frontend and backend concurrently in development mode |
+| `npm test` | Executes full Vitest test suite across shared, api, and web workspaces |
+| `npm run build` | Compiles shared library, builds API TypeScript, and bundles Web SPA via Vite |
+| `npm run lint` | Runs ESLint across all workspaces |
+| `npx tsc -b` | Performs strict TypeScript project references check across monorepo |
+| `npm audit --audit-level=critical` | Executes security audit for critical dependency vulnerabilities |
+
+---
+
+## 6. Testing Philosophy
+
+The codebase enforces strict test coverage and behavior verification:
+- **Unit Testing:** 100% pure mathematical calculations and schema parsing (`packages/shared/test`).
+- **Integration Testing:** Authenticated API routes, rate limiting, and tenant data isolation (`apps/api/test`).
+- **Component & A11y Testing:** React components and axe-core accessibility evaluations (`apps/web/src/test`).
+- **Regression Pre-Commit Gate:** `tsc -b`, `eslint`, full test suite, and production build must pass with zero errors prior to every commit.
+
+---
+
+## 7. Operations & Runbook
+
+For production deployment instructions, database migration procedures (including migrating legacy Firestore datasets to PostgreSQL), and disaster recovery playbooks, consult [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+
+---
+
+## 8. License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

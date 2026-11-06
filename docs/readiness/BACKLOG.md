@@ -230,16 +230,16 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [x] Fails PR if linting, typechecking, tests, or build fails
 - **How It Will Be Tested:** Validate workflow YAML syntax and verify local test commands replicate CI pipeline.
 
-### 16. [WEB-1] Modern comprehensive README rewrite reflecting monorepo and v3.0 full-stack architecture
+### 16. [WEB-1] Modern comprehensive README rewrite reflecting monorepo and v3.0 full-stack architecture [DONE]
 
 - **Priority:** `P0` | **Effort:** `M` | **Category:** `WEB`
 - **Dependencies:** None
 - **Files Likely Touched:**
   - `README.md`
 - **Acceptance Criteria:**
-  - [ ] Replaces legacy v1.0 HTML5/vanilla JS descriptions with current React 19, TypeScript strict, Postgres, and Express 5 architecture
-  - [ ] Includes architecture diagram, setup instructions, scripts reference, environment variables, and testing guide
-  - [ ] No placeholder or outdated marketing text
+  - [x] Replaces legacy v1.0 HTML5/vanilla JS descriptions with current React 19, TypeScript strict, Postgres, and Express 5 architecture
+  - [x] Includes architecture diagram, setup instructions, scripts reference, environment variables, and testing guide
+  - [x] No placeholder or outdated marketing text
 - **How It Will Be Tested:** Manual review of README.md for complete accuracy and link integrity.
 
 ### 17. [SEC-1] Rotate and restrict historical Firebase API key in Google Cloud Console `[NEEDS-USER]`

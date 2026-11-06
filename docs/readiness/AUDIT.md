@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{313.5}{499} = \mathbf{62.8\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{315.5}{499} = \mathbf{63.2\%}$$
 
-- **Current Readiness Score:** **62.8%** (Baseline: 56.8%)
+- **Current Readiness Score:** **63.2%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **313.5 points**
+- **Earned Weight:** **315.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **82** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **47** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **83** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **46** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -42,7 +42,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
 | **QA** | Testing and Code Quality | 18 | 8D / 5P / 4M (1 other) | **64.1%** | 29.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 5D / 3P / 4M (9 other) | **33.6%** | 18.5 / 55 |
-| **WEB** | Web Presence, Legal and Documentation | 20 | 3D / 7P / 9M (1 other) | **45.3%** | 19.5 / 43 |
+| **WEB** | Web Presence, Legal and Documentation | 20 | 4D / 6P / 9M (1 other) | **50.0%** | 21.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
 | **X** | Additional Operational Excellence | 4 | 0D / 2P / 1M (1 other) | **25%** | 2.5 / 10 |
 
@@ -287,7 +287,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
-| **WEB-1** | README with what the product is, screenshots, features, tech stack, architecture diagram, setup, environment variables, scripts, tests, deployment and roadmap | `PARTIAL` | README.md exists (198 lines) | README describes legacy v1.0 HTML5/vanilla JS stack instead of React 19 / Express 5 monorepo. |
+| **WEB-1** | README with what the product is, screenshots, features, tech stack, architecture diagram, setup, environment variables, scripts, tests, deployment and roadmap | `DONE` | README.md:1-190 | Modern comprehensive README rewrite documenting React 19 / Express 5 / Prisma architecture, Mermaid topology diagram, monorepo workspaces, setup instructions, scripts, testing, security, and runbook links. | None |
 | **WEB-2** | Privacy Policy page, linked from sign-up and the footer | `DONE` | apps/web/src/components/legal/PrivacyPage.tsx, AuthModal.tsx:685, ProfileModal.tsx:520 | - |
 | **WEB-3** | A public landing page that explains the product, its privacy stance and shows screenshots, with a sign-in link | `PARTIAL` | apps/web/src/components/auth/AuthModal.tsx:250-320 (marketing hero highlights) | Dedicated standalone public marketing landing page (/index or /landing) not separate from auth screen. |
 | **WEB-4** | Terms of Use page | `DONE` | apps/web/src/components/legal/TermsPage.tsx:1-180, AuthModal.tsx:680, ProfileModal.tsx:510 | - |
