@@ -66,16 +66,67 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     (op: QueuedOperation, error: any) => {
       const detail = toUserFriendlyError(error, 'Please review your details and try again.');
       showToast(`We couldn't save an offline change: ${detail}`, 'error', 4500);
+
       // Revert optimistic changes
       if (op.entityType === 'transaction') {
         if (op.method === 'POST') {
-          setTransactions((prev) => prev.filter((t) => t.id !== op.entityId));
+          setTransactions((prev) => {
+            const reverted = prev.filter((t) => t.id !== op.entityId);
+            syncQueue.setCachedData('transactions', reverted);
+            return reverted;
+          });
+        } else {
+          // On failed PATCH or DELETE, reconcile with authoritative server state
+          apiClient.getTransactions({ pageSize: 100 }).then((res) => {
+            if (res?.items) {
+              setTransactions(res.items);
+              syncQueue.setCachedData('transactions', res.items);
+            }
+          }).catch(() => {
+            // Ignore offline fallback
+          });
         }
       } else if (op.entityType === 'autopay') {
         if (op.method === 'POST') {
-          setAutopays((prev) => prev.filter((a) => a.id !== op.entityId));
+          setAutopays((prev) => {
+            const reverted = prev.filter((a) => a.id !== op.entityId);
+            syncQueue.setCachedData('autopays', reverted);
+            return reverted;
+          });
+        } else {
+          apiClient.getAutopays().then((plans) => {
+            if (plans) {
+              setAutopays(plans);
+              syncQueue.setCachedData('autopays', plans);
+            }
+          }).catch(() => {
+            // Ignore offline fallback
+          });
         }
+      } else if (op.entityType === 'category') {
+        apiClient.getCategories().then((cats) => {
+          if (cats) {
+            const merged: CategoriesMap = {
+              income: Array.from(new Set([...DEFAULT_CATEGORIES.income, ...(cats.income || [])])),
+              expense: Array.from(new Set([...DEFAULT_CATEGORIES.expense, ...(cats.expense || [])])),
+            };
+            setCategories(merged);
+            syncQueue.setCachedData('categories', merged);
+          }
+        }).catch(() => {
+          // Ignore offline fallback
+        });
+      } else if (op.entityType === 'budget') {
+        apiClient.getBudget().then((b) => {
+          if (b) {
+            setBudgetGoal(b);
+            syncQueue.setCachedData('budgetGoal', b);
+          }
+        }).catch(() => {
+          // Ignore offline fallback
+        });
       }
+
       refreshQueueCount();
     },
     [showToast, refreshQueueCount],

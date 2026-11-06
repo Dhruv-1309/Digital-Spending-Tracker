@@ -131,7 +131,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] A subsequent sign-in by a different user on the same browser device never sees previous user data
 - **How It Will Be Tested:** Unit test asserting that after signOutUser(), syncQueue.getCachedData returns null and queue count is 0.
 
-### 8. [CORE-1] End-to-end functional requirements FR-1.1 to FR-6.3 verification & edge-case closure
+### 8. [CORE-1] End-to-end functional requirements FR-1.1 to FR-6.3 verification & edge-case closure [DONE]
 
 - **Priority:** `P0` | **Effort:** `M` | **Category:** `CORE`
 - **Dependencies:** `AUTH-1`, `CORE-2`, `CORE-3`

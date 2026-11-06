@@ -153,4 +153,24 @@ describe('Offline Sync Queue Protocol (SYNC-1 to SYNC-6)', () => {
     const remaining = await syncQueue.getQueue();
     expect(remaining.length).toBe(0);
   });
+
+  it('clearAll clears both offline queue and local cache data (AUTH-2, AUTH-3)', async () => {
+    await syncQueue.enqueue({
+      id: 'op-cache-test',
+      endpoint: '/transactions',
+      method: 'POST',
+      entityType: 'transaction',
+      entityId: 'tx-1',
+      createdAt: 1000,
+    });
+    await syncQueue.setCachedData('transactions', [{ id: 'tx-1' }]);
+
+    expect(await syncQueue.getQueueLength()).toBe(1);
+    expect(await syncQueue.getCachedData('transactions')).toEqual([{ id: 'tx-1' }]);
+
+    await syncQueue.clearAll();
+
+    expect(await syncQueue.getQueueLength()).toBe(0);
+    expect(await syncQueue.getCachedData('transactions')).toBeNull();
+  });
 });

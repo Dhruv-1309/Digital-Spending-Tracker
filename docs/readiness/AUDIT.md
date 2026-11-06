@@ -12,16 +12,16 @@
 ### 1.1 Overall Readiness Score
 $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{293.5}{499} = \mathbf{58.8\%}$$
 
-- **Current Readiness Score:** **59.6%** (Baseline: 56.8%)
+- **Current Readiness Score:** **60.0%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **297.5 points**
+- **Earned Weight:** **299.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **74** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **55** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **75** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **54** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 10D / 10P / 1M (1 other) | **67.4%** | 44.5 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 11D / 9P / 1M (1 other) | **70.5%** | 46.5 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 7D / 4P / 2M (1 other) | **68.8%** | 27.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 16D / 3P / 2M  | **87.9%** | 58 / 66 |
 | **SEC** | Security and Privacy | 22 | 10D / 5P / 4M (3 other) | **63.8%** | 44 / 69 |
@@ -90,7 +90,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
-| **CORE-1** | Every functional requirement FR-1.1 to FR-6.3 is implemented and works end to end (audit each one separately) | `PARTIAL` | apps/web/src/components/layout/AppLayout.tsx:31-50, apps/web/src/test/*.test.tsx (261 passing tests) | FR-1.1 silently signs up on mistyped credentials; syncQueue offline rollback handling has edge cases. |
+| **CORE-1** | Every functional requirement FR-1.1 to FR-6.3 is implemented and works end to end (audit each one separately) | `DONE` | apps/web/src/context/TrackerContext.tsx:64-135, apps/web/src/services/auth.ts:50-100, apps/web/src/test/authService.test.ts:30-65, apps/web/src/test/syncQueue.test.ts:104-170 | None. FR-1.1 to FR-6.3 verified end-to-end; sign-in and sign-up decoupled with explicit credential validation; syncQueue terminal error rollback reconciles transactions, autopays, categories, and budget goals. |
 | **CORE-2** | Money is stored and summed as integers (paise) or with a decimal-safe method; no floating-point drift in any total | `DONE` | apps/api/prisma/schema.prisma (BigInt amountPaise); packages/shared/src/calculations/transactions.ts:215-225, analytics.ts:365-375, budget.ts:20-33, autopay.ts:13-49 sum in integer paise; test/transactions.test.ts verifies 0.1+0.2=0.3 without float drift | - |
 | **CORE-3** | Amount validation: positive, sensible maximum, at most 2 decimals, rejects NaN, negative values and exponent notation | `DONE` | packages/shared/src/schemas/transactions.ts (max 1,000,000,000 paise / ₹10 Crore), packages/shared/src/schemas/autopay.ts; packages/shared/src/calculations/validation.ts (validateAmount enforces >0, <=100,000,000, max 2 decimals, rejects exponent notation /[eE]/ and NaN); test/validation.test.ts, test/schemas.test.ts | - |
 | **CORE-4** | Dates use the user's timezone consistently; no off-by-one day around midnight or from UTC conversion | `PARTIAL` | apps/web/src/services/apiClient.ts:123-125 (.slice(0, 10)), apps/api/src/repositories/transactionRepository.ts:61 | No property-based tests verifying midnight edge cases across different international client timezones. |
