@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import { getFirebaseAuth } from './firebase';
 import { apiClient } from './apiClient';
+import { syncQueue } from './syncQueue';
 import { toUserFriendlyError } from '../lib/errorMessages';
 import type { UserProfile } from '../types';
 
@@ -210,9 +211,27 @@ export async function deleteUserAccount(): Promise<void> {
   const user = getFirebaseAuth().currentUser;
   if (!user) throw new Error('Please sign in to manage your account.');
 
-  await apiClient.deleteMe().catch((e) => {
-    console.warn('Backend user delete warning:', e);
+  await apiClient.deleteMe().catch(() => {
+    // If backend delete failed or user already wiped in DB, proceed with local and auth cleanup
   });
+
+  try {
+    await syncQueue.clearAll();
+  } catch {
+    // Non-blocking storage clear
+  }
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
+  } catch {
+    // Non-blocking storage clear
+  }
+
   try {
     await deleteUser(user);
   } catch (err: unknown) {

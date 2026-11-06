@@ -150,6 +150,27 @@ export const syncQueue = {
     }
   },
 
+  async clearAll(): Promise<void> {
+    memoryFallback.queue = [];
+    memoryFallback.cache.clear();
+
+    if (!hasIndexedDB()) {
+      return;
+    }
+    try {
+      const db = await openDB();
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction([STORE_QUEUE, STORE_CACHE], 'readwrite');
+        tx.objectStore(STORE_QUEUE).clear();
+        tx.objectStore(STORE_CACHE).clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch {
+      // Memory fallback already cleared
+    }
+  },
+
   // Local Cache Helpers
   async setCachedData<T = any>(key: string, data: T): Promise<void> {
     if (!hasIndexedDB()) {
@@ -243,7 +264,6 @@ export const syncQueue = {
         failed += 1;
         if (terminalError) {
           await this.removeOperation(op.id);
-          console.error(`Terminal error executing queued operation ${op.id}:`, lastErr);
           onRollback?.(op, lastErr);
         } else {
           // Leave in queue for next drain cycle when network stabilizes

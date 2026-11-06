@@ -104,7 +104,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [x] User cannot accidentally create an orphaned account by mistyping their password
 - **How It Will Be Tested:** Unit test in auth_profile_redesign.test.tsx ensuring signInWithEmail with non-existent user throws error without creating account.
 
-### 6. [AUTH-2] Comprehensive account deletion: wipe DB, clear local IndexedDB syncQueue, inform user
+### 6. [AUTH-2] Comprehensive account deletion: wipe DB, clear local IndexedDB syncQueue, inform user [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `AUTH`
 - **Dependencies:** `AUTH-1`

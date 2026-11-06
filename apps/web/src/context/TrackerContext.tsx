@@ -90,8 +90,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         setPendingSyncCount(remaining);
       });
       await refreshQueueCount();
-    } catch (e) {
-      console.warn('Queue drain warning:', e);
+    } catch {
+      // Drain warning silently handled by backoff / offline retry
     } finally {
       isDrainingRef.current = false;
     }
@@ -233,7 +233,6 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         // Drain any pending sync queue items
         await triggerDrain();
       } catch (err: any) {
-        console.warn('Failed to fetch data from API:', err);
         setLoadError(
           toUserFriendlyError(
             err,

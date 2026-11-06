@@ -70,6 +70,7 @@ export function createApp() {
   apiV1.use(idempotencyMiddleware());
 
   apiV1.use('/', userRouter);
+  apiV1.use('/users', userRouter);
   apiV1.use('/transactions', transactionRouter);
   apiV1.use('/categories', categoryRouter);
   apiV1.use('/autopay', autopayRouter);
