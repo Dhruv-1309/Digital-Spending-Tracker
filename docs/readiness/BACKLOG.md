@@ -47,7 +47,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [x] Root tsconfig.json coordinates monorepo build mode (tsc -b passes with 0 errors across all workspaces)
 - **How It Will Be Tested:** Run `npx tsc -b apps/web apps/api packages/shared` and assert exit code 0.
 
-### 2. [CORE-2] Integer paise summation and zero floating-point drift in frontend totals
+### 2. [CORE-2] Integer paise summation and zero floating-point drift in frontend totals [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `QA-1`
@@ -56,10 +56,10 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - `packages/shared/src/calculations/analytics.ts`
   - `packages/shared/src/currency/paise.ts`
 - **Acceptance Criteria:**
-  - [ ] Transaction sums convert amounts to integer paise (rupeesToPaise) before summation
-  - [ ] Division back to rupees (paiseToRupees) occurs only at presentation boundary
-  - [ ] Summing 0.10 + 0.20 returns exactly 0.30 with zero binary floating-point drift (e.g. 0.30000000000000004 prevented)
-  - [ ] All calculation tests assert exact rupee and paise outputs
+  - [x] Transaction sums convert amounts to integer paise (rupeesToPaise) before summation
+  - [x] Division back to rupees (paiseToRupees) occurs only at presentation boundary
+  - [x] Summing 0.10 + 0.20 returns exactly 0.30 with zero binary floating-point drift (e.g. 0.30000000000000004 prevented)
+  - [x] All calculation tests assert exact rupee and paise outputs
 - **How It Will Be Tested:** Run `npm --workspace=@moneytracker/shared test` with tests asserting precise decimal addition.
 
 ### 3. [CORE-3] Amount validation caps, decimal precision, and exponent notation rejection

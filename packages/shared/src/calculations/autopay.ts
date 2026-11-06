@@ -1,3 +1,5 @@
+import { rupeesToPaise, paiseToRupees } from '../currency/paise.js';
+
 export interface AutopayLike {
   id: string;
   name: string;
@@ -11,11 +13,13 @@ export interface AutopayLike {
 }
 
 export function calculateMonthlyFlow(autopays: AutopayLike[]): number {
-  return autopays
+  const netPaise = autopays
     .filter((a) => a.active !== false)
     .reduce((sum, a) => {
-      return a.type === 'income' ? sum + a.amount : sum - a.amount;
+      const paise = rupeesToPaise(a.amount);
+      return a.type === 'income' ? sum + paise : sum - paise;
     }, 0);
+  return paiseToRupees(netPaise);
 }
 
 export interface AutopayFlows {
@@ -29,21 +33,25 @@ export function calculateAutopayFlows(autopays: AutopayLike[]): AutopayFlows {
     return { income: 0, expense: 0, text: '₹0' };
   }
 
-  const totals = autopays
+  const totalsPaise = autopays
     .filter((a) => a.active !== false)
     .reduce(
       (sum, a) => {
-        if (a.type === 'income') sum.income += a.amount;
-        else sum.expense += a.amount;
+        const paise = rupeesToPaise(a.amount);
+        if (a.type === 'income') sum.income += paise;
+        else sum.expense += paise;
         return sum;
       },
       { income: 0, expense: 0 },
     );
 
+  const income = paiseToRupees(totalsPaise.income);
+  const expense = paiseToRupees(totalsPaise.expense);
+
   return {
-    income: totals.income,
-    expense: totals.expense,
-    text: `+₹${totals.income.toLocaleString('en-IN')} / -₹${totals.expense.toLocaleString('en-IN')}`,
+    income,
+    expense,
+    text: `+₹${income.toLocaleString('en-IN')} / -₹${expense.toLocaleString('en-IN')}`,
   };
 }
 

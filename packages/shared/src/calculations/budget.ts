@@ -1,4 +1,5 @@
 import { formatCurrency } from './formatters.js';
+import { rupeesToPaise, paiseToRupees } from '../currency/paise.js';
 
 export type BudgetAlertLevel = 'none' | 'warning' | 'critical';
 
@@ -18,18 +19,20 @@ export function getCurrentMonthRange(refDate: Date = new Date()): {
 }
 
 export function getCurrentMonthExpenses(
-  transactions: Array<{ amount: number; type: string; date: string }>,
+  transactions: Array<{ amount: number; type: string; date: string; amountPaise?: number }>,
   refDate: Date = new Date(),
 ): number {
   const { start, end } = getCurrentMonthRange(refDate);
 
-  return transactions
+  const totalExpensePaise = transactions
     .filter((t) => {
       if (t.type !== 'expense') return false;
       const tDate = new Date(t.date);
       return tDate >= start && tDate <= end;
     })
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + (t.amountPaise != null ? t.amountPaise : rupeesToPaise(t.amount)), 0);
+
+  return paiseToRupees(totalExpensePaise);
 }
 
 export interface BudgetEvaluationResult {

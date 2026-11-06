@@ -87,6 +87,25 @@ describe('transactions', () => {
     expect(parsed.summary.balance).toBe(48350);
   });
 
+  it('exportTransactionsJson calculates totals using integer paise without floating point drift', () => {
+    const floatTransactions = [
+      { id: 'tx_f1', amount: 0.1, type: 'income', category: 'Salary', paymentMethod: 'upi', date: '2026-10-01' },
+      { id: 'tx_f2', amount: 0.2, type: 'income', category: 'Salary', paymentMethod: 'upi', date: '2026-10-02' },
+      { id: 'tx_f3', amount: 0.05, type: 'expense', category: 'Tea', paymentMethod: 'upi', date: '2026-10-03' },
+      { id: 'tx_f4', amount: 0.05, type: 'expense', category: 'Tea', paymentMethod: 'upi', date: '2026-10-04' },
+    ];
+
+    const json = exportTransactionsJson({
+      transactions: floatTransactions,
+      autopays: [],
+      budgetGoal: null,
+    });
+    const parsed = JSON.parse(json);
+    expect(parsed.summary.totalIncome).toBe(0.3); // Exact 0.3, not 0.30000000000000004
+    expect(parsed.summary.totalExpense).toBe(0.1);
+    expect(parsed.summary.balance).toBe(0.2);
+  });
+
   it('importTransactionsFromCsv imports valid rows and skips duplicates', () => {
     const csvContent = `Date,Type,Category,Description,Payment Method,Amount
 2026-10-15,expense,Food & Dining,Dinner with friends,upi,1200

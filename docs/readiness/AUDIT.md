@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{285.5}{499} = \mathbf{57.2\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{287.5}{499} = \mathbf{57.6\%}$$
 
-- **Current Readiness Score:** **57.2%** (Baseline: 56.8%)
+- **Current Readiness Score:** **57.6%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **285.5 points**
+- **Earned Weight:** **287.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **68** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **61** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **69** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **60** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 8D / 12P / 1M (1 other) | **61.4%** | 40.5 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 9D / 11P / 1M (1 other) | **64.4%** | 42.5 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 4D / 7P / 2M (1 other) | **53.8%** | 21.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 16D / 3P / 2M  | **87.9%** | 58 / 66 |
 | **SEC** | Security and Privacy | 22 | 9D / 6P / 4M (3 other) | **60.9%** | 42 / 69 |
@@ -91,7 +91,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
 | **CORE-1** | Every functional requirement FR-1.1 to FR-6.3 is implemented and works end to end (audit each one separately) | `PARTIAL` | apps/web/src/components/layout/AppLayout.tsx:31-50, apps/web/src/test/*.test.tsx (261 passing tests) | FR-1.1 silently signs up on mistyped credentials; syncQueue offline rollback handling has edge cases. |
-| **CORE-2** | Money is stored and summed as integers (paise) or with a decimal-safe method; no floating-point drift in any total | `PARTIAL` | apps/api/prisma/schema.prisma:69,87 (BigInt amountPaise), packages/shared/src/currency/paise.ts | Frontend packages/shared/src/calculations/transactions.ts:217,221 sums floating-point numbers directly with JS + |
+| **CORE-2** | Money is stored and summed as integers (paise) or with a decimal-safe method; no floating-point drift in any total | `DONE` | apps/api/prisma/schema.prisma (BigInt amountPaise); packages/shared/src/calculations/transactions.ts:215-225, analytics.ts:365-375, budget.ts:20-33, autopay.ts:13-49 sum in integer paise; test/transactions.test.ts verifies 0.1+0.2=0.3 without float drift | - |
 | **CORE-3** | Amount validation: positive, sensible maximum, at most 2 decimals, rejects NaN, negative values and exponent notation | `PARTIAL` | packages/shared/src/schemas/transactions.ts:30, packages/shared/src/calculations/validation.ts:27-31 | No maximum limit validation on amounts (e.g. ₹100 Cr); exponent notation and >2 decimal inputs not explicitly rejected. |
 | **CORE-4** | Dates use the user's timezone consistently; no off-by-one day around midnight or from UTC conversion | `PARTIAL` | apps/web/src/services/apiClient.ts:123-125 (.slice(0, 10)), apps/api/src/repositories/transactionRepository.ts:61 | No property-based tests verifying midnight edge cases across different international client timezones. |
 | **CORE-5** | Month boundaries are correct for 28, 29, 30 and 31 day months, leap years, autopay day 31 and Last Day | `PARTIAL` | packages/shared/src/calculations/autopay.ts:97-100 (getClampedDueDay) | Unit test suite in packages/shared/test/autopay.test.ts lacks explicit tests for Feb 28/29 leap year clamping and day 31. |

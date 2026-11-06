@@ -30,4 +30,14 @@ describe('paise currency utilities', () => {
     expect(formatPaise(-250000)).toBe('-₹2,500');
     expect(formatPaise(10000, { showFraction: true })).toBe('₹100.00');
   });
+
+  it('eliminates floating-point addition drift (0.10 + 0.20 === 0.30)', () => {
+    // Standard JS float addition produces 0.30000000000000004
+    expect(0.1 + 0.2).not.toBe(0.3);
+
+    // Integer paise conversion eliminates binary drift
+    const sumPaise = rupeesToPaise(0.1) + rupeesToPaise(0.2);
+    expect(sumPaise).toBe(30);
+    expect(paiseToRupees(sumPaise)).toBe(0.3);
+  });
 });

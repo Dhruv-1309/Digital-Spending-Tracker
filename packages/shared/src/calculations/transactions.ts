@@ -1,3 +1,5 @@
+import { rupeesToPaise, paiseToRupees } from '../currency/paise.js';
+
 export type TransactionSortOption =
   | 'date-desc'
   | 'date-asc'
@@ -212,13 +214,17 @@ export function exportTransactionsJson(data: {
   autopays: any[];
   budgetGoal: any;
 }): string {
-  const totalIncome = data.transactions
+  const totalIncomePaise = data.transactions
     .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise != null ? Number(t.amountPaise) / 100 : 0)), 0);
+    .reduce((sum, t) => sum + (t.amountPaise != null ? Number(t.amountPaise) : rupeesToPaise(t.amount ?? 0)), 0);
 
-  const totalExpense = data.transactions
+  const totalExpensePaise = data.transactions
     .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise != null ? Number(t.amountPaise) / 100 : 0)), 0);
+    .reduce((sum, t) => sum + (t.amountPaise != null ? Number(t.amountPaise) : rupeesToPaise(t.amount ?? 0)), 0);
+
+  const totalIncome = paiseToRupees(totalIncomePaise);
+  const totalExpense = paiseToRupees(totalExpensePaise);
+  const balance = paiseToRupees(totalIncomePaise - totalExpensePaise);
 
   const payload = {
     exportedAt: new Date().toISOString(),
@@ -227,7 +233,7 @@ export function exportTransactionsJson(data: {
       recurringCount: data.autopays.length,
       totalIncome,
       totalExpense,
-      balance: totalIncome - totalExpense,
+      balance,
     },
     budgetGoal: data.budgetGoal,
     recurringPlans: data.autopays,

@@ -3,6 +3,7 @@ import type {
   AnalyticsPreset,
   AnalyticsPeriod,
 } from '../types/index.js';
+import { rupeesToPaise, paiseToRupees } from '../currency/paise.js';
 
 export function extractUniqueYears(
   transactions: Array<{ date: string }>,
@@ -363,15 +364,15 @@ export function calculateMoneyRunway(
   avgDailySpend: number,
   refDate: Date = new Date(),
 ): MoneyRunwayResult {
-  const totalIncome = transactions
+  const totalIncomePaise = transactions
     .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise ? t.amountPaise / 100 : 0)), 0);
+    .reduce((sum, t) => sum + (t.amountPaise != null ? t.amountPaise : rupeesToPaise(t.amount ?? 0)), 0);
 
-  const totalExpenses = transactions
+  const totalExpensesPaise = transactions
     .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + (t.amount ?? (t.amountPaise ? t.amountPaise / 100 : 0)), 0);
+    .reduce((sum, t) => sum + (t.amountPaise != null ? t.amountPaise : rupeesToPaise(t.amount ?? 0)), 0);
 
-  const balance = totalIncome - totalExpenses;
+  const balance = paiseToRupees(totalIncomePaise - totalExpensesPaise);
 
   if (balance <= 0) {
     return {
