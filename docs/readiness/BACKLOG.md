@@ -182,7 +182,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] Zero spending, negative balance, and single-day history never render "NaN" or "Infinity" anywhere on screen
 - **How It Will Be Tested:** Unit test in analytics.test.ts and component test in analytics_redesign.test.tsx with zero transactions and negative balance.
 
-### 12. [BE-7] Authenticated user-level token bucket rate limiting in API middleware
+### 12. [BE-7] Authenticated user-level token bucket rate limiting in API middleware [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `BE`
 - **Dependencies:** None

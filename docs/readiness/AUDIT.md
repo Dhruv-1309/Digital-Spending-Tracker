@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{305.5}{499} = \mathbf{61.2\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{307.5}{499} = \mathbf{61.6\%}$$
 
-- **Current Readiness Score:** **61.2%** (Baseline: 56.8%)
+- **Current Readiness Score:** **61.6%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **305.5 points**
+- **Earned Weight:** **307.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **78** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **51** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **79** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **50** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -36,7 +36,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CORE** | Core Behavior and Data Correctness | 22 | 14D / 6P / 1M (1 other) | **79.5%** | 52.5 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 7D / 4P / 2M (1 other) | **68.8%** | 27.5 / 40 |
-| **BE** | Backend, API and Database | 21 | 16D / 3P / 2M  | **87.9%** | 58 / 66 |
+| **BE** | Backend, API and Database | 21 | 17D / 2P / 2M  | **90.9%** | 60 / 66 |
 | **SEC** | Security and Privacy | 22 | 10D / 5P / 4M (3 other) | **63.8%** | 44 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 13D / 4P / 6M (1 other) | **68.2%** | 37.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
@@ -142,7 +142,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **BE-4** | Database constraints (NOT NULL, CHECK, UNIQUE, foreign keys) enforce the rules, not only application code | `DONE` | apps/api/prisma/schema.prisma:33-130, apps/api/prisma/migrations/0_init/migration.sql | - |
 | **BE-5** | Multi-step writes run inside a database transaction | `DONE` | apps/api/src/services/autopayService.ts:60-120, apps/api/src/repositories/userRepository.ts:33-54 | - |
 | **BE-6** | Migrations are versioned and repeatable, and have been run on an empty database and on a copy of production-like data | `DONE` | apps/api/prisma/migrations/0_init/migration.sql, apps/api/test/migration.test.ts | - |
-| **BE-7** | Rate limiting per user and per IP | `PARTIAL` | apps/api/src/middleware/rateLimiter.ts:1-35 | Rate limiter uses IP-based limits; authenticated user-ID keying is not configured. |
+| **BE-7** | Rate limiting per user and per IP | `DONE` | apps/api/src/middleware/rateLimiter.ts:4-38, apps/api/src/app.ts:60,70, apps/api/test/auth.test.ts:87-128 | Global IP rate limiting protects server from IP floods; user-level token bucket rate limiter mounted post-authMiddleware in apiV1 keys on req.user.id/firebaseUid across differing IPs and isolates users on shared IPs. |
 | **BE-8** | CORS uses an allowlist of origins, not a wildcard | `DONE` | apps/api/src/app.ts:25-35, apps/api/src/config/index.ts:25 | - |
 | **BE-9** | Every list endpoint is paginated with a maximum page size | `PARTIAL` | packages/shared/src/schemas/transactions.ts:49-50, apps/api/src/repositories/transactionRepository.ts:180-200 | Autopay plans endpoint (/autopay) returns all records without pagination. |
 | **BE-10** | Create operations accept an idempotency key so a retry cannot duplicate data | `DONE` | apps/api/src/middleware/idempotency.ts:1-55, apps/api/test/idempotency.test.ts | - |

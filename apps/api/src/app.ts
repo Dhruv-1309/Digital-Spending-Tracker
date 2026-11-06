@@ -5,7 +5,7 @@ import { config } from './config/index.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { authMiddleware } from './middleware/auth.js';
 import { idempotencyMiddleware } from './middleware/idempotency.js';
-import { generalRateLimiter } from './middleware/rateLimiter.js';
+import { generalRateLimiter, globalIpRateLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Support BigInt serialization in JSON responses (e.g. Prisma BigInt amountPaise)
@@ -56,8 +56,8 @@ export function createApp() {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-  // 5. Rate Limiting (SEC-5)
-  app.use(generalRateLimiter);
+  // 5. Global IP Rate Limiting (SEC-5: DDoS protection per IP)
+  app.use(globalIpRateLimiter);
 
   // 6. Public & Health Routes (Unauthenticated, BE-6.1)
   app.use('/', healthRouter);
@@ -67,6 +67,8 @@ export function createApp() {
   // 7. API v1 Endpoints (PRD §7)
   const apiV1 = express.Router();
   apiV1.use(authMiddleware());
+  // User-level rate limiting (BE-7: 100 requests per minute per authenticated user)
+  apiV1.use(generalRateLimiter);
   apiV1.use(idempotencyMiddleware());
 
   apiV1.use('/', userRouter);
