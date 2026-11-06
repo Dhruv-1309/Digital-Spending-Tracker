@@ -305,7 +305,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
 
 Expected of a production-grade personal financial application. These ensure robust offline recovery, thorough testing, graceful error boundaries, and essential documentation.
 
-### 1. [X-1] Build & Lint Hygiene: resolve React Compiler setState in effect error and clean warnings
+### 1. [X-1] Build & Lint Hygiene: resolve React Compiler setState in effect error and clean warnings [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `X`
 - **Dependencies:** `QA-1`
@@ -313,9 +313,9 @@ Expected of a production-grade personal financial application. These ensure robu
   - `apps/web/src/components/analytics/AnalyticsTab.tsx`
   - `apps/web/vite.config.ts`
 - **Acceptance Criteria:**
-  - [ ] Fix AnalyticsTab.tsx:118:5 setState-in-effect error by computing initial month/year without cascading render
-  - [ ] npm run lint passes with 0 errors across apps/web
-  - [ ] Configure manualChunks or dynamic imports in vite.config.ts to resolve >500kB chunk size warning
+  - [x] Fix AnalyticsTab.tsx:118:5 setState-in-effect error by computing initial month/year without cascading render
+  - [x] npm run lint passes with 0 errors across apps/web
+  - [x] Configure manualChunks or dynamic imports in vite.config.ts to resolve >500kB chunk size warning
 - **How It Will Be Tested:** Run `npm run lint` and `npm --workspace=apps/web run build` with zero errors or warnings.
 
 ### 2. [QA-4] ESLint and Prettier configuration with pre-commit check script

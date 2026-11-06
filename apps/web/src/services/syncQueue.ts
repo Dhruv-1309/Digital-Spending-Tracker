@@ -1,4 +1,4 @@
-import { ApiError } from './apiClient.js';
+import { ApiError, apiRequest } from './apiClient.js';
 
 export interface QueuedOperation {
   id: string; // UUIDv4
@@ -285,7 +285,6 @@ export const syncQueue = {
       options.body = JSON.stringify(op.body);
     }
 
-    const { apiRequest } = await import('./apiClient.js');
     await apiRequest(path, options);
   },
 };
