@@ -29,7 +29,26 @@ export function createApp() {
   const app = express();
 
   // 1. Security Headers (SEC-4)
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      referrerPolicy: {
+        policy: 'strict-origin-when-cross-origin',
+      },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+
+  // Additional Permissions-Policy header for API endpoints (SEC-4)
+  app.use((_req, res, next) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
 
   // 2. CORS Allowlist (SEC-4)
   app.use(

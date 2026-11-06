@@ -193,7 +193,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] Prevents a malicious authenticated client from flooding API routes while staying within shared IP limits
 - **How It Will Be Tested:** Supertest integration test in apps/api/test/auth.test.ts simulating rate limit exceeded for a specific user ID.
 
-### 13. [SEC-4] Security headers configuration (CSP, X-Content-Type-Options, Permissions-Policy, frame-ancestors)
+### 13. [SEC-4] Security headers configuration (CSP, X-Content-Type-Options, Permissions-Policy, frame-ancestors) [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** None

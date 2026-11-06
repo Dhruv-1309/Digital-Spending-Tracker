@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{307.5}{499} = \mathbf{61.6\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{309.5}{499} = \mathbf{62.0\%}$$
 
-- **Current Readiness Score:** **61.6%** (Baseline: 56.8%)
+- **Current Readiness Score:** **62.0%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **307.5 points**
+- **Earned Weight:** **309.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **79** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **50** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **80** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **49** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -37,7 +37,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **CORE** | Core Behavior and Data Correctness | 22 | 14D / 6P / 1M (1 other) | **79.5%** | 52.5 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 7D / 4P / 2M (1 other) | **68.8%** | 27.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 17D / 2P / 2M  | **90.9%** | 60 / 66 |
-| **SEC** | Security and Privacy | 22 | 10D / 5P / 4M (3 other) | **63.8%** | 44 / 69 |
+| **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 13D / 4P / 6M (1 other) | **68.2%** | 37.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
 | **QA** | Testing and Code Quality | 18 | 7D / 6P / 4M (1 other) | **59.8%** | 27.5 / 46 |
@@ -165,7 +165,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **SEC-1** | No secrets in the repository or its git history (scan the working tree and the history) | `NEEDS-USER` | git show 2d606a9 (Firebase API key in historical script.js), apps/api/.env.example placeholder private key | Requires rotating/restricting Firebase API key in Google Cloud Console. |
 | **SEC-2** | A .env.example is committed, real env files are git-ignored, and required variables are validated at startup | `DONE` | .env.example, apps/api/.env.example, apps/web/.env.example, .gitignore:35-43, apps/api/src/config/index.ts | - |
 | **SEC-3** | HTTPS is enforced everywhere, with HSTS | `NEEDS-USER` | apps/api/src/app.ts:22 (helmet hsts enabled) | Production domain configuration and SSL verification requires owner deployment. |
-| **SEC-4** | Security headers: Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, Permissions-Policy and frame-ancestors | `PARTIAL` | apps/api/src/app.ts:22 (helmet configured for API) | apps/web static hosting config (vercel.json / headers) lacks CSP, Permissions-Policy, frame-ancestors. |
+| **SEC-4** | Security headers: Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, Permissions-Policy and frame-ancestors | `DONE` | apps/web/vercel.json, apps/web/public/_headers, apps/api/src/app.ts:31-48, apps/api/test/health.test.ts:34-42, apps/web/src/test/security_headers.test.ts | Static frontend and API security headers fully configured with strict CSP, frame-ancestors 'none', nosniff, Referrer-Policy, and Permissions-Policy camera/mic/geo disablement; verified in automated tests. |
 | **SEC-5** | No unescaped user content rendered as HTML; no dangerouslySetInnerHTML with user data | `DONE` | Scanned codebase: 0 occurrences of dangerouslySetInnerHTML | - |
 | **SEC-6** | CSV export neutralises formula injection (cells starting with =, +, - or @) | `DONE` | packages/shared/src/calculations/transactions.ts (toCsvSafeValue prepends single quote ' to values starting with =, +, -, @, \t, \r); test/transactions.test.ts verifies neutralization of formula triggers | - |
 | **SEC-7** | Database rules or query scoping tested with negative tests (another user's id, missing auth, tampered ids) | `DONE` | apps/api/test/isolation.test.ts:1-75, apps/api/test/auth.test.ts:1-80 | - |

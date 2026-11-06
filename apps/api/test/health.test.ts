@@ -30,4 +30,13 @@ describe('Health Endpoints', () => {
     expect(res.status).toBe(503);
     expect(res.body.status).toBe('not_ready');
   });
+
+  it('serves required HTTP security headers on responses (SEC-4)', async () => {
+    const res = await request(app).get('/healthz');
+    expect(res.status).toBe(200);
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+    expect(res.headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=()');
+    expect(res.headers['content-security-policy']).toContain("frame-ancestors 'none'");
+  });
 });
