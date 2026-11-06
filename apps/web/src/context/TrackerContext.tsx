@@ -172,6 +172,7 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       setLoadError(null);
       setPendingSyncCount(0);
+      lastSyncCursorRef.current = null;
       return;
     }
 

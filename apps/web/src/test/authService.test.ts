@@ -41,8 +41,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   deleteUser,
+  signOut,
 } from 'firebase/auth';
-import { signInWithEmail, deleteUserAccount } from '../services/auth';
+import { signInWithEmail, deleteUserAccount, signOutUser } from '../services/auth';
 
 describe('authService.signInWithEmail [AUTH-1]', () => {
   beforeEach(() => {
@@ -130,5 +131,25 @@ describe('authService.deleteUserAccount [AUTH-2]', () => {
     vi.mocked(deleteUser).mockRejectedValueOnce({ code: 'auth/requires-recent-login' });
 
     await expect(deleteUserAccount()).rejects.toThrow();
+  });
+});
+
+describe('authService.signOutUser [AUTH-3]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockClearAll.mockResolvedValue(undefined);
+    vi.mocked(signOut).mockResolvedValue(undefined);
+  });
+
+  it('purges syncQueue, local storage, session storage, and calls Firebase signOut', async () => {
+    const localSpy = vi.spyOn(Storage.prototype, 'clear');
+
+    await signOutUser();
+
+    expect(mockClearAll).toHaveBeenCalledTimes(1);
+    expect(localSpy).toHaveBeenCalled();
+    expect(signOut).toHaveBeenCalledTimes(1);
+
+    localSpy.mockRestore();
   });
 });

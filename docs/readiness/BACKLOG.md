@@ -118,7 +118,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] Confirmation modal states specifically what was purged (transactions, plans, budget, local cache)
 - **How It Will Be Tested:** Component test in auth_profile_redesign.test.tsx asserting clearQueue() and storage cleanup on account deletion.
 
-### 7. [AUTH-3] Sign out data purge: zero residue in memory, localStorage, or IndexedDB offline queue
+### 7. [AUTH-3] Sign out data purge: zero residue in memory, localStorage, or IndexedDB offline queue [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `AUTH`
 - **Dependencies:** `AUTH-2`

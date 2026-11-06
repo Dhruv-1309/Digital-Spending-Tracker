@@ -184,6 +184,24 @@ export async function sendPasswordReset(email: string): Promise<void> {
 
 export async function signOutUser(): Promise<void> {
   const auth = getFirebaseAuth();
+
+  try {
+    await syncQueue.clearAll();
+  } catch {
+    // Non-blocking storage clear
+  }
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear();
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
+  } catch {
+    // Non-blocking storage clear
+  }
+
   await signOut(auth);
 }
 
