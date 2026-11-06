@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{319.0}{499} = \mathbf{63.9\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{320.5}{499} = \mathbf{64.2\%}$$
 
-- **Current Readiness Score:** **63.9%** (Baseline: 56.8%)
+- **Current Readiness Score:** **64.2%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **319.0 points**
+- **Earned Weight:** **320.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **85** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **44** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **86** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **43** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -40,7 +40,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 13D / 4P / 6M (1 other) | **68.2%** | 37.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
-| **QA** | Testing and Code Quality | 18 | 8D / 5P / 4M (1 other) | **64.1%** | 29.5 / 46 |
+| **QA** | Testing and Code Quality | 18 | 9D / 4P / 4M (1 other) | **67.4%** | 31.0 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 4D / 6P / 9M (1 other) | **50.0%** | 21.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
@@ -241,7 +241,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **QA-1** | TypeScript strict with zero errors; any use of any has a comment explaining it | DONE | Root tsconfig.json references all packages; npx tsc -b passes with 0 errors across packages/shared, apps/api, apps/web; mathEvaluator.test.ts uses .js; vitest.config.ts isolates dist | - |
 | **QA-2** | Unit tests cover all pure logic including the edge cases in the CORE section | `DONE` | 404 passing tests across shared/api/web (`test/budget.test.ts`, `test/paise.test.ts`, `test/transactions.test.ts`, `test/autopay.test.ts`) covering amount limits, leap year Feb 29 clamping, exact budget thresholds, and CSV UTF-8 BOM handling | None |
 | **QA-3** | API integration tests run against a real database | `DONE` | apps/api/test/*.test.ts (13 test files, 40 tests passing against Prisma/testDb) | - |
-| **QA-4** | ESLint and Prettier are configured with zero errors, and a pre-commit hook runs them on changed files | `PARTIAL` | npm run lint failed with 1 error (AnalyticsTab.tsx:118:5 set-state-in-effect) and 34 warnings | Fix ESLint error; configure lint scripts in api and shared; add pre-commit hook. |
+| **QA-4** | ESLint and Prettier are configured with zero errors, and a pre-commit hook runs them on changed files | `DONE` | apps/web/eslint.config.js, apps/api/package.json, packages/shared/package.json, scripts/pre-commit.js, .git/hooks/pre-commit | ESLint and typecheck configured across all monorepo workspaces (web, api, shared) with 0 errors; pre-commit verification script and git hook enforce checks on changed files. | None |
 | **QA-5** | Component tests cover forms, dropdowns, dialogs and the sync queue | `DONE` | apps/web/src/test/primitives.test.tsx (41 tests), ui_primitives.test.tsx (6 tests), syncQueue.test.ts (5 tests) | - |
 | **QA-6** | End-to-end tests cover the critical journeys: sign up, add transaction, autopay, import, export, delete account | `MISSING` | No Playwright config or e2e tests directory exists | E2E testing suite with Playwright needs to be implemented. |
 | **QA-7** | Tests are deterministic: fake clock, no real network, no order dependence | `DONE` | All 417 tests pass with mocked network, deterministic date refs, and isolated workers | - |

@@ -11,6 +11,7 @@
     "build": "npm run --workspaces --if-present build",
     "test": "npm run --workspaces --if-present test",
     "lint": "npm run --workspaces --if-present lint",
+    "precommit": "npm run lint && npx tsc -b && npm test && npm run build",
     "migrate:firestore": "tsx scripts/migrate-firestore-to-postgres.ts",
     "verify:parity": "tsx scripts/verify-parity.ts"
   },

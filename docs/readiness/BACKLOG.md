@@ -318,7 +318,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Configure manualChunks or dynamic imports in vite.config.ts to resolve >500kB chunk size warning
 - **How It Will Be Tested:** Run `npm run lint` and `npm --workspace=apps/web run build` with zero errors or warnings.
 
-### 2. [QA-4] ESLint and Prettier configuration with pre-commit check script
+### 2. [QA-4] ESLint and Prettier configuration with pre-commit check script [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `QA`
 - **Dependencies:** `X-1`
@@ -327,8 +327,8 @@ Expected of a production-grade personal financial application. These ensure robu
   - `apps/api/package.json`
   - `packages/shared/package.json`
 - **Acceptance Criteria:**
-  - [ ] npm run lint executes across all workspaces with 0 errors
-  - [ ] Configure linting scripts in apps/api and packages/shared
+  - [x] npm run lint executes across all workspaces with 0 errors
+  - [x] Configure linting scripts in apps/api and packages/shared
 - **How It Will Be Tested:** Run `npm run lint` in monorepo root.
 
 ### 3. [UX-3] React ErrorBoundary with friendly fallback and reload action

@@ -13,6 +13,7 @@
     "./calculations": "./src/calculations/index.ts"
   },
   "scripts": {
+    "lint": "tsc --noEmit",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
