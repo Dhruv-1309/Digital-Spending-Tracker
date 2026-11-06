@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{289.5}{499} = \mathbf{58.4\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{293.5}{499} = \mathbf{58.8\%}$$
 
-- **Current Readiness Score:** **58.4%** (Baseline: 56.8%)
+- **Current Readiness Score:** **58.8%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **291.5 points**
+- **Earned Weight:** **293.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **71** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **58** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **72** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **57** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -35,7 +35,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CORE** | Core Behavior and Data Correctness | 22 | 10D / 10P / 1M (1 other) | **67.4%** | 44.5 / 66 |
-| **AUTH** | Authentication and Accounts | 14 | 4D / 7P / 2M (1 other) | **53.8%** | 21.5 / 40 |
+| **AUTH** | Authentication and Accounts | 14 | 5D / 6P / 2M (1 other) | **58.8%** | 23.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 16D / 3P / 2M  | **87.9%** | 58 / 66 |
 | **SEC** | Security and Privacy | 22 | 10D / 5P / 4M (3 other) | **63.8%** | 44 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 13D / 4P / 6M (1 other) | **68.2%** | 37.5 / 55 |
@@ -117,7 +117,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
-| **AUTH-1** | Sign in and sign up are separate explicit actions. A mistyped email or password must never silently create a new account | `PARTIAL` | apps/web/src/services/auth.ts:63-84 | signInWithEmail catches auth/invalid-credential and auth/user-not-found and calls createUserWithEmailAndPassword, silently creating accounts on typo. |
+| **AUTH-1** | Sign in and sign up are separate explicit actions. A mistyped email or password must never silently create a new account | `DONE` | apps/web/src/services/auth.ts (signInWithEmail strictly signs in; throws "Incorrect email or password" on invalid-credential, user-not-found, wrong-password and never calls createUserWithEmailAndPassword); apps/web/src/components/auth/AuthModal.tsx (explicit toggle between signin and signup); apps/web/src/test/authService.test.ts | - |
 | **AUTH-2** | Account deletion removes all user data (database rows, local caches, queued writes, the auth user) and tells the user what was removed | `PARTIAL` | apps/web/src/services/auth.ts:228-240, apps/api/src/repositories/userRepository.ts:33-54 | Client syncQueue (IndexedDB) and local caches are not wiped upon deletion; modal does not list deleted data items. |
 | **AUTH-3** | Signing out, or switching users on a shared device, leaves no previous user's data in memory, local storage, IndexedDB or the offline queue | `PARTIAL` | apps/web/src/services/auth.ts:203-206 (signOut(auth)) | signOutUser does not purge syncQueue in IndexedDB or clear user-scoped caches. |
 | **AUTH-4** | Email verification after sign-up, with a resend option | `MISSING` | apps/web/src/services/auth.ts:97-157 | sendEmailVerification is not invoked during signup; no email verification prompt or resend banner exists. |

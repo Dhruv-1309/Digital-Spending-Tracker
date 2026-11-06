@@ -57,33 +57,14 @@ export async function signInWithEmail(
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error: unknown) {
-    // Explicit typing for Firebase auth errors
     const err = error as { code?: string; message?: string };
 
-    if (err.code === 'auth/invalid-credential') {
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        return;
-      } catch (createError: unknown) {
-        const cErr = createError as { code?: string; message?: string };
-        if (cErr.code === 'auth/email-already-in-use') {
-          throw new Error('Incorrect password. Please try again.');
-        } else if (cErr.code === 'auth/weak-password') {
-          throw new Error('Password is too weak. Please use at least 6 characters.');
-        } else {
-          throw new Error('Incorrect email or password. Please double-check and try again.');
-        }
-      }
-    } else if (err.code === 'auth/user-not-found') {
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        return;
-      } catch (createError: unknown) {
-        const cErr = createError as { code?: string; message?: string };
-        throw new Error(toUserFriendlyError(cErr, 'Unable to create account. Please try again.'));
-      }
-    } else if (err.code === 'auth/wrong-password') {
-      throw new Error('Incorrect password. Please try again.');
+    if (
+      err.code === 'auth/invalid-credential' ||
+      err.code === 'auth/user-not-found' ||
+      err.code === 'auth/wrong-password'
+    ) {
+      throw new Error('Incorrect email or password. Please double-check and try again.');
     } else if (err.code === 'auth/invalid-email') {
       throw new Error('Please enter a valid email address.');
     } else if (err.code === 'auth/too-many-requests') {

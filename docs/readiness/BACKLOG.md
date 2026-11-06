@@ -89,18 +89,19 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [x] Normal text values remain uncorrupted
 - **How It Will Be Tested:** Unit test verifying that descriptions like "=cmd|...", "+2+5", "-10", "@SUM" are exported as "'=cmd|...", etc.
 
-### 5. [AUTH-1] Decouple Sign In and Sign Up to prevent silent account creation on typos
+### 5. [AUTH-1] Decouple Sign In and Sign Up to prevent silent account creation on typos [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `AUTH`
 - **Dependencies:** None
 - **Files Likely Touched:**
   - `apps/web/src/services/auth.ts`
   - `apps/web/src/components/auth/AuthModal.tsx`
+  - `apps/web/src/test/authService.test.ts`
 - **Acceptance Criteria:**
-  - [ ] signInWithEmail strictly signs in; if user does not exist or credentials fail, throws "Incorrect email or password"
-  - [ ] signInWithEmail NEVER calls createUserWithEmailAndPassword on invalid-credential or user-not-found
-  - [ ] Account creation only occurs when user explicitly submits in "signup" mode
-  - [ ] User cannot accidentally create an orphaned account by mistyping their password
+  - [x] signInWithEmail strictly signs in; if user does not exist or credentials fail, throws "Incorrect email or password"
+  - [x] signInWithEmail NEVER calls createUserWithEmailAndPassword on invalid-credential or user-not-found
+  - [x] Account creation only occurs when user explicitly submits in "signup" mode
+  - [x] User cannot accidentally create an orphaned account by mistyping their password
 - **How It Will Be Tested:** Unit test in auth_profile_redesign.test.tsx ensuring signInWithEmail with non-existent user throws error without creating account.
 
 ### 6. [AUTH-2] Comprehensive account deletion: wipe DB, clear local IndexedDB syncQueue, inform user
