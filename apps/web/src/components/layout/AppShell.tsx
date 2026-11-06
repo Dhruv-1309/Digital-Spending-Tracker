@@ -250,34 +250,41 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               </div>
             </div>
           ) : (
-            /* Expanded Rail Top: Brand Logo + Title on left, Collapse Sidebar button on right (Image 3) */
-            <div className="flex items-center justify-between gap-2 px-1 pt-0.5 pb-1">
-              <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-tint text-accent shadow-xs">
-                  <WalletIcon size={18} />
-                </div>
-                <div className="min-w-0">
-                  <span className="font-display text-sm font-semibold tracking-tight text-ink block leading-tight truncate">
-                    MoneyTracker
-                  </span>
-                  <span className="text-[10px] text-ink-3 block whitespace-nowrap">Personal Finance</span>
-                </div>
-              </div>
-
-              <div className="relative group">
+            /* Expanded Rail Top: Brand Logo morphs to Collapse Sidebar button on hover (Image 2) */
+            <div className="flex items-center gap-2.5 px-1 pt-0.5 pb-1">
+              <div className="relative group flex items-center justify-center">
                 <button
                   type="button"
                   data-testid="sidebar-collapse-btn"
                   onClick={toggleSidebar}
                   aria-label="Collapse sidebar"
                   title="Collapse sidebar (Ctrl+B)"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  <PanelLeftIcon size={18} />
+                  {/* Default State: Expense Tracker Brand Logo */}
+                  <span className="flex items-center justify-center transition-all duration-150 group-hover:opacity-0 group-hover:scale-75">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-tint text-accent shadow-xs">
+                      <WalletIcon size={18} />
+                    </div>
+                  </span>
+
+                  {/* Hover State: Collapse Sidebar Toggle Icon (Image 2) */}
+                  <span className="absolute inset-0 flex items-center justify-center transition-all duration-150 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 text-ink">
+                    <PanelLeftIcon size={18} />
+                  </span>
                 </button>
-                <span className="absolute right-0 top-full mt-1 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+
+                {/* Floating Tooltip Pill: "Collapse sidebar" */}
+                <span className="absolute left-full ml-3 px-3 py-1.5 text-xs font-medium text-white bg-slate-900 rounded-xl shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50">
                   Collapse sidebar
                 </span>
+              </div>
+
+              <div className="min-w-0">
+                <span className="font-display text-sm font-semibold tracking-tight text-ink block leading-tight truncate">
+                  MoneyTracker
+                </span>
+                <span className="text-[10px] text-ink-3 block whitespace-nowrap">Personal Finance</span>
               </div>
             </div>
           )}
