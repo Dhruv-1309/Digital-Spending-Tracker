@@ -5,6 +5,7 @@ import { ToastContainer } from '../common/ToastContainer';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { AuthModal } from '../auth/AuthModal';
 import { AppShell } from './AppShell';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { DashboardTab } from '../dashboard/DashboardTab';
 import { AddTransactionTab } from '../transactions/AddTransactionTab';
 import { TransactionsTab } from '../transactions/TransactionsTab';
@@ -34,11 +35,13 @@ export function AppLayout() {
         <>
           <AppShell onOpenProfile={() => setIsProfileOpen(true)}>
             <div id="appContainer" className="w-full">
-              {currentTab === 'dashboard' && <DashboardTab />}
-              {currentTab === 'add-transaction' && <AddTransactionTab />}
-              {currentTab === 'transactions' && <TransactionsTab />}
-              {currentTab === 'autopay' && <AutopayTab />}
-              {currentTab === 'analytics' && <AnalyticsTab />}
+              <ErrorBoundary>
+                {currentTab === 'dashboard' && <DashboardTab />}
+                {currentTab === 'add-transaction' && <AddTransactionTab />}
+                {currentTab === 'transactions' && <TransactionsTab />}
+                {currentTab === 'autopay' && <AutopayTab />}
+                {currentTab === 'analytics' && <AnalyticsTab />}
+              </ErrorBoundary>
             </div>
           </AppShell>
 

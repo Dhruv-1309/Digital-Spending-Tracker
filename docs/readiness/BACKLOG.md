@@ -331,7 +331,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Configure linting scripts in apps/api and packages/shared
 - **How It Will Be Tested:** Run `npm run lint` in monorepo root.
 
-### 3. [UX-3] React ErrorBoundary with friendly fallback and reload action
+### 3. [UX-3] React ErrorBoundary with friendly fallback and reload action [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
@@ -339,9 +339,9 @@ Expected of a production-grade personal financial application. These ensure robu
   - `apps/web/src/components/common/ErrorBoundary.tsx`
   - `apps/web/src/App.tsx`
 - **Acceptance Criteria:**
-  - [ ] ErrorBoundary catches unhandled component rendering exceptions without crashing whole application
-  - [ ] Displays empathetic, editorial fallback card with "Reload Application" button and support email
-  - [ ] Logs error to console or telemetry
+  - [x] ErrorBoundary catches unhandled component rendering exceptions without crashing whole application
+  - [x] Displays empathetic, editorial fallback card with "Reload Application" button and support email
+  - [x] Logs error to console or telemetry
 - **How It Will Be Tested:** Component test throwing simulated render error and verifying friendly fallback appearance.
 
 ### 4. [UX-4] Dedicated 404 page, unknown-route handling, and standalone offline page
