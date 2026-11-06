@@ -47,7 +47,7 @@ export function getNextDeductionDate(
     includeWeekday: false,
     includeYear: false,
   });
-  const date = new Date(Date.UTC(targetYear, targetMonth, targetDay, 12, 0, 0));
+  const date = new Date(targetYear, targetMonth, targetDay);
 
   const refMidnight = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
   const dueMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());

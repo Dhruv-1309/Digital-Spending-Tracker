@@ -155,7 +155,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] Unit tests assert consistent parsing and display across UTC-11, UTC+0, and UTC+14
 - **How It Will Be Tested:** Vitest unit tests asserting date preservation across simulated timezone offsets.
 
-### 10. [CORE-5] Month boundaries and leap year handling for 28, 29, 30, 31 day months and Last Day autopay
+### 10. [CORE-5] Month boundaries and leap year handling for 28, 29, 30, 31 day months and Last Day autopay [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `CORE-1`

@@ -530,6 +530,33 @@ describe('Phase 6: Autopay Redesign Screen', () => {
       // October has 31 days, 31 >= 15, so next deduction is Oct 31
       expect(nextLastDay.dueDateStr).toBe('2026-10-31');
       expect(nextLastDay.dayLabel).toBe('Last day');
+
+      // 6. Next deduction date clamps to Feb 28 in non-leap year (CORE-5)
+      const febNonLeap = getNextDeductionDate(lastDayPlan, new Date(2025, 1, 10));
+      expect(febNonLeap.dueDateStr).toBe('2025-02-28');
+      expect(febNonLeap.formattedDue).toBe('28 Feb');
+      expect(febNonLeap.dayLabel).toBe('Last day');
+
+      // 7. Next deduction date clamps to Feb 29 in leap year (CORE-5)
+      const febLeap = getNextDeductionDate(lastDayPlan, new Date(2024, 1, 10));
+      expect(febLeap.dueDateStr).toBe('2024-02-29');
+      expect(febLeap.formattedDue).toBe('29 Feb');
+
+      // 8. Next deduction date rolls from late January into February clamping correctly
+      const jan31Ref = new Date(2025, 0, 31);
+      const day30Plan: AutopayPlan = {
+        id: 'auto_30',
+        name: 'Day 30 Plan',
+        amount: 1000,
+        type: 'expense',
+        category: 'Utilities',
+        day: 30,
+        active: true,
+      };
+      // On Jan 31, day 30 has passed for January -> rolls to Feb 2025 (28 days) -> clamps to Feb 28
+      const rolledFeb = getNextDeductionDate(day30Plan, jan31Ref);
+      expect(rolledFeb.dueDateStr).toBe('2025-02-28');
+      expect(rolledFeb.formattedDue).toBe('28 Feb');
     });
   });
 });
