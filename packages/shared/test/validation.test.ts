@@ -70,4 +70,39 @@ describe('validation', () => {
     });
     expect(valid.isValid).toBe(true);
   });
+
+  it('validateTransactionForm enforces amount caps, max 2 decimals, and rejects exponent notation', () => {
+    const base = {
+      type: 'expense',
+      date: '2026-10-17',
+      category: 'Food & Dining',
+      paymentMethod: 'card',
+    };
+
+    // Rejects exponent notation
+    const exp1 = validateTransactionForm({ ...base, amount: '1e5' });
+    expect(exp1.isValid).toBe(false);
+    expect(exp1.errors.amount).toMatch(/exponent/i);
+
+    // Rejects amount > ₹10 Crore
+    const overCap = validateTransactionForm({ ...base, amount: 100000001 });
+    expect(overCap.isValid).toBe(false);
+    expect(overCap.errors.amount).toMatch(/10 crore/i);
+
+    // Rejects > 2 decimal places
+    const decimals = validateTransactionForm({ ...base, amount: '12.345' });
+    expect(decimals.isValid).toBe(false);
+    expect(decimals.errors.amount).toMatch(/2 decimal/i);
+
+    // Rejects negative amounts
+    const negative = validateTransactionForm({ ...base, amount: -50 });
+    expect(negative.isValid).toBe(false);
+
+    // Accepts valid boundary values
+    const exactCap = validateTransactionForm({ ...base, amount: 100000000 });
+    expect(exactCap.isValid).toBe(true);
+
+    const validDecimals = validateTransactionForm({ ...base, amount: '12.34' });
+    expect(validDecimals.isValid).toBe(true);
+  });
 });

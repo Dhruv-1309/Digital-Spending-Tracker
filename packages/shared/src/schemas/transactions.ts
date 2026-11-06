@@ -27,7 +27,11 @@ export const DateStringSchema = z
 export const CreateTransactionSchema = z.object({
   id: z.string().uuid().optional(),
   type: TxnTypeEnum,
-  amountPaise: z.number().int().positive('Amount in paise must be a positive integer'),
+  amountPaise: z
+    .number()
+    .int()
+    .positive('Amount in paise must be a positive integer')
+    .max(1_000_000_000, 'Amount cannot exceed ₹10 Crore'),
   currency: z.string().length(3).default('INR'),
   category: z.string().trim().min(1, 'Category is required'),
   paymentMethod: PayMethodEnum,

@@ -29,6 +29,13 @@ describe('zod validation schemas', () => {
 
     const invalidPaymentMethod = { ...valid, paymentMethod: 'bitcoin' };
     expect(CreateTransactionSchema.safeParse(invalidPaymentMethod).success).toBe(false);
+
+    // Enforce ₹10 Crore cap in paise (1,000,000,000 paise)
+    const overCap = { ...valid, amountPaise: 1000000001 };
+    expect(CreateTransactionSchema.safeParse(overCap).success).toBe(false);
+
+    const exactCap = { ...valid, amountPaise: 1000000000 };
+    expect(CreateTransactionSchema.safeParse(exactCap).success).toBe(true);
   });
 
   it('validates transaction query parameters', () => {

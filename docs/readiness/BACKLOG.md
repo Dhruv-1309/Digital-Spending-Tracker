@@ -62,7 +62,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [x] All calculation tests assert exact rupee and paise outputs
 - **How It Will Be Tested:** Run `npm --workspace=@moneytracker/shared test` with tests asserting precise decimal addition.
 
-### 3. [CORE-3] Amount validation caps, decimal precision, and exponent notation rejection
+### 3. [CORE-3] Amount validation caps, decimal precision, and exponent notation rejection [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `CORE-2`
@@ -71,10 +71,10 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - `packages/shared/src/calculations/validation.ts`
   - `apps/web/src/components/ui/AmountInput.tsx`
 - **Acceptance Criteria:**
-  - [ ] Validation schema rejects NaN, negative values, and exponent string formats (e.g. "1e5")
-  - [ ] Enforces maximum amount cap of ₹10,00,00,000 (10 Crore / 1,000,000,000 paise)
-  - [ ] Enforces at most 2 decimal places for fractional rupee amounts
-  - [ ] AmountInput UI displays inline error and prevents submission when amount exceeds limits
+  - [x] Validation schema rejects NaN, negative values, and exponent string formats (e.g. "1e5")
+  - [x] Enforces maximum amount cap of ₹10,00,00,000 (10 Crore / 1,000,000,000 paise)
+  - [x] Enforces at most 2 decimal places for fractional rupee amounts
+  - [x] AmountInput UI displays inline error and prevents submission when amount exceeds limits
 - **How It Will Be Tested:** Unit tests in validation.test.ts and schemas.test.ts verifying rejection of 1e6, -50, 10000000001, and 12.345.
 
 ### 4. [SEC-6] CSV export formula injection (CSV injection / DDE) neutralization
