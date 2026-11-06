@@ -472,7 +472,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
           isSidebarCollapsed ? 'min-[1025px]:left-[68px]' : 'min-[1025px]:left-[256px]'
         }`}
       >
-        {/* Left: Mobile Hamburger, Desktop Toggle (when collapsed), Page Title */}
+        {/* Left: Mobile Hamburger (< 1025px) and Page Title */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           {/* Mobile Hamburger Button (< 1025px) */}
           <button
@@ -483,20 +483,6 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
           >
             <MenuIcon size={20} />
           </button>
-
-          {/* Desktop Sidebar Toggle Button (header toggle for testing / convenience when collapsed) */}
-          {isSidebarCollapsed && (
-            <button
-              type="button"
-              data-testid="header-sidebar-toggle"
-              onClick={toggleSidebar}
-              aria-label="Expand sidebar"
-              title="Expand sidebar (Ctrl+B)"
-              className="hidden min-[1025px]:inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 border border-line/60 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
-            >
-              <PanelLeftOpenIcon size={18} />
-            </button>
-          )}
 
           {/* Page Title */}
           <h1 className="font-display text-xl sm:text-2xl font-semibold text-ink tracking-tight truncate">

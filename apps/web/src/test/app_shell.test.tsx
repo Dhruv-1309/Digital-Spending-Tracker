@@ -585,7 +585,7 @@ describe('Phase 3: AppShell & Navigation', () => {
       expect(main).toHaveClass('min-[1025px]:pl-[68px]');
     });
 
-    it('expands sidebar back to 256px when clicking toggle button in header or rail', () => {
+    it('expands sidebar back to 256px when clicking toggle button in rail', () => {
       renderWithProviders(
         <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={true}>
           <div>Main Content</div>
@@ -595,9 +595,12 @@ describe('Phase 3: AppShell & Navigation', () => {
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
       expect(sidebar).toHaveClass('w-[68px]');
 
-      // Click toggle button in header
-      const headerToggle = screen.getByTestId('header-sidebar-toggle');
-      fireEvent.click(headerToggle);
+      // Redundant header toggle button before page title is removed
+      expect(screen.queryByTestId('header-sidebar-toggle')).not.toBeInTheDocument();
+
+      // Click logo toggle button in rail
+      const logoToggle = screen.getByRole('button', { name: /Open sidebar/i });
+      fireEvent.click(logoToggle);
 
       // Sidebar returns to expanded width (w-[256px])
       expect(sidebar).toHaveClass('w-[256px]');
