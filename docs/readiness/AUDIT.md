@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{311.5}{499} = \mathbf{62.4\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{313.5}{499} = \mathbf{62.8\%}$$
 
-- **Current Readiness Score:** **62.4%** (Baseline: 56.8%)
+- **Current Readiness Score:** **62.8%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **311.5 points**
+- **Earned Weight:** **313.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **81** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **48** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **82** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **47** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -41,7 +41,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **UX** | Frontend, UX and Accessibility | 24 | 13D / 4P / 6M (1 other) | **68.2%** | 37.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
 | **QA** | Testing and Code Quality | 18 | 8D / 5P / 4M (1 other) | **64.1%** | 29.5 / 46 |
-| **OPS** | DevOps, Hosting and Operations | 21 | 4D / 4P / 4M (9 other) | **30%** | 16.5 / 55 |
+| **OPS** | DevOps, Hosting and Operations | 21 | 5D / 3P / 4M (9 other) | **33.6%** | 18.5 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 3D / 7P / 9M (1 other) | **45.3%** | 19.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
 | **X** | Additional Operational Excellence | 4 | 0D / 2P / 1M (1 other) | **25%** | 2.5 / 10 |
@@ -263,7 +263,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | :--- | :--- | :--- | :--- | :--- |
 | **OPS-1** | The app is live on a public HTTPS URL | `NEEDS-USER` | Local monorepo setup ready for deployment | Requires owner to deploy to public hosting (Vercel / Render). |
 | **OPS-2** | Staging and production are separate, with separate databases and keys | `NEEDS-USER` | .env.example templates exist | Requires owner to provision isolated staging and production PostgreSQL instances. |
-| **OPS-3** | CI runs on every pull request: install, lint, type check, tests, build and dependency audit | `PARTIAL` | .github/workflows/ci.yml:1-59 | Workflow omits linting, audit, and only runs on push to main/v3-fullstack. |
+| **OPS-3** | CI runs on every pull request: install, lint, type check, tests, build and dependency audit | `DONE` | .github/workflows/ci.yml:1-85 | Hardened GitHub Actions CI with concurrency control, running on all PRs and pushes to main, readiness/*, and feature/*; executes npm ci, prisma:generate, npm run lint, npx tsc -b, npm test, npm run build, and npm audit --audit-level=critical. |
 | **OPS-4** | Database backups are automatic, retention is set, and a restore has been rehearsed | `NEEDS-USER` | docs/RUNBOOK.md outlines database management | Requires owner to configure managed database backups (Neon / Cloud SQL). |
 | **OPS-5** | If data is moving from Firestore, the migration has a dry run, a parity report with zero differences, and a rollback plan | `DONE` | scripts/migrate-firestore-to-postgres.ts, scripts/verify-parity.ts, docs/RUNBOOK.md:95-108 | - |
 | **OPS-6** | Deployments are automatic to staging and approved by hand to production, with a written rollback procedure | `NEEDS-USER` | docs/RUNBOOK.md:95-108 has written rollback plan | Requires owner setting up GitHub deployment environments and CD approval gates. |

@@ -218,16 +218,16 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [x] All new test cases assert exact numerical and string properties
 - **How It Will Be Tested:** Run `npm test` and assert all unit test suites pass.
 
-### 15. [OPS-3] Hardened GitHub Actions CI workflow (lint, typecheck, test, build, audit)
+### 15. [OPS-3] Hardened GitHub Actions CI workflow (lint, typecheck, test, build, audit) [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `OPS`
 - **Dependencies:** `QA-1`
 - **Files Likely Touched:**
   - `.github/workflows/ci.yml`
 - **Acceptance Criteria:**
-  - [ ] CI runs on all PRs and pushes to main, readiness/*, and feature branches
-  - [ ] Executes: npm ci, prisma:generate, npm run lint, npx tsc -b, npm test, npm run build
-  - [ ] Fails PR if linting, typechecking, tests, or build fails
+  - [x] CI runs on all PRs and pushes to main, readiness/*, and feature branches
+  - [x] Executes: npm ci, prisma:generate, npm run lint, npx tsc -b, npm test, npm run build
+  - [x] Fails PR if linting, typechecking, tests, or build fails
 - **How It Will Be Tested:** Validate workflow YAML syntax and verify local test commands replicate CI pipeline.
 
 ### 16. [WEB-1] Modern comprehensive README rewrite reflecting monorepo and v3.0 full-stack architecture
