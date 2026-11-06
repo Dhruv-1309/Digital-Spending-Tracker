@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
 import { useCountUp } from '../../hooks/useCountUp';
 import { WeeklyActivityChart } from './WeeklyActivityChart';
 import { getCurrentMonthExpenses, getCurrentMonthRange, evaluateBudgetStatus } from '../../lib/budget';
@@ -143,6 +144,7 @@ export function DashboardTab() {
     refreshData,
   } = useTracker();
   const { showToast } = useToast();
+  const { showConfirm } = useConfirm();
 
   const [isBudgetFormOpen, setIsBudgetFormOpen] = useState(false);
   const [monthlyLimitInput, setMonthlyLimitInput] = useState<string>(
@@ -294,8 +296,23 @@ export function DashboardTab() {
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    await deleteTransaction(id);
-    showToast('Transaction removed.', 'info');
+    const confirmed = await showConfirm(
+      'Are you sure you want to delete this transaction?',
+      {
+        title: 'Delete transaction',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger',
+      },
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteTransaction(id);
+      showToast('Transaction removed.', 'info');
+    } catch (err: unknown) {
+      showToast(toUserFriendlyError(err, 'Failed to delete transaction. Please try again.'), 'error');
+    }
   };
 
   // 1. Loading State: Skeletons matching final layout

@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { LazyMotion, domAnimation } from 'motion/react';
 import { TransactionsTab } from '../components/transactions/TransactionsTab';
 import { TrackerContext, type TrackerContextValue } from '../context/trackerContextDef';
 import { ToastContext } from '../context/toastContextDef';
+import { ConfirmContext, type ConfirmContextValue } from '../context/confirmContextDef';
 import {
   filterTransactions,
   exportTransactionsCsv,
@@ -160,6 +161,7 @@ const mockBudgetGoal: BudgetGoal = {
 function renderTransactions(
   trackerOverrides: Partial<TrackerContextValue> = {},
   toastOverrides = {},
+  confirmOverrides: Partial<ConfirmContextValue> = {},
 ) {
   const showToast = vi.fn();
   const dismissToast = vi.fn();
@@ -204,12 +206,29 @@ function renderTransactions(
     ...toastOverrides,
   };
 
+  const confirmValue: ConfirmContextValue = {
+    confirmState: {
+      isOpen: false,
+      title: 'Confirm',
+      message: '',
+      confirmText: 'Confirm',
+      cancelText: 'Cancel',
+      variant: 'warning',
+    },
+    showConfirm: vi.fn().mockResolvedValue(true),
+    handleConfirm: vi.fn(),
+    handleCancel: vi.fn(),
+    ...confirmOverrides,
+  };
+
   const utils = render(
     <LazyMotion features={domAnimation}>
       <ToastContext.Provider value={toastValue}>
-        <TrackerContext.Provider value={trackerValue}>
-          <TransactionsTab />
-        </TrackerContext.Provider>
+        <ConfirmContext.Provider value={confirmValue}>
+          <TrackerContext.Provider value={trackerValue}>
+            <TransactionsTab />
+          </TrackerContext.Provider>
+        </ConfirmContext.Provider>
       </ToastContext.Provider>
     </LazyMotion>,
   );
@@ -218,6 +237,7 @@ function renderTransactions(
     ...utils,
     trackerValue,
     toastValue,
+    confirmValue,
   };
 }
 
@@ -493,95 +513,49 @@ describe('Phase 5: Transactions Redesign Screen', () => {
   });
 
   /* ========================================================================
-     6. Undo Delete
+     6. Delete Transaction with Confirmation Modal
      ======================================================================== */
-  describe('6. Undo Delete (5s expiration, restore, unmount and pagehide commits)', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
+  describe('6. Delete Transaction with Confirmation Modal', () => {
+    it('clicking delete prompts with confirmation modal and calls deleteTransaction when confirmed', async () => {
+      const { trackerValue, confirmValue, toastValue } = renderTransactions();
 
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it('deleting one transaction removes it from list immediately and shows Undo toast', () => {
-      const { toastValue } = renderTransactions();
-
-      expect(screen.getAllByText('Dinner with friends').length).toBeGreaterThan(0);
       const deleteBtn = screen.getAllByLabelText(/Delete Food & Dining transaction/i)[0];
       fireEvent.click(deleteBtn);
 
-      // Removed immediately from list
-      expect(screen.queryAllByText('Dinner with friends').length).toBe(0);
-
-      // Undo toast called with 5000ms duration and action
-      expect(toastValue.showToast).toHaveBeenCalledWith(
-        expect.stringContaining('Deleted Food & Dining transaction'),
-        'info',
-        5000,
+      expect(confirmValue.showConfirm).toHaveBeenCalledWith(
+        'Are you sure you want to delete this transaction?',
         expect.objectContaining({
-          label: 'Undo',
+          title: 'Delete transaction',
+          confirmText: 'Delete',
+          variant: 'danger',
         }),
       );
-    });
 
-    it('clicking Undo on toast restores the transaction', () => {
-      const { toastValue } = renderTransactions();
-
-      const deleteBtn = screen.getAllByLabelText(/Delete Food & Dining transaction/i)[0];
-      fireEvent.click(deleteBtn);
-      expect(screen.queryAllByText('Dinner with friends').length).toBe(0);
-
-      // Extract and execute the undo action
-      const undoAction = toastValue.showToast.mock.calls[0][3];
-      act(() => {
-        undoAction.onClick();
+      await waitFor(() => {
+        expect(trackerValue.deleteTransaction).toHaveBeenCalledWith('tx_1');
+        expect(toastValue.showToast).toHaveBeenCalledWith(
+          'Deleted Food & Dining transaction',
+          'info',
+        );
       });
-
-      // Transaction is restored
-      expect(screen.getAllByText('Dinner with friends').length).toBeGreaterThan(0);
     });
 
-    it('commits delete to data layer when 5 seconds expire', () => {
-      const { trackerValue } = renderTransactions();
+    it('canceling confirmation dialog does NOT delete transaction', async () => {
+      const { trackerValue, confirmValue, toastValue } = renderTransactions(
+        {},
+        {},
+        { showConfirm: vi.fn().mockResolvedValue(false) },
+      );
 
       const deleteBtn = screen.getAllByLabelText(/Delete Food & Dining transaction/i)[0];
       fireEvent.click(deleteBtn);
 
-      expect(trackerValue.deleteTransaction).not.toHaveBeenCalled();
+      expect(confirmValue.showConfirm).toHaveBeenCalled();
 
-      // Fast-forward 5000ms
-      act(() => {
-        vi.advanceTimersByTime(5000);
+      await waitFor(() => {
+        expect(trackerValue.deleteTransaction).not.toHaveBeenCalled();
+        expect(toastValue.showToast).not.toHaveBeenCalled();
       });
-
-      expect(trackerValue.deleteTransaction).toHaveBeenCalledWith('tx_1');
-    });
-
-    it('commits delete when component unmounts (navigating away)', () => {
-      const { trackerValue, unmount } = renderTransactions();
-
-      const deleteBtn = screen.getAllByLabelText(/Delete Food & Dining transaction/i)[0];
-      fireEvent.click(deleteBtn);
-
-      expect(trackerValue.deleteTransaction).not.toHaveBeenCalled();
-
-      unmount();
-
-      expect(trackerValue.deleteTransaction).toHaveBeenCalledWith('tx_1');
-    });
-
-    it('commits delete on window pagehide event', () => {
-      const { trackerValue } = renderTransactions();
-
-      const deleteBtn = screen.getAllByLabelText(/Delete Food & Dining transaction/i)[0];
-      fireEvent.click(deleteBtn);
-
-      expect(trackerValue.deleteTransaction).not.toHaveBeenCalled();
-
-      fireEvent(window, new Event('pagehide'));
-
-      expect(trackerValue.deleteTransaction).toHaveBeenCalledWith('tx_1');
     });
   });
 

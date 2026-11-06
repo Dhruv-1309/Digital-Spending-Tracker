@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AuthContext, type AuthContextValue } from '../../context/authContextDef';
 import { TrackerContext, type TrackerContextValue } from '../../context/trackerContextDef';
 import { ToastContext } from '../../context/toastContextDef';
-import { ConfirmContext } from '../../context/confirmContextDef';
+import { ConfirmContext, type ConfirmState, type ConfirmOptions } from '../../context/confirmContextDef';
+import { ConfirmModal } from '../common/ConfirmModal';
+import { ToastContainer } from '../common/ToastContainer';
 import { AppShell } from '../layout/AppShell';
 import { DashboardTab } from '../dashboard/DashboardTab';
 import { TransactionsTab } from '../transactions/TransactionsTab';
@@ -11,7 +13,7 @@ import { AnalyticsTab } from '../analytics/AnalyticsTab';
 import { AddTransactionTab } from '../transactions/AddTransactionTab';
 import { AuthModal } from '../auth/AuthModal';
 import { ProfileModal } from '../profile/ProfileModal';
-import type { UserProfile, Transaction, AutopayPlan, BudgetGoal } from '../../types';
+import type { UserProfile, Transaction, AutopayPlan, BudgetGoal, ToastItem } from '../../types';
 
 export type AuditScreen = 'dashboard' | 'transactions' | 'autopay' | 'analytics' | 'add-transaction' | 'auth' | 'profile';
 export type AuditState = 'loading' | 'empty' | 'error' | 'populated';
@@ -158,24 +160,62 @@ export function StateAuditDevPage() {
     deleteAccount: async () => {},
   };
 
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const showToast = useCallback((message: string, type: any = 'info', duration = 3000, action?: any) => {
+    const id = `toast_${Date.now()}_${Math.random()}`;
+    setToasts((prev) => [...prev, { id, message, type, duration, action }]);
+  }, []);
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const toastValue = {
-    toasts: [],
-    showToast: () => {},
-    dismissToast: () => {},
+    toasts,
+    showToast,
+    dismissToast,
   };
 
+  const [confirmState, setConfirmState] = useState<ConfirmState>({
+    isOpen: false,
+    title: 'Confirm',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    variant: 'warning',
+  });
+  const confirmResolverRef = useRef<((val: boolean) => void) | null>(null);
+
+  const showConfirm = useCallback((message: string, options?: ConfirmOptions): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      confirmResolverRef.current = resolve;
+      setConfirmState({
+        isOpen: true,
+        message,
+        title: options?.title || 'Confirm',
+        confirmText: options?.confirmText || 'Confirm',
+        cancelText: options?.cancelText || 'Cancel',
+        variant: options?.variant || 'warning',
+      });
+    });
+  }, []);
+
+  const handleConfirm = useCallback(() => {
+    setConfirmState((prev) => ({ ...prev, isOpen: false }));
+    confirmResolverRef.current?.(true);
+    confirmResolverRef.current = null;
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    setConfirmState((prev) => ({ ...prev, isOpen: false }));
+    confirmResolverRef.current?.(false);
+    confirmResolverRef.current = null;
+  }, []);
+
   const confirmValue = {
-    confirmState: {
-      isOpen: false,
-      title: 'Confirm',
-      message: '',
-      confirmText: 'Confirm',
-      cancelText: 'Cancel',
-      variant: 'warning' as const,
-    },
-    showConfirm: async () => true,
-    handleConfirm: () => {},
-    handleCancel: () => {},
+    confirmState,
+    showConfirm,
+    handleConfirm,
+    handleCancel,
   };
 
   const trackerValue: TrackerContextValue = {
@@ -217,6 +257,8 @@ export function StateAuditDevPage() {
       <ToastContext.Provider value={toastValue}>
         <ConfirmContext.Provider value={confirmValue}>
           <TrackerContext.Provider value={trackerValue}>
+            <ToastContainer />
+            <ConfirmModal />
             <div
               className="min-h-screen bg-bg text-ink flex flex-col"
               style={{ '--shell-top-offset': '37px' } as React.CSSProperties}

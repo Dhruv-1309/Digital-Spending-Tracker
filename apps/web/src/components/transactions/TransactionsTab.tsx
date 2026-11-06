@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { m, AnimatePresence } from 'motion/react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Dropdown } from '../ui/Dropdown';
@@ -90,6 +91,7 @@ export function TransactionsTab() {
     refreshData,
   } = useTracker();
   const { showToast } = useToast();
+  const { showConfirm } = useConfirm();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const listTopRef = useRef<HTMLDivElement>(null);
@@ -107,10 +109,6 @@ export function TransactionsTab() {
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [slideOverTrigger, setSlideOverTrigger] = useState<HTMLElement | null>(null);
-
-  // Undo delete pending state
-  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
-  const pendingTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Close more menu on click outside or Escape
   useEffect(() => {
@@ -135,58 +133,22 @@ export function TransactionsTab() {
     };
   }, [isMoreMenuOpen]);
 
-  // Commit all pending deletes when navigating away / component unmounts
-  useEffect(() => {
-    const activeTimers = pendingTimersRef.current;
-    return () => {
-      activeTimers.forEach((timer, id) => {
-        clearTimeout(timer);
-        deleteTransaction(id);
-      });
-      activeTimers.clear();
-    };
-  }, [deleteTransaction]);
-
-  // Commit pending deletes on window pagehide
-  useEffect(() => {
-    const handlePageHide = () => {
-      const activeTimers = pendingTimersRef.current;
-      activeTimers.forEach((timer, id) => {
-        clearTimeout(timer);
-        deleteTransaction(id);
-      });
-      activeTimers.clear();
-    };
-
-    window.addEventListener('pagehide', handlePageHide);
-    return () => {
-      window.removeEventListener('pagehide', handlePageHide);
-    };
-  }, [deleteTransaction]);
-
   // Month options from transactions
   const monthOptions = useMemo(() => {
     const list = extractUniqueMonths(transactions);
     return [{ value: 'all', label: 'All Months' }, ...list];
   }, [transactions]);
 
-  // Filter out pending deleted transactions immediately
-  const activeTransactions = useMemo(() => {
-    if (pendingDeleteIds.length === 0) return transactions;
-    const pendingSet = new Set(pendingDeleteIds);
-    return transactions.filter((t) => !pendingSet.has(t.id));
-  }, [transactions, pendingDeleteIds]);
-
   // Filter transactions using existing FR-3 logic
   const filtered = useMemo(() => {
     return filterTransactions(
-      activeTransactions,
+      transactions,
       searchQuery,
       typeFilter,
       monthFilter,
       sortBy,
     );
-  }, [activeTransactions, searchQuery, typeFilter, monthFilter, sortBy]);
+  }, [transactions, searchQuery, typeFilter, monthFilter, sortBy]);
 
   // Filtered cashflow summary metrics
   const filteredMetrics = useMemo(() => {
@@ -254,40 +216,31 @@ export function TransactionsTab() {
     return groups;
   }, [paginatedItems]);
 
-  // Handle Undo Delete
-  const handleDeleteWithUndo = useCallback(
-    (tx: Transaction) => {
-      const id = tx.id;
-      setPendingDeleteIds((prev) => [...prev, id]);
-
-      const timer = setTimeout(async () => {
-        pendingTimersRef.current.delete(id);
-        setPendingDeleteIds((prev) => prev.filter((item) => item !== id));
-        await deleteTransaction(id);
-      }, 5000);
-
-      pendingTimersRef.current.set(id, timer);
-
-      showToast(
-        `Deleted ${tx.category} transaction`,
-        'info',
-        5000,
+  // Handle Delete with Confirmation Modal
+  const handleDeleteTransaction = useCallback(
+    async (tx: Transaction) => {
+      const confirmed = await showConfirm(
+        'Are you sure you want to delete this transaction?',
         {
-          label: 'Undo',
-          onClick: () => {
-            const activeTimer = pendingTimersRef.current.get(id);
-            if (activeTimer) {
-              clearTimeout(activeTimer);
-              pendingTimersRef.current.delete(id);
-            }
-            setPendingDeleteIds((prev) => prev.filter((item) => item !== id));
-            showToast('Transaction restored.', 'info', 2400);
-          },
+          title: 'Delete transaction',
+          confirmText: 'Delete',
+          cancelText: 'Cancel',
+          variant: 'danger',
         },
       );
+      if (!confirmed) return;
+
+      try {
+        await deleteTransaction(tx.id);
+        showToast(`Deleted ${tx.category} transaction`, 'info');
+      } catch (err: unknown) {
+        showToast(toUserFriendlyError(err, 'Failed to delete transaction. Please try again.'), 'error');
+      }
     },
-    [deleteTransaction, showToast],
+    [showConfirm, deleteTransaction, showToast],
   );
+
+  const handleDeleteWithUndo = handleDeleteTransaction;
 
   // Pagination page change: cross-fades and scrolls list top into view
   const handlePageChange = useCallback((newPage: number) => {

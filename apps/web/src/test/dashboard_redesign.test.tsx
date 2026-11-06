@@ -4,6 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { TrackerContext } from '../context/trackerContextDef';
 import { ToastContext } from '../context/toastContextDef';
+import { ConfirmContext } from '../context/confirmContextDef';
 import { DashboardTab } from '../components/dashboard/DashboardTab';
 import { useCountUp } from '../hooks/useCountUp';
 import type { TrackerContextValue } from '../context/trackerContextDef';
@@ -91,16 +92,31 @@ function renderDashboard(trackerOverrides: Partial<TrackerContextValue> = {}) {
     showToast: vi.fn(),
     dismissToast: vi.fn(),
   };
+  const confirmValue = {
+    confirmState: {
+      isOpen: false,
+      title: 'Confirm',
+      message: '',
+      confirmText: 'Confirm',
+      cancelText: 'Cancel',
+      variant: 'warning' as const,
+    },
+    showConfirm: vi.fn().mockResolvedValue(true),
+    handleConfirm: vi.fn(),
+    handleCancel: vi.fn(),
+  };
 
   const result = render(
     <ToastContext.Provider value={toastValue}>
-      <TrackerContext.Provider value={trackerValue}>
-        <DashboardTab />
-      </TrackerContext.Provider>
+      <ConfirmContext.Provider value={confirmValue}>
+        <TrackerContext.Provider value={trackerValue}>
+          <DashboardTab />
+        </TrackerContext.Provider>
+      </ConfirmContext.Provider>
     </ToastContext.Provider>,
   );
 
-  return { ...result, trackerValue, toastValue };
+  return { ...result, trackerValue, toastValue, confirmValue };
 }
 
 describe('Phase 4: Dashboard Redesign (SPEC Section 3, 4, 5 & 6)', () => {
@@ -347,7 +363,9 @@ describe('Phase 4: Dashboard Redesign (SPEC Section 3, 4, 5 & 6)', () => {
       const deleteButtons = screen.getAllByRole('button', { name: /Delete/i });
       expect(deleteButtons.length).toBe(3);
       fireEvent.click(deleteButtons[0]);
-      expect(trackerValue.deleteTransaction).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(trackerValue.deleteTransaction).toHaveBeenCalled();
+      });
     });
   });
 
