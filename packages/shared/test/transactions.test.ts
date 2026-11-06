@@ -188,4 +188,59 @@ describe('transactions', () => {
     });
     expect(hash1).toBe(hash2);
   });
+
+  describe('CSV parsing, UTF-8 BOM, and edge cases (CORE-12, QA-2)', () => {
+    it('strips UTF-8 BOM character from CSV import header without rejecting Date column', () => {
+      const bomCsv = '\uFEFFDate,Type,Category,Description,Payment Method,Amount\n2026-10-20,expense,Travel,Train Ticket,upi,450';
+      const { newTransactions, skippedCount, error } = importTransactionsFromCsv(bomCsv, []);
+      expect(error).toBeUndefined();
+      expect(skippedCount).toBe(0);
+      expect(newTransactions.length).toBe(1);
+      expect(newTransactions[0].date).toBe('2026-10-20');
+      expect(newTransactions[0].amount).toBe(450);
+      expect(newTransactions[0].category).toBe('Travel');
+    });
+
+    it('rejects empty CSV and single-line CSV missing data rows', () => {
+      const empty = importTransactionsFromCsv('', []);
+      expect(empty.error).toBe('CSV file is empty or missing data rows.');
+
+      const onlyHeader = importTransactionsFromCsv('Date,Type,Category,Amount\n', []);
+      expect(onlyHeader.error).toBe('CSV file is empty or missing data rows.');
+    });
+
+    it('rejects CSV missing required Date or Amount columns', () => {
+      const missingAmount = importTransactionsFromCsv('Date,Type,Category\n2026-10-01,expense,Food', []);
+      expect(missingAmount.error).toBe('CSV must include at least Date and Amount columns.');
+
+      const missingDate = importTransactionsFromCsv('Category,Amount\nFood,500', []);
+      expect(missingDate.error).toBe('CSV must include at least Date and Amount columns.');
+    });
+
+    it('parses quoted values containing commas and escaped quotes correctly', () => {
+      const complexRow = '2026-10-21,expense,"Food, Drinks & Snacks","Lunch at ""Bistro""",card,1250';
+      const parsed = parseCsvLine(complexRow);
+      expect(parsed).toEqual([
+        '2026-10-21',
+        'expense',
+        'Food, Drinks & Snacks',
+        'Lunch at "Bistro"',
+        'card',
+        '1250',
+      ]);
+    });
+
+    it('skips rows with invalid date, zero amount, or non-numeric amount', () => {
+      const csv = `Date,Type,Category,Amount
+2026-10-01,expense,Food,500
+invalid-date,expense,Food,200
+2026-10-02,expense,Food,0
+2026-10-03,expense,Food,not-a-number`;
+
+      const { newTransactions, skippedCount, error } = importTransactionsFromCsv(csv, []);
+      expect(error).toBeUndefined();
+      expect(newTransactions.length).toBe(1);
+      expect(skippedCount).toBe(3);
+    });
+  });
 });

@@ -207,15 +207,15 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] Permissions-Policy disables camera, microphone, geolocation
 - **How It Will Be Tested:** Inspect vercel.json and run response header assertions on API and build artifacts.
 
-### 14. [QA-2] Unit test coverage for pure calculation edge cases (CORE boundaries)
+### 14. [QA-2] Unit test coverage for pure calculation edge cases (CORE boundaries) [DONE]
 
 - **Priority:** `P0` | **Effort:** `M` | **Category:** `QA`
 - **Dependencies:** `CORE-2`, `CORE-3`, `CORE-5`, `CORE-7`
 - **Files Likely Touched:**
   - `packages/shared/test/*.test.ts`
 - **Acceptance Criteria:**
-  - [ ] 100% test coverage on pure calculation logic including zero balances, negative balances, and edge cases
-  - [ ] All new test cases assert exact numerical and string properties
+  - [x] 100% test coverage on pure calculation logic including zero balances, negative balances, and edge cases
+  - [x] All new test cases assert exact numerical and string properties
 - **How It Will Be Tested:** Run `npm test` and assert all unit test suites pass.
 
 ### 15. [OPS-3] Hardened GitHub Actions CI workflow (lint, typecheck, test, build, audit)

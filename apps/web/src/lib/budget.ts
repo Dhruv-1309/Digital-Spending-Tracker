@@ -56,7 +56,7 @@ export function evaluateBudgetStatus(
     };
   }
 
-  const percentSpent = (currentSpent / limit) * 100;
+  const percentSpent = parseFloat(((currentSpent / limit) * 100).toFixed(2));
   const clampedPercent = Math.min(100, Math.max(0, percentSpent));
   const remaining = limit - currentSpent;
 

@@ -255,7 +255,10 @@ export function importTransactionsFromCsv(
   skippedCount: number;
   error?: string;
 } {
-  const lines = content
+  // Strip UTF-8 BOM if present (CORE-12, QA-2)
+  const cleanContent = content.charCodeAt(0) === 0xFEFF ? content.slice(1) : content;
+
+  const lines = cleanContent
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
@@ -312,7 +315,7 @@ export function importTransactionsFromCsv(
     const parsedDate = new Date(dateRaw);
     const date = !isNaN(parsedDate.getTime())
       ? parsedDate.toISOString().split('T')[0]
-      : dateRaw.slice(0, 10);
+      : '';
 
     const amountNum = Math.abs(parseFloat(cols[indexMap.amount] || '0'));
     if (!date || isNaN(amountNum) || amountNum <= 0) {

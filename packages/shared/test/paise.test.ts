@@ -40,4 +40,17 @@ describe('paise currency utilities', () => {
     expect(sumPaise).toBe(30);
     expect(paiseToRupees(sumPaise)).toBe(0.3);
   });
+
+  it('handles extreme bounds up to 10 Crore (100,000,000 rupees) with exact paise fidelity (QA-2)', () => {
+    const tenCrore = 100000000;
+    const paise = rupeesToPaise(tenCrore);
+    expect(paise).toBe(10000000000); // 10 billion paise
+    expect(paiseToRupees(paise)).toBe(tenCrore);
+    expect(formatPaise(paise)).toBe('₹10,00,00,000');
+
+    // 1 paise (0.01 rupee)
+    expect(rupeesToPaise(0.01)).toBe(1);
+    expect(paiseToRupees(1)).toBe(0.01);
+    expect(formatPaise(1, { showFraction: true })).toBe('₹0.01');
+  });
 });
