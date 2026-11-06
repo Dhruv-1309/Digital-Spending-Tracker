@@ -169,7 +169,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] Comprehensive unit tests assert all 12 month boundaries and leap year cases
 - **How It Will Be Tested:** Add parameterized unit test cases to autopay.test.ts testing days 28, 29, 30, 31 across leap and non-leap years.
 
-### 11. [CORE-7] Eliminate Infinity / NaN from money runway and forecast on zero spend and negative balance
+### 11. [CORE-7] Eliminate Infinity / NaN from money runway and forecast on zero spend and negative balance [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `CORE-2`

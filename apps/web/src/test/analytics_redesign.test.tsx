@@ -576,5 +576,67 @@ describe('Phase 7: Analytics Screen Redesign', () => {
       expect(expectedRunway.balance).toBe(42500); // 50000 - 7500
       expect(expectedWeekday.totalExpenses).toBe(7500);
     });
+
+    it('renders Sustainable and N/A (Sustainable) without Infinity when daily spend is 0 (CORE-7)', () => {
+      // Income only: 50,000 income, 0 expense
+      const incomeOnly: Transaction[] = [
+        {
+          id: 'tx_inc_only',
+          amount: 50000,
+          type: 'income',
+          category: 'Salary',
+          paymentMethod: 'bank_transfer',
+          description: 'Salary Only',
+          date: '2026-10-01',
+          createdAt: new Date().toISOString(),
+        },
+      ];
+
+      const tracker = createMockTracker({ transactions: incomeOnly });
+      render(
+        <TrackerContext.Provider value={tracker}>
+          <AnalyticsTab />
+        </TrackerContext.Provider>,
+      );
+
+      // Badge displays Sustainable
+      expect(screen.getByText('Sustainable')).toBeInTheDocument();
+
+      // Accessible table renders "N/A (Sustainable)" rather than "Infinity"
+      const runwayTable = screen.getByRole('table', { name: /Estimated runway and burn metrics/i });
+      expect(runwayTable).toHaveTextContent('N/A (Sustainable)');
+      expect(runwayTable).not.toHaveTextContent('Infinity');
+      expect(runwayTable).not.toHaveTextContent('NaN');
+    });
+
+    it('renders 0 and Already Depleted without NaN or Infinity when balance is negative (CORE-7)', () => {
+      const negativeBalanceTxs: Transaction[] = [
+        {
+          id: 'tx_exp_only',
+          amount: 5000,
+          type: 'expense',
+          category: 'Food & Dining',
+          paymentMethod: 'upi',
+          description: 'Overdraft Dinner',
+          date: '2026-10-05',
+          createdAt: new Date().toISOString(),
+        },
+      ];
+
+      const tracker = createMockTracker({ transactions: negativeBalanceTxs });
+      render(
+        <TrackerContext.Provider value={tracker}>
+          <AnalyticsTab />
+        </TrackerContext.Provider>,
+      );
+
+      // Runway displays Critical badge and Already Depleted
+      expect(screen.getByText('Critical')).toBeInTheDocument();
+      expect(screen.getAllByText('Already Depleted').length).toBeGreaterThanOrEqual(1);
+
+      const runwayTable = screen.getByRole('table', { name: /Estimated runway and burn metrics/i });
+      expect(runwayTable).not.toHaveTextContent('Infinity');
+      expect(runwayTable).not.toHaveTextContent('NaN');
+    });
   });
 });

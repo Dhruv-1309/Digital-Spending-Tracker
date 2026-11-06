@@ -89,9 +89,25 @@ describe('analytics', () => {
     expect(runway.daysRemaining).toBe(30);
     expect(runway.burnRatePercent).toBe('3.33');
 
-    // No spending -> Infinity
+    // No spending -> daysRemaining is null instead of Infinity (CORE-7)
     const noSpend = calculateMoneyRunway(sampleTransactions, 0, refDate);
-    expect(noSpend.daysRemaining).toBe(Infinity);
+    expect(noSpend.daysRemaining).toBeNull();
+    expect(noSpend.depletionDate).toBe('N/A (No spending)');
+    expect(noSpend.burnRatePercent).toBe('0');
+
+    // Zero balance -> daysRemaining is 0, Already Depleted
+    const zeroRunway = calculateMoneyRunway([], 100, refDate);
+    expect(zeroRunway.balance).toBe(0);
+    expect(zeroRunway.daysRemaining).toBe(0);
+    expect(zeroRunway.depletionDate).toBe('Already Depleted');
+    expect(zeroRunway.burnRatePercent).toBe('100');
+
+    // Negative balance -> daysRemaining is 0, Already Depleted
+    const negRunway = calculateMoneyRunway([{ type: 'expense', amount: 5000 }], 500, refDate);
+    expect(negRunway.balance).toBe(-5000);
+    expect(negRunway.daysRemaining).toBe(0);
+    expect(negRunway.depletionDate).toBe('Already Depleted');
+    expect(negRunway.burnRatePercent).toBe('100');
   });
 
   it('getExpensesByDayOfWeek aggregates expenses by day of week', () => {

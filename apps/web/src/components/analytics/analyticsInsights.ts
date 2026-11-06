@@ -85,7 +85,7 @@ export function getForecastInsight(forecast: {
  * Computes a 1-sentence insight for money runway
  */
 export function getRunwayInsight(runway: {
-  daysRemaining: number;
+  daysRemaining: number | null;
   balance: number;
   depletionDate: string;
   burnRatePercent: string;
@@ -94,7 +94,7 @@ export function getRunwayInsight(runway: {
     return 'Runway analysis unavailable.';
   }
 
-  if (runway.daysRemaining === Infinity) {
+  if (runway.daysRemaining === null || runway.daysRemaining === Infinity) {
     return 'Current balance is sustainable with zero or positive net daily burn rate.';
   }
 

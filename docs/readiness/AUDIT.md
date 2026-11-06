@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{303.5}{499} = \mathbf{60.8\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{305.5}{499} = \mathbf{61.2\%}$$
 
-- **Current Readiness Score:** **60.8%** (Baseline: 56.8%)
+- **Current Readiness Score:** **61.2%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **303.5 points**
+- **Earned Weight:** **305.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **77** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **52** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **78** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **51** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 13D / 7P / 1M (1 other) | **76.5%** | 50.5 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 14D / 6P / 1M (1 other) | **79.5%** | 52.5 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 7D / 4P / 2M (1 other) | **68.8%** | 27.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 16D / 3P / 2M  | **87.9%** | 58 / 66 |
 | **SEC** | Security and Privacy | 22 | 10D / 5P / 4M (3 other) | **63.8%** | 44 / 69 |
@@ -96,7 +96,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **CORE-4** | Dates use the user's timezone consistently; no off-by-one day around midnight or from UTC conversion | `DONE` | packages/shared/src/calculations/formatters.ts:1-75, packages/shared/src/calculations/analytics.ts:8-165, packages/shared/src/calculations/autopay.ts:80-95, packages/shared/test/formatters.test.ts:38-65, packages/shared/test/analytics.test.ts:106-155 | None. Dates use timezone-invariant UTC calendar parsing (formatCalendarDate, getLocalDateString) and string-boundary range comparisons, eliminating off-by-one day shifts around midnight across international timezones. |
 | **CORE-5** | Month boundaries are correct for 28, 29, 30 and 31 day months, leap years, autopay day 31 and Last Day | `DONE` | packages/shared/src/calculations/autopay.ts:107-110, packages/shared/test/autopay.test.ts:114-239, apps/web/src/test/autopay_redesign.test.tsx:534-560 | Clamped due day logic verified across all 12 months, standard/century leap years (2024, 2028, 2000, 2400) vs non-leap years (1900, 2025, 2100), and Last Day (31) execution idempotency. |
 | **CORE-6** | Autopay creates exactly one transaction per plan per month, even with repeated page loads or two devices open | `DONE` | apps/api/src/services/autopayService.ts:38-70, unique constraint uq_txn_autopay_period in prisma migration 0_init | - |
-| **CORE-7** | Forecast and runway handle zero spend, no data, negative balance and a single day of history with no NaN or Infinity on screen | `PARTIAL` | packages/shared/src/calculations/analytics.ts:388, apps/web/src/components/analytics/AnalyticsTab.tsx:1067,1113 | calculateMoneyRunway returns daysRemaining: Infinity which leaks raw string Infinity in accessible data table line 1113. |
+| **CORE-7** | Forecast and runway handle zero spend, no data, negative balance and a single day of history with no NaN or Infinity on screen | `DONE` | packages/shared/src/calculations/analytics.ts:336,424, apps/web/src/components/analytics/AnalyticsTab.tsx:1032,1064,1110, apps/web/src/test/analytics_redesign.test.tsx:580-640 | calculateMoneyRunway returns daysRemaining: null on zero spend, 0 on negative balance; table renders "N/A (Sustainable)" or "0"; zero spend, negative balance, and single-day tests assert zero NaN/Infinity leaks. |
 | **CORE-8** | Transactions can be edited, not only created and deleted, and editing updates totals, charts, budget status and anomaly state | `DONE` | apps/web/src/components/transactions/TransactionSlideOver.tsx, TransactionsTab.tsx:258-261, apps/api/src/routes/transactionRoutes.ts:50 | - |
 | **CORE-9** | Deleting a transaction is recoverable (undo or trash) | `MISSING` | apps/web/src/context/TrackerContext.tsx:401-420 immediately removes from state and queues DELETE | No Undo toast action, no 30-day Trash view or restore mechanism. |
 | **CORE-10** | Budget status is exact at the boundaries (just below threshold, at threshold, at limit, over limit) | `PARTIAL` | packages/shared/src/calculations/budget.ts:64-87, packages/shared/test/budget.test.ts:30-55 | When currentSpent === limit, returns Near limit (₹0 left) instead of At limit; boundary edge cases untested. |

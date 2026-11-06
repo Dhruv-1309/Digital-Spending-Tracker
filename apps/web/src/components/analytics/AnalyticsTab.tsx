@@ -1029,7 +1029,7 @@ export function AnalyticsTab() {
                   </div>
                   <Badge
                     variant={
-                      runway.daysRemaining === Infinity
+                      runway.daysRemaining === null || runway.daysRemaining === Infinity
                         ? 'income'
                         : runway.daysRemaining <= 7
                           ? 'danger'
@@ -1039,7 +1039,7 @@ export function AnalyticsTab() {
                     }
                     className="text-xs"
                   >
-                    {runway.daysRemaining === Infinity
+                    {runway.daysRemaining === null || runway.daysRemaining === Infinity
                       ? 'Sustainable'
                       : runway.daysRemaining <= 7
                         ? 'Critical'
@@ -1054,17 +1054,19 @@ export function AnalyticsTab() {
                   <div className="flex items-baseline gap-2">
                     <span
                       className={`font-display text-4xl sm:text-5xl font-semibold tabular-nums tracking-tight ${
-                        runway.daysRemaining <= 7
-                          ? 'text-danger'
-                          : runway.daysRemaining <= 30
-                            ? 'text-warning'
-                            : 'text-income'
+                        runway.daysRemaining === null || runway.daysRemaining === Infinity
+                          ? 'text-income'
+                          : runway.daysRemaining <= 7
+                            ? 'text-danger'
+                            : runway.daysRemaining <= 30
+                              ? 'text-warning'
+                              : 'text-income'
                       }`}
                     >
-                      {runway.daysRemaining === Infinity ? '∞' : runway.daysRemaining}
+                      {runway.daysRemaining === null || runway.daysRemaining === Infinity ? '∞' : runway.daysRemaining}
                     </span>
                     <span className="text-ink-2 font-sans text-sm font-medium">
-                      {runway.daysRemaining === Infinity ? 'days (Sustainable)' : 'days remaining'}
+                      {runway.daysRemaining === null || runway.daysRemaining === Infinity ? 'days (Sustainable)' : 'days remaining'}
                     </span>
                   </div>
                 </div>
@@ -1107,7 +1109,11 @@ export function AnalyticsTab() {
                       </tr>
                       <tr>
                         <td>Days Remaining</td>
-                        <td>{runway.daysRemaining}</td>
+                        <td>
+                          {runway.daysRemaining === null || runway.daysRemaining === Infinity
+                            ? 'N/A (Sustainable)'
+                            : runway.daysRemaining}
+                        </td>
                       </tr>
                       <tr>
                         <td>Estimated Depletion Date</td>

@@ -333,7 +333,7 @@ export function calculateSMAForecast(
   windowSize: number = 7,
   forecastDays: number = 7,
 ): SMAForecastResult {
-  if (amounts.length < windowSize || rawDates.length === 0) {
+  if (windowSize <= 0 || forecastDays <= 0 || amounts.length < windowSize || rawDates.length === 0) {
     return {
       forecastDates: [],
       forecastAmounts: [],
@@ -389,7 +389,7 @@ export function calculateSMAForecast(
 
 export interface MoneyRunwayResult {
   balance: number;
-  daysRemaining: number;
+  daysRemaining: number | null;
   depletionDate: string;
   burnRatePercent: string;
 }
@@ -421,7 +421,7 @@ export function calculateMoneyRunway(
   if (!avgDailySpend || avgDailySpend <= 0) {
     return {
       balance,
-      daysRemaining: Infinity,
+      daysRemaining: null,
       depletionDate: 'N/A (No spending)',
       burnRatePercent: '0',
     };
