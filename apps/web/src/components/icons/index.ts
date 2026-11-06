@@ -73,4 +73,5 @@ export * from "./XIcon";
 export * from "./ZapIcon";
 export * from "./GoogleIcon";
 export * from "./PanelLeftIcon";
+export * from "./PanelLeftOpenIcon";
 export * from "./MenuIcon";

@@ -9,10 +9,12 @@ import {
   WalletIcon,
   PlusIcon,
   WifiOffIcon,
-  UserIcon,
   LogOutIcon,
   MenuIcon,
   XIcon,
+  PanelLeftIcon,
+  PanelLeftOpenIcon,
+  SettingsIcon,
 } from '../icons';
 
 export interface AppShellProps {
@@ -215,35 +217,43 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
         }`}
       >
         <div className="flex flex-col gap-2 w-full">
-          {/* Top Header: Hamburger Toggle & Brand */}
+          {/* Top Header: Gemini-Style Logo & Sidebar Toggle (Images 1, 2, 3) */}
           {isSidebarCollapsed ? (
+            /* Collapsed Rail Top: Expense Tracker Logo morphs to Open Sidebar button on hover (Images 1 & 2) */
             <div className="flex flex-col items-center pt-0.5 pb-1 w-full">
-              <button
-                type="button"
-                data-testid="sidebar-collapse-btn"
-                onClick={toggleSidebar}
-                aria-label="Expand sidebar"
-                title="Expand menu (Ctrl+B)"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <MenuIcon size={20} />
-              </button>
+              <div className="relative group flex items-center justify-center">
+                <button
+                  type="button"
+                  data-testid="sidebar-collapse-btn"
+                  onClick={toggleSidebar}
+                  aria-label="Open sidebar"
+                  title="Open sidebar (Ctrl+B)"
+                  className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  {/* Default State: Expense Tracker Brand Logo (Image 1) */}
+                  <span className="flex items-center justify-center transition-all duration-150 group-hover:opacity-0 group-hover:scale-75">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-tint text-accent shadow-xs">
+                      <WalletIcon size={18} />
+                    </div>
+                  </span>
+
+                  {/* Hover State: Open Sidebar Toggle Icon (Image 2) */}
+                  <span className="absolute inset-0 flex items-center justify-center transition-all duration-150 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 text-ink">
+                    <PanelLeftOpenIcon size={20} />
+                  </span>
+                </button>
+
+                {/* Floating Tooltip Pill: "Open sidebar" (Image 2) */}
+                <span className="absolute left-full ml-3 px-3 py-1.5 text-xs font-medium text-white bg-slate-900 rounded-xl shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50">
+                  Open sidebar
+                </span>
+              </div>
             </div>
           ) : (
+            /* Expanded Rail Top: Brand Logo + Title on left, Collapse Sidebar button on right (Image 3) */
             <div className="flex items-center justify-between gap-2 px-1 pt-0.5 pb-1">
-              <button
-                type="button"
-                data-testid="sidebar-collapse-btn"
-                onClick={toggleSidebar}
-                aria-label="Collapse sidebar"
-                title="Collapse menu (Ctrl+B)"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <MenuIcon size={20} />
-              </button>
-
               <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-tint text-accent">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-tint text-accent shadow-xs">
                   <WalletIcon size={18} />
                 </div>
                 <div className="min-w-0">
@@ -252,6 +262,22 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                   </span>
                   <span className="text-[10px] text-ink-3 block whitespace-nowrap">Personal Finance</span>
                 </div>
+              </div>
+
+              <div className="relative group">
+                <button
+                  type="button"
+                  data-testid="sidebar-collapse-btn"
+                  onClick={toggleSidebar}
+                  aria-label="Collapse sidebar"
+                  title="Collapse sidebar (Ctrl+B)"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <PanelLeftIcon size={18} />
+                </button>
+                <span className="absolute right-0 top-full mt-1 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                  Collapse sidebar
+                </span>
               </div>
             </div>
           )}
@@ -393,7 +419,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                   {user?.email || ''}
                 </p>
               </div>
-              <UserIcon size={16} className="text-ink-3 group-hover:text-ink shrink-0 mr-1" />
+              <SettingsIcon size={18} className="text-ink-3 group-hover:text-ink shrink-0 mr-1" />
             </button>
 
             <button
@@ -461,7 +487,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               title="Expand sidebar (Ctrl+B)"
               className="hidden min-[1025px]:inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 border border-line/60 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
             >
-              <MenuIcon size={18} />
+              <PanelLeftOpenIcon size={18} />
             </button>
           )}
 

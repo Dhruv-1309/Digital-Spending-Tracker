@@ -625,5 +625,25 @@ describe('Phase 3: AppShell & Navigation', () => {
       fireEvent.keyDown(window, { key: 'b', metaKey: true });
       expect(sidebar).toHaveClass('w-[256px]');
     });
+
+    it('in collapsed rail, renders logo toggle button with Open sidebar aria-label and expands on click', () => {
+      renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={true}>
+          <div>Main Content</div>
+        </AppShell>,
+      );
+
+      const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
+      expect(sidebar).toHaveClass('w-[68px]');
+
+      // Logo toggle button in collapsed rail
+      const logoToggleBtn = screen.getByRole('button', { name: /Open sidebar/i });
+      expect(logoToggleBtn).toBeInTheDocument();
+      expect(screen.getByText('Open sidebar')).toBeInTheDocument();
+
+      // Clicking logo button expands sidebar
+      fireEvent.click(logoToggleBtn);
+      expect(sidebar).toHaveClass('w-[256px]');
+    });
   });
 });
