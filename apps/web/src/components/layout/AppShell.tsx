@@ -256,46 +256,9 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
             </div>
           )}
 
-          {/* Gemini-Style "+ New Transaction" Button */}
-          {isSidebarCollapsed ? (
-            <div className="my-1.5 flex justify-center w-full relative group">
-              <button
-                type="button"
-                id="sidebarNewTxBtnCollapsed"
-                onClick={() => setCurrentTab('add-transaction')}
-                aria-label="New Transaction (Press N)"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-white hover:bg-accent-hover shadow-1 hover:shadow-2 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <PlusIcon size={20} />
-              </button>
-              {/* Floating Tooltip */}
-              <span className="absolute left-full ml-3 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
-                New Transaction (N)
-              </span>
-            </div>
-          ) : (
-            <div className="my-1.5 px-0.5">
-              <button
-                type="button"
-                id="sidebarNewTxBtn"
-                onClick={() => setCurrentTab('add-transaction')}
-                className="group flex h-10 w-full items-center justify-between rounded-full bg-accent-tint/60 hover:bg-accent-tint border border-accent/25 px-3.5 text-accent font-medium text-sm transition-all shadow-xs hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                title="New Transaction (Press N)"
-              >
-                <span className="flex items-center gap-2.5">
-                  <PlusIcon size={18} className="text-accent shrink-0" />
-                  <span className="font-medium text-sm">New Transaction</span>
-                </span>
-                <kbd className="px-1.5 py-0.5 text-[10px] font-sans font-semibold rounded bg-accent/15 text-accent">
-                  N
-                </kbd>
-              </button>
-            </div>
-          )}
-
           {/* Navigation Items (Dashboard, Transactions, Autopay, Analytics) */}
           {isSidebarCollapsed ? (
-            <nav aria-label="Desktop Navigation" className="flex flex-col gap-1.5 items-center w-full mt-1">
+            <nav aria-label="Desktop Navigation" className="flex flex-col gap-1.5 items-center w-full mt-2">
               {MAIN_NAV_ITEMS.map((item) => {
                 const isActive = currentTab === item.id;
                 const IconComponent = item.icon;
@@ -588,19 +551,6 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                   <XIcon size={18} />
                 </button>
               </div>
-
-              {/* Mobile Drawer "+ New Transaction" Pill */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentTab('add-transaction');
-                  setIsMobileDrawerOpen(false);
-                }}
-                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-accent text-white font-medium text-sm shadow-1 hover:bg-accent-hover transition-colors"
-              >
-                <PlusIcon size={18} />
-                <span>New Transaction</span>
-              </button>
 
               {/* Mobile Drawer Navigation Items */}
               <nav aria-label="Mobile Drawer Navigation" className="flex flex-col gap-1 mt-2">
