@@ -1,5 +1,5 @@
 import type { AutopayPlan } from '../../types';
-import { getDaySuffix } from '../../lib/formatters';
+import { getDaySuffix, formatCalendarDate } from '../../lib/formatters';
 
 export interface NextDeductionInfo {
   date: Date;
@@ -40,12 +40,14 @@ export function getNextDeductionDate(
     targetDay = Math.min(plan.day, daysInNextMonth);
   }
 
-  const date = new Date(targetYear, targetMonth, targetDay);
-  const dueDateStr = date.toISOString().split('T')[0];
-  const formattedDue = date.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
+  const mm = String(targetMonth + 1).padStart(2, '0');
+  const dd = String(targetDay).padStart(2, '0');
+  const dueDateStr = `${targetYear}-${mm}-${dd}`;
+  const formattedDue = formatCalendarDate(dueDateStr, {
+    includeWeekday: false,
+    includeYear: false,
   });
+  const date = new Date(Date.UTC(targetYear, targetMonth, targetDay, 12, 0, 0));
 
   const refMidnight = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
   const dueMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());

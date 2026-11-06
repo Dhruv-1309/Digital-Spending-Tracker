@@ -5,6 +5,7 @@ import '../../lib/chartConfig';
 import type { Transaction } from '../../types';
 import { formatIndianGrouping } from '../ui/formatIndianGrouping';
 import { useChartTheme, cleanupChartTooltips } from '../../ui/chartTheme';
+import { formatCalendarDate, getLocalDateString } from '@moneytracker/shared';
 
 export interface WeeklyActivityChartProps {
   transactions: Transaction[];
@@ -40,28 +41,23 @@ export function WeeklyActivityChart({ transactions }: WeeklyActivityChartProps) 
     for (let i = 6; i >= 0; i -= 1) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toDateString();
+      const dKey = getLocalDateString(d);
 
       const dayExpenses = transactions
-        .filter(
-          (t) =>
-            t.type === 'expense' &&
-            new Date(t.date).toDateString() === dateStr,
-        )
+        .filter((t) => t.type === 'expense' && t.date === dKey)
         .reduce((sum, t) => sum + t.amount, 0);
 
       const dayIncomes = transactions
-        .filter(
-          (t) =>
-            t.type === 'income' &&
-            new Date(t.date).toDateString() === dateStr,
-        )
+        .filter((t) => t.type === 'income' && t.date === dKey)
         .reduce((sum, t) => sum + t.amount, 0);
+
+      const weekdayStr = formatCalendarDate(dKey, { includeWeekday: true, includeYear: false }).split(',')[0];
+      const fullDateStr = formatCalendarDate(dKey, { includeWeekday: false, includeYear: false });
 
       list.push({
         date: d,
-        label: d.toLocaleDateString('en-IN', { weekday: 'short' }),
-        fullDate: d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+        label: weekdayStr,
+        fullDate: fullDateStr,
         income: dayIncomes,
         expense: dayExpenses,
       });

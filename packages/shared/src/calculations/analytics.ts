@@ -4,25 +4,22 @@ import type {
   AnalyticsPeriod,
 } from '../types/index.js';
 import { rupeesToPaise, paiseToRupees } from '../currency/paise.js';
+import { formatCalendarDate, getLocalDateString } from './formatters.js';
 
 export function extractUniqueYears(
   transactions: Array<{ date: string }>,
   currentYear: number = new Date().getFullYear(),
 ): string[] {
-  const years = Array.from(
-    new Set(
-      transactions
-        .map((t) => new Date(t.date))
-        .filter((d) => !Number.isNaN(d.getTime()))
-        .map((d) => d.getFullYear()),
-    ),
-  ).sort((a, b) => b - a);
+  const set = new Set(
+    transactions
+      .map((t) => parseInt(t.date.split('-')[0], 10))
+      .filter((y) => !Number.isNaN(y) && y >= 1970 && y <= 2100),
+  );
+  set.add(currentYear);
 
-  if (!years.includes(currentYear)) {
-    years.unshift(currentYear);
-  }
-
-  return years.map(String);
+  return Array.from(set)
+    .sort((a, b) => b - a)
+    .map(String);
 }
 
 export function getAnalyticsDateRange(
@@ -31,35 +28,53 @@ export function getAnalyticsDateRange(
   year: string,
   month: string,
   refDate: Date = new Date(),
-): { start: Date; end: Date } | null {
+): { start: Date; end: Date; startStr: string; endStr: string } | null {
+  const pad = (n: number) => String(n).padStart(2, '0');
+
   if (preset === 'this-week') {
     const today = new Date(refDate);
     const day = today.getDay(); // 0 is Sunday
     const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Monday
-    const monday = new Date(today.setDate(diff));
-    monday.setHours(0, 0, 0, 0);
+    const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
 
-    const endOfWeek = new Date(refDate);
-    endOfWeek.setHours(23, 59, 59, 999);
-    return { start: monday, end: endOfWeek };
+    const startStr = `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
+    const endStr = `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`;
+
+    return {
+      start: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 0, 0, 0, 0),
+      end: new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 23, 59, 59, 999),
+      startStr,
+      endStr,
+    };
   }
 
   if (preset === 'this-month') {
     const y = refDate.getFullYear();
     const m = refDate.getMonth();
-    const start = new Date(y, m, 1, 0, 0, 0, 0);
-    const end = new Date(y, m + 1, 0, 23, 59, 59, 999);
-    return { start, end };
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const startStr = `${y}-${pad(m + 1)}-01`;
+    const endStr = `${y}-${pad(m + 1)}-${pad(daysInMonth)}`;
+
+    return {
+      start: new Date(y, m, 1, 0, 0, 0, 0),
+      end: new Date(y, m, daysInMonth, 23, 59, 59, 999),
+      startStr,
+      endStr,
+    };
   }
 
   if (preset === 'last-30-days') {
-    const start = new Date(refDate);
-    start.setDate(start.getDate() - 29);
-    start.setHours(0, 0, 0, 0);
+    const past = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate() - 29);
+    const startStr = `${past.getFullYear()}-${pad(past.getMonth() + 1)}-${pad(past.getDate())}`;
+    const endStr = `${refDate.getFullYear()}-${pad(refDate.getMonth() + 1)}-${pad(refDate.getDate())}`;
 
-    const end = new Date(refDate);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
+    return {
+      start: new Date(past.getFullYear(), past.getMonth(), past.getDate(), 0, 0, 0, 0),
+      end: new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), 23, 59, 59, 999),
+      startStr,
+      endStr,
+    };
   }
 
   // Presets take precedence over custom dropdown filters
@@ -67,27 +82,46 @@ export function getAnalyticsDateRange(
     const today = new Date(refDate);
     const day = today.getDay(); // 0 is Sunday
     const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Monday
-    const monday = new Date(today.setDate(diff));
-    monday.setHours(0, 0, 0, 0);
+    const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
 
-    const endOfWeek = new Date(refDate);
-    endOfWeek.setHours(23, 59, 59, 999);
-    return { start: monday, end: endOfWeek };
+    const startStr = `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
+    const endStr = `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`;
+
+    return {
+      start: new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 0, 0, 0, 0),
+      end: new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 23, 59, 59, 999),
+      startStr,
+      endStr,
+    };
   }
 
   if (period === 'monthly') {
     const y = parseInt(year, 10) || refDate.getFullYear();
     const m = month !== 'all' ? parseInt(month, 10) - 1 : refDate.getMonth();
-    const start = new Date(y, m, 1, 0, 0, 0, 0);
-    const end = new Date(y, m + 1, 0, 23, 59, 59, 999);
-    return { start, end };
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const startStr = `${y}-${pad(m + 1)}-01`;
+    const endStr = `${y}-${pad(m + 1)}-${pad(daysInMonth)}`;
+
+    return {
+      start: new Date(y, m, 1, 0, 0, 0, 0),
+      end: new Date(y, m, daysInMonth, 23, 59, 59, 999),
+      startStr,
+      endStr,
+    };
   }
 
   if (period === 'yearly') {
     const y = parseInt(year, 10) || refDate.getFullYear();
-    const start = new Date(y, 0, 1, 0, 0, 0, 0);
-    const end = new Date(y, 11, 31, 23, 59, 59, 999);
-    return { start, end };
+    const startStr = `${y}-01-01`;
+    const endStr = `${y}-12-31`;
+
+    return {
+      start: new Date(y, 0, 1, 0, 0, 0, 0),
+      end: new Date(y, 11, 31, 23, 59, 59, 999),
+      startStr,
+      endStr,
+    };
   }
 
   // Overall: no date boundary
@@ -96,13 +130,16 @@ export function getAnalyticsDateRange(
 
 export function filterAnalyticsTransactions<T extends { date: string }>(
   transactions: T[],
-  range: { start: Date; end: Date } | null,
+  range: { start: Date; end: Date; startStr?: string; endStr?: string } | null,
 ): T[] {
   if (!range) return transactions;
 
+  const startStr = range.startStr || range.start.toISOString().split('T')[0];
+  const endStr = range.endStr || range.end.toISOString().split('T')[0];
+
   return transactions.filter((t) => {
-    const date = new Date(t.date);
-    return date >= range.start && date <= range.end;
+    const d = t.date.includes('T') ? t.date.split('T')[0] : t.date;
+    return d >= startStr && d <= endStr;
   });
 }
 
@@ -147,13 +184,9 @@ export function calculateDailyExpenses(
   const recentDates = sortedDates.slice(-30);
   const amounts = recentDates.map((date) => dailyExpenses[date]);
 
-  const labels = recentDates.map((date) => {
-    const parsed = new Date(date);
-    return parsed.toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-    });
-  });
+  const labels = recentDates.map((date) =>
+    formatCalendarDate(date, { includeWeekday: false, includeYear: false }),
+  );
 
   return { labels, amounts };
 }
@@ -238,8 +271,10 @@ export function performTimeSeriesAnalysis(
   });
 
   const sortedDates = Object.keys(daily).sort();
-  const startDate = new Date(sortedDates[0]);
-  const endDate = new Date(sortedDates[sortedDates.length - 1]);
+  const [sy, sm, sd] = sortedDates[0].split('-').map(Number);
+  const [ey, em, ed] = sortedDates[sortedDates.length - 1].split('-').map(Number);
+  const startDate = new Date(Date.UTC(sy, sm - 1, sd, 12, 0, 0));
+  const endDate = new Date(Date.UTC(ey, em - 1, ed, 12, 0, 0));
 
   const completeDates: string[] = [];
   const rawDates: string[] = [];
@@ -247,16 +282,15 @@ export function performTimeSeriesAnalysis(
 
   const cur = new Date(startDate);
   while (cur <= endDate) {
-    const dateStr = cur.toISOString().split('T')[0];
+    const y = cur.getUTCFullYear();
+    const m = String(cur.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(cur.getUTCDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+
     rawDates.push(dateStr);
-    completeDates.push(
-      cur.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-      }),
-    );
+    completeDates.push(formatCalendarDate(dateStr, { includeWeekday: false, includeYear: false }));
     completeAmounts.push(daily[dateStr] || 0);
-    cur.setDate(cur.getDate() + 1);
+    cur.setUTCDate(cur.getUTCDate() + 1);
   }
 
   const nonZero = completeAmounts.filter((a) => a > 0);
@@ -313,19 +347,20 @@ export function calculateSMAForecast(
   const lastWindow = amounts.slice(-windowSize);
   const smaValue = lastWindow.reduce((a, b) => a + b, 0) / windowSize;
 
-  const lastDate = new Date(rawDates[rawDates.length - 1]);
+  const [ly, lm, ld] = rawDates[rawDates.length - 1].split('-').map(Number);
+  const lastDate = new Date(Date.UTC(ly, lm - 1, ld, 12, 0, 0));
   const forecastDates: string[] = [];
   const forecastAmounts: number[] = [];
 
   for (let i = 1; i <= forecastDays; i += 1) {
     const nextDate = new Date(lastDate);
-    nextDate.setDate(lastDate.getDate() + i);
-    forecastDates.push(
-      nextDate.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-      }),
-    );
+    nextDate.setUTCDate(lastDate.getUTCDate() + i);
+    const ny = nextDate.getUTCFullYear();
+    const nm = String(nextDate.getUTCMonth() + 1).padStart(2, '0');
+    const nd = String(nextDate.getUTCDate()).padStart(2, '0');
+    const nextDateStr = `${ny}-${nm}-${nd}`;
+
+    forecastDates.push(formatCalendarDate(nextDateStr, { includeWeekday: false, includeYear: false }));
     forecastAmounts.push(smaValue);
   }
 
@@ -396,10 +431,9 @@ export function calculateMoneyRunway(
   const targetDate = new Date(refDate);
   targetDate.setDate(targetDate.getDate() + daysRemaining);
 
-  const formattedDate = targetDate.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  const formattedDate = formatCalendarDate(getLocalDateString(targetDate), {
+    includeWeekday: false,
+    includeYear: true,
   });
 
   const burnRatePercent = ((avgDailySpend / balance) * 100).toFixed(2);
@@ -472,9 +506,11 @@ export function getExpensesByDayOfWeek(
   ];
 
   expenseTxs.forEach((t) => {
-    const date = new Date(t.date);
-    const dayName = daysOfWeek[date.getDay()];
     const amt = t.amount ?? (t.amountPaise ? t.amountPaise / 100 : 0);
+    const dateStr = t.date.includes('T') ? t.date.split('T')[0] : t.date;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    const dayName = daysOfWeek[date.getUTCDay()];
     if (dayTotals[dayName] !== undefined) {
       dayTotals[dayName] += amt;
       dayCounts[dayName] += 1;

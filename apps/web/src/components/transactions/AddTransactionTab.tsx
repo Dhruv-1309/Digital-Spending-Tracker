@@ -11,7 +11,7 @@ import { PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
 import { toUserFriendlyError } from '../../lib/errorMessages';
-import { containsMathExpression, evaluateMathExpression } from '@moneytracker/shared';
+import { containsMathExpression, evaluateMathExpression, getLocalDateString } from '@moneytracker/shared';
 import type { TransactionType, PaymentMethod } from '../../types';
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
@@ -37,7 +37,7 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
   const { showToast } = useToast();
 
   const amountRef = useRef<HTMLInputElement>(null);
-  const getTodayString = () => new Date().toISOString().split('T')[0];
+  const getTodayString = () => getLocalDateString();
 
   const [type, setType] = useState<TransactionType>('expense');
   const [amountStr, setAmountStr] = useState<string>('');

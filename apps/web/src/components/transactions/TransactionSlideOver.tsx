@@ -13,7 +13,7 @@ import { XIcon, PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
 import { toUserFriendlyError } from '../../lib/errorMessages';
-import { containsMathExpression, evaluateMathExpression } from '@moneytracker/shared';
+import { containsMathExpression, evaluateMathExpression, getLocalDateString } from '@moneytracker/shared';
 import { EASING } from '../../ui/motion';
 import type { Transaction, TransactionType, PaymentMethod } from '../../types';
 
@@ -65,7 +65,7 @@ export function TransactionSlideOver({
   const amountRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
-  const getTodayString = () => new Date().toISOString().split('T')[0];
+  const getTodayString = () => getLocalDateString();
 
   const [type, setType] = useState<TransactionType>('expense');
   const [amountStr, setAmountStr] = useState<string>('');

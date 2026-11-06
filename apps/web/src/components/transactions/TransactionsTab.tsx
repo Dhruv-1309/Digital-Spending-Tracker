@@ -20,7 +20,7 @@ import {
   exportTransactionsJson,
   importTransactionsFromCsv,
 } from '../../lib/transactions';
-import { formatCurrency } from '../../lib/formatters';
+import { formatCurrency, formatCalendarDate, getLocalDateString } from '../../lib/formatters';
 import { toUserFriendlyError } from '../../lib/errorMessages';
 import {
   SearchIcon,
@@ -195,15 +195,10 @@ export function TransactionsTab() {
         0,
       );
 
-      const dateObj = new Date(dateKey);
-      const formattedDate = isNaN(dateObj.getTime())
-        ? dateKey
-        : dateObj.toLocaleDateString('en-IN', {
-            weekday: 'short',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          });
+      const formattedDate = formatCalendarDate(dateKey, {
+        includeWeekday: true,
+        includeYear: true,
+      });
 
       groups.push({
         date: dateKey,
@@ -279,7 +274,7 @@ export function TransactionsTab() {
       return;
     }
 
-    const datePart = new Date().toISOString().split('T')[0];
+    const datePart = getLocalDateString();
     let content = '';
     let filename = '';
     let mimeType = '';

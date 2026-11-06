@@ -143,7 +143,7 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [ ] Fix any lingering silent-create or unhandled network errors across the context pipeline
 - **How It Will Be Tested:** Run full suite of 261 component and integration tests in apps/web.
 
-### 9. [CORE-4] Timezone-consistent date conversions and midnight boundary verification
+### 9. [CORE-4] Timezone-consistent date conversions and midnight boundary verification [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `CORE-1`

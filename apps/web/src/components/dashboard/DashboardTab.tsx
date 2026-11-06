@@ -6,7 +6,7 @@ import { useCountUp } from '../../hooks/useCountUp';
 import { WeeklyActivityChart } from './WeeklyActivityChart';
 import { getCurrentMonthExpenses, getCurrentMonthRange, evaluateBudgetStatus } from '../../lib/budget';
 import { detectSpendingAnomalies } from '../../lib/anomalies';
-import { formatCurrency } from '../../lib/formatters';
+import { formatCurrency, formatCalendarDate } from '../../lib/formatters';
 import { validateBudgetGoalForm } from '../../lib/validation';
 import { toUserFriendlyError } from '../../lib/errorMessages';
 import {
@@ -379,9 +379,9 @@ export function DashboardTab() {
           style={{ '--i': 0 } as React.CSSProperties}
         >
           {unapprovedAnomalies.map((anomaly) => {
-            const formattedDate = new Date(anomaly.date).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'short',
+            const formattedDate = formatCalendarDate(anomaly.date, {
+              includeWeekday: false,
+              includeYear: false,
             });
             const meanVal = anomaly.expectedAmount || 0;
             const percentAboveMean =
@@ -821,9 +821,9 @@ export function DashboardTab() {
           >
             {recentTransactions.map((tx) => {
               const isIncome = tx.type === 'income';
-              const formattedDate = new Date(tx.date).toLocaleDateString('en-IN', {
-                month: 'short',
-                day: 'numeric',
+              const formattedDate = formatCalendarDate(tx.date, {
+                includeWeekday: false,
+                includeYear: false,
               });
 
               return (

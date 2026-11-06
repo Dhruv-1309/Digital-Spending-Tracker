@@ -506,7 +506,7 @@ describe('Phase 6: Autopay Redesign Screen', () => {
       expect(upcoming.length).toBe(1);
       expect(upcoming[0].autopay.id).toBe('auto_2'); // Netflix, day 18
       expect(upcoming[0].daysRemaining).toBe(3); // 18 - 15 = 3
-      expect(upcoming[0].dueDateStr).toBe(new Date(2026, 9, 18).toISOString().split('T')[0]);
+      expect(upcoming[0].dueDateStr).toBe('2026-10-18');
 
       // Countdown text
       expect(getCountdownChipText(upcoming[0].daysRemaining)).toBe('in 3 days');
@@ -515,20 +515,20 @@ describe('Phase 6: Autopay Redesign Screen', () => {
       const gymPlan = sampleAutopays.find((a) => a.id === 'auto_3')!; // day 10
       const nextGym = getNextDeductionDate(gymPlan, refDate);
       // Day 10 has passed for Oct 15, so next deduction is Nov 10
-      expect(nextGym.dueDateStr).toBe(new Date(2026, 10, 10).toISOString().split('T')[0]);
+      expect(nextGym.dueDateStr).toBe('2026-11-10');
       expect(nextGym.dayLabel).toBe('the 10th');
 
       // 4. Next deduction date calculation for future in month
       const netflixPlan = sampleAutopays.find((a) => a.id === 'auto_2')!; // day 18
       const nextNetflix = getNextDeductionDate(netflixPlan, refDate);
-      expect(nextNetflix.dueDateStr).toBe(new Date(2026, 9, 18).toISOString().split('T')[0]);
+      expect(nextNetflix.dueDateStr).toBe('2026-10-18');
       expect(nextNetflix.dayLabel).toBe('the 18th');
 
       // 5. Next deduction date calculation for Last Day (day 31)
       const lastDayPlan = sampleAutopays.find((a) => a.id === 'auto_4')!; // day 31
       const nextLastDay = getNextDeductionDate(lastDayPlan, refDate);
       // October has 31 days, 31 >= 15, so next deduction is Oct 31
-      expect(nextLastDay.dueDateStr).toBe(new Date(2026, 9, 31).toISOString().split('T')[0]);
+      expect(nextLastDay.dueDateStr).toBe('2026-10-31');
       expect(nextLastDay.dayLabel).toBe('Last day');
     });
   });

@@ -1,4 +1,5 @@
 import { rupeesToPaise, paiseToRupees } from '../currency/paise.js';
+import { formatCalendarDate } from './formatters.js';
 
 export interface AutopayLike {
   id: string;
@@ -79,11 +80,12 @@ export function getUpcomingAutopays<T extends AutopayLike>(
       const targetDay = Math.min(autopay.day, daysInMonth);
       if (targetDay >= currentDay) {
         const daysRemaining = targetDay - currentDay;
-        const dueDate = new Date(currentYear, currentMonth, targetDay);
-        const dueDateStr = dueDate.toISOString().split('T')[0];
-        const formattedDue = dueDate.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'short',
+        const mm = String(currentMonth + 1).padStart(2, '0');
+        const dd = String(targetDay).padStart(2, '0');
+        const dueDateStr = `${currentYear}-${mm}-${dd}`;
+        const formattedDue = formatCalendarDate(dueDateStr, {
+          includeWeekday: false,
+          includeYear: false,
         });
 
         upcoming.push({
