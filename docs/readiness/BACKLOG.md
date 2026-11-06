@@ -344,18 +344,19 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Logs error to console or telemetry
 - **How It Will Be Tested:** Component test throwing simulated render error and verifying friendly fallback appearance.
 
-### 4. [UX-4] Dedicated 404 page, unknown-route handling, and standalone offline page
+### 4. [UX-4] Dedicated 404 page, unknown-route handling, and standalone offline page [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
 - **Files Likely Touched:**
   - `apps/web/src/components/common/NotFoundPage.tsx`
-  - `apps/web/src/components/common/OfflineFallbackPage.tsx`
+  - `apps/web/src/lib/routes.ts`
+  - `apps/web/public/offline.html`
   - `apps/web/src/App.tsx`
 - **Acceptance Criteria:**
-  - [ ] Navigating to unrecognized URL route renders clear 404 Not Found screen with "Return to Dashboard" action
-  - [ ] Provides offline fallback view if user opens app disconnected without cached shell
-- **How It Will Be Tested:** Component tests in legal_routes.test.tsx verifying 404 page on unknown paths.
+  - [x] Navigating to unrecognized URL route renders clear 404 Not Found screen with "Return to Dashboard" action
+  - [x] Provides offline fallback view if user opens app disconnected without cached shell
+- **How It Will Be Tested:** Component tests in legal_routes.test.tsx and not_found.test.tsx verifying 404 page on unknown paths.
 
 ### 5. [CORE-9] Recoverable transaction deletion (Undo toast action and soft-delete state)
 

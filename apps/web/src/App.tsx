@@ -6,8 +6,11 @@ import { ConfirmProvider } from './context/ConfirmContext';
 import { TrackerProvider } from './context/TrackerContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { NotFoundPage } from './components/common/NotFoundPage';
 import { TermsPage } from './components/legal/TermsPage';
 import { PrivacyPage } from './components/legal/PrivacyPage';
+
+import { type AppRoute, resolveAppRoute } from './lib/routes';
 
 // Dev-only routes /design and /audit, completely pruned from production builds via import.meta.env.DEV
 const DevDesignPage = import.meta.env.DEV
@@ -18,42 +21,17 @@ const DevStateAuditPage = import.meta.env.DEV
   ? lazy(() => import('./components/dev/StateAuditDevPage'))
   : null;
 
-type AppRoute = 'terms' | 'privacy' | 'design' | 'audit' | null;
-
 function useAppRoute(): AppRoute {
   const [route, setRoute] = useState<AppRoute>(() => {
     if (typeof window === 'undefined') return null;
-    const path = window.location.pathname;
-    const hash = window.location.hash;
-
-    if (path === '/terms' || hash.startsWith('#terms')) return 'terms';
-    if (path === '/privacy' || hash.startsWith('#privacy')) return 'privacy';
-
-    if (import.meta.env.DEV) {
-      if (path === '/design' || hash.startsWith('#design')) return 'design';
-      if (path === '/audit' || hash.startsWith('#audit')) return 'audit';
-    }
-    return null;
+    return resolveAppRoute(window.location.pathname, window.location.hash);
   });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleLocationChange = () => {
-      const path = window.location.pathname;
-      const hash = window.location.hash;
-
-      if (path === '/terms' || hash.startsWith('#terms')) {
-        setRoute('terms');
-      } else if (path === '/privacy' || hash.startsWith('#privacy')) {
-        setRoute('privacy');
-      } else if (import.meta.env.DEV && (path === '/design' || hash.startsWith('#design'))) {
-        setRoute('design');
-      } else if (import.meta.env.DEV && (path === '/audit' || hash.startsWith('#audit'))) {
-        setRoute('audit');
-      } else {
-        setRoute(null);
-      }
+      setRoute(resolveAppRoute(window.location.pathname, window.location.hash));
     };
 
     window.addEventListener('popstate', handleLocationChange);
@@ -94,6 +72,14 @@ export function App() {
     return (
       <LazyMotion features={domAnimation} strict>
         <PrivacyPage onBack={handleBackToApp} />
+      </LazyMotion>
+    );
+  }
+
+  if (route === 'not-found') {
+    return (
+      <LazyMotion features={domAnimation} strict>
+        <NotFoundPage onBack={handleBackToApp} />
       </LazyMotion>
     );
   }

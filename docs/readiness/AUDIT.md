@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{323.5}{499} = \mathbf{64.8\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{326.5}{499} = \mathbf{65.4\%}$$
 
-- **Current Readiness Score:** **64.8%** (Baseline: 56.8%)
+- **Current Readiness Score:** **65.4%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **323.5 points**
+- **Earned Weight:** **326.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **87** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **88** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **43** |
-| **MISSING** | Not implemented | **39** |
+| **MISSING** | Not implemented | **38** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -38,7 +38,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **AUTH** | Authentication and Accounts | 14 | 7D / 4P / 2M (1 other) | **68.8%** | 27.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 17D / 2P / 2M  | **90.9%** | 60 / 66 |
 | **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
-| **UX** | Frontend, UX and Accessibility | 24 | 14D / 4P / 5M (1 other) | **73.6%** | 40.5 / 55 |
+| **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
 | **QA** | Testing and Code Quality | 18 | 9D / 4P / 4M (1 other) | **67.4%** | 31.0 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
@@ -192,7 +192,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **UX-1** | Every screen has loading, empty, error and success states | `DONE` | apps/web/src/test/primitives.test.tsx, DashboardTab.tsx, TransactionsTab.tsx, AutopayTab.tsx, AnalyticsTab.tsx | - |
 | **UX-2** | Forms have visible labels, inline validation, keep the user's input after an error, and block double submission | `DONE` | AddTransactionTab.tsx, TransactionSlideOver.tsx, AuthModal.tsx, AutopayTab.tsx | - |
 | **UX-3** | An error boundary stops one broken component from blanking the app, with a friendly fallback and a reload action | `DONE` | apps/web/src/components/common/ErrorBoundary.tsx, apps/web/src/App.tsx, apps/web/src/components/layout/AppLayout.tsx, apps/web/src/test/error_boundary.test.tsx | ErrorBoundary wraps application shell and tab views with empathetic fallback card, reload action, reset state recovery, and error logging. | None |
-| **UX-4** | A 404 page and unknown-route handling exist, and an offline page where relevant | `MISSING` | apps/web/src/App.tsx:22-67 falls through to AppLayout on unknown routes | Dedicated 404 Not Found screen and standalone offline fallback page are missing. |
+| **UX-4** | A 404 page and unknown-route handling exist, and an offline page where relevant | `DONE` | apps/web/src/components/common/NotFoundPage.tsx, apps/web/src/lib/routes.ts, apps/web/public/offline.html, apps/web/src/test/not_found.test.tsx | Dedicated 404 Not Found screen on unknown routes with 'Return to Dashboard' CTA; standalone public offline.html for service worker / disconnected fallback. | None |
 | **UX-5** | Destructive actions ask for confirmation or offer undo | `DONE` | apps/web/src/components/common/ConfirmModal.tsx, TransactionsTab.tsx:265-272, AutopayTab.tsx:160-175, ProfileModal.tsx:495-505 | - |
 | **UX-6** | Layout works at 360, 390, 768, 1024 and 1440 px with no horizontal scroll | `DONE` | apps/web/src/test/app_shell.test.tsx, docs/redesign/baseline screenshots at 390, 768, 1440px | - |
 | **UX-7** | Touch targets are at least 44 px and nothing depends on hover alone | `DONE` | apps/web/src/components/ui/Button.tsx (min-h-[44px]), apps/web/src/test/a11y_axe.test.tsx | - |
