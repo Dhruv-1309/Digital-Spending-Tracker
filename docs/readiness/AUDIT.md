@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{283.5}{499} = \mathbf{56.8\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{285.5}{499} = \mathbf{57.2\%}$$
 
-- **Baseline Readiness Score:** **56.8%**
+- **Current Readiness Score:** **57.2%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **283.5 points**
+- **Earned Weight:** **285.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **67** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **62** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **68** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **61** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -40,7 +40,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **SEC** | Security and Privacy | 22 | 9D / 6P / 4M (3 other) | **60.9%** | 42 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 13D / 4P / 6M (1 other) | **68.2%** | 37.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
-| **QA** | Testing and Code Quality | 18 | 6D / 7P / 4M (1 other) | **55.4%** | 25.5 / 46 |
+| **QA** | Testing and Code Quality | 18 | 7D / 6P / 4M (1 other) | **59.8%** | 27.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 4D / 4P / 4M (9 other) | **30%** | 16.5 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 3D / 7P / 9M (1 other) | **45.3%** | 19.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
@@ -238,7 +238,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
-| **QA-1** | TypeScript strict with zero errors; any use of any has a comment explaining it | `PARTIAL` | packages/shared/test/mathEvaluator.test.ts TS2835 error; 34 @typescript-eslint/no-explicit-any warnings in web | Fix shared test import extension and remove or document any types. |
+| **QA-1** | TypeScript strict with zero errors; any use of any has a comment explaining it | DONE | Root tsconfig.json references all packages; npx tsc -b passes with 0 errors across packages/shared, apps/api, apps/web; mathEvaluator.test.ts uses .js; vitest.config.ts isolates dist | - |
 | **QA-2** | Unit tests cover all pure logic including the edge cases in the CORE section | `PARTIAL` | 417 passing tests across workspaces | Missing explicit tests for amount limits, leap year Feb 29 clamping, exact budget thresholds, and CSV BOM handling. |
 | **QA-3** | API integration tests run against a real database | `DONE` | apps/api/test/*.test.ts (13 test files, 40 tests passing against Prisma/testDb) | - |
 | **QA-4** | ESLint and Prettier are configured with zero errors, and a pre-commit hook runs them on changed files | `PARTIAL` | npm run lint failed with 1 error (AnalyticsTab.tsx:118:5 set-state-in-effect) and 34 warnings | Fix ESLint error; configure lint scripts in api and shared; add pre-commit hook. |

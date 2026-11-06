@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   containsMathExpression,
   evaluateMathExpression,
-} from '../src/calculations/mathEvaluator';
+} from '../src/calculations/mathEvaluator.js';
 
 describe('mathEvaluator', () => {
   describe('containsMathExpression', () => {

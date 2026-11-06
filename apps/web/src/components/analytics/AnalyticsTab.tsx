@@ -110,14 +110,11 @@ export function AnalyticsTab() {
 
   const [preset, setPreset] = useState<AnalyticsPreset>(null);
   const [period, setPeriod] = useState<AnalyticsPeriod>('monthly');
-  const [selectedMonth, setSelectedMonth] = useState<string>(defaultMonthYear.month);
-  const [selectedYear, setSelectedYear] = useState<string>(defaultMonthYear.year);
+  const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
+  const [userSelectedYear, setUserSelectedYear] = useState<string | null>(null);
 
-  // Sync if defaultMonthYear updates when transactions first load
-  useEffect(() => {
-    setSelectedMonth((prev) => (prev === currentMonthStr ? defaultMonthYear.month : prev));
-    setSelectedYear((prev) => (prev === currentYearStr ? defaultMonthYear.year : prev));
-  }, [defaultMonthYear, currentMonthStr, currentYearStr]);
+  const selectedMonth = userSelectedMonth ?? defaultMonthYear.month;
+  const selectedYear = userSelectedYear ?? defaultMonthYear.year;
 
   // Category Doughnut <-> Legend bidirectional hover state
   const [hoveredCategoryIndex, setHoveredCategoryIndex] = useState<number | null>(null);
@@ -147,12 +144,12 @@ export function AnalyticsTab() {
 
   const handleMonthChange = (val: string) => {
     setPreset(null);
-    setSelectedMonth(val);
+    setUserSelectedMonth(val);
   };
 
   const handleYearChange = (val: string) => {
     setPreset(null);
-    setSelectedYear(val);
+    setUserSelectedYear(val);
   };
 
   // Filter transactions
