@@ -134,7 +134,7 @@ describe('Phase 3: AppShell & Navigation', () => {
   });
 
   describe('1. Desktop Left Rail & Tablet/Phone Navigation', () => {
-    it('renders the 232px left rail with brand logo, 4 items and profile at the bottom', () => {
+    it('renders the 256px left rail with brand logo, 4 items and profile at the bottom', () => {
       const onOpenProfile = vi.fn();
       renderWithProviders(
         <AppShell onOpenProfile={onOpenProfile}>
@@ -145,7 +145,7 @@ describe('Phase 3: AppShell & Navigation', () => {
       // Sidebar exists
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
       expect(sidebar).toBeInTheDocument();
-      expect(sidebar).toHaveClass('w-[232px]');
+      expect(sidebar).toHaveClass('w-[256px]');
 
       // Logo and brand text
       expect(screen.getByText('MoneyTracker')).toBeInTheDocument();
@@ -295,11 +295,11 @@ describe('Phase 3: AppShell & Navigation', () => {
 
       // Desktop Left Rail is hidden below 1025px (for 390px phone and 768px tablet), visible on 1025px+ (1440px desktop)
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
-      expect(sidebar).toHaveClass('hidden', 'min-[1025px]:flex', 'w-[232px]');
+      expect(sidebar).toHaveClass('hidden', 'min-[1025px]:flex', 'w-[256px]');
 
-      // Top bar adapts: on desktop offsets by rail width (min-[1025px]:left-[232px]), full width on mobile/tablet (left-0)
+      // Top bar adapts: on desktop offsets by rail width (min-[1025px]:left-[256px]), full width on mobile/tablet (left-0)
       const header = screen.getByRole('banner', { name: /App Header/i });
-      expect(header).toHaveClass('fixed', 'top-0', 'left-0', 'min-[1025px]:left-[232px]');
+      expect(header).toHaveClass('fixed', 'top-0', 'left-0', 'min-[1025px]:left-[256px]');
 
       // Mobile Profile button in top bar visible on tablet/phone, hidden on desktop
       const mobileProfileBtn = screen.getByRole('button', { name: /Open mobile profile settings/i });
@@ -309,9 +309,9 @@ describe('Phase 3: AppShell & Navigation', () => {
       const mobileNav = screen.getByRole('navigation', { name: /Main Navigation Tabs/i });
       expect(mobileNav).toHaveClass('min-[1025px]:hidden', 'fixed', 'bottom-0');
 
-      // Main content area has bottom padding for mobile bar (pb-20) and left padding for desktop rail (min-[1025px]:pl-[232px])
+      // Main content area has bottom padding for mobile bar (pb-20) and left padding for desktop rail (min-[1025px]:pl-[256px])
       const main = screen.getByRole('main');
-      expect(main).toHaveClass('min-[1025px]:pl-[232px]', 'pb-20');
+      expect(main).toHaveClass('min-[1025px]:pl-[256px]', 'pb-20');
     });
   });
 
@@ -555,12 +555,12 @@ describe('Phase 3: AppShell & Navigation', () => {
     });
   });
 
-  describe('8. Collapsible Sidebar & Clean Full-Width Mode', () => {
+  describe('8. Collapsible Sidebar & Gemini-Style Slim Rail', () => {
     beforeEach(() => {
       localStorage.clear();
     });
 
-    it('hides sidebar and expands main content to full width when clicking collapse button', () => {
+    it('collapses sidebar to 68px slim rail and adjusts header/main when clicking collapse button', () => {
       const onOpenProfile = vi.fn();
       renderWithProviders(
         <AppShell onOpenProfile={onOpenProfile} defaultSidebarCollapsed={false}>
@@ -569,23 +569,23 @@ describe('Phase 3: AppShell & Navigation', () => {
       );
 
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
-      expect(sidebar).toHaveClass('w-[232px]', 'translate-x-0');
+      expect(sidebar).toHaveClass('w-[256px]');
 
       // Click collapse button in sidebar header
       const collapseBtn = screen.getByTestId('sidebar-collapse-btn');
       fireEvent.click(collapseBtn);
 
-      // Sidebar slides off-screen (-translate-x-full)
-      expect(sidebar).toHaveClass('-translate-x-full');
+      // Sidebar switches to Gemini slim rail (w-[68px])
+      expect(sidebar).toHaveClass('w-[68px]');
 
-      // Header and main content expand to full width (left-0, pl-0)
+      // Header and main content adjust offsets to slim rail (left-[68px], pl-[68px])
       const header = screen.getByRole('banner', { name: /App Header/i });
-      expect(header).toHaveClass('min-[1025px]:left-0');
+      expect(header).toHaveClass('min-[1025px]:left-[68px]');
       const main = screen.getByRole('main');
-      expect(main).toHaveClass('min-[1025px]:pl-0');
+      expect(main).toHaveClass('min-[1025px]:pl-[68px]');
     });
 
-    it('expands sidebar back when clicking toggle button in header', () => {
+    it('expands sidebar back to 256px when clicking toggle button in header or rail', () => {
       renderWithProviders(
         <AppShell onOpenProfile={vi.fn()} defaultSidebarCollapsed={true}>
           <div>Main Content</div>
@@ -593,16 +593,18 @@ describe('Phase 3: AppShell & Navigation', () => {
       );
 
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
-      expect(sidebar).toHaveClass('-translate-x-full');
+      expect(sidebar).toHaveClass('w-[68px]');
 
       // Click toggle button in header
       const headerToggle = screen.getByTestId('header-sidebar-toggle');
       fireEvent.click(headerToggle);
 
-      // Sidebar returns to screen
-      expect(sidebar).toHaveClass('translate-x-0');
+      // Sidebar returns to expanded width (w-[256px])
+      expect(sidebar).toHaveClass('w-[256px]');
       const header = screen.getByRole('banner', { name: /App Header/i });
-      expect(header).toHaveClass('min-[1025px]:left-[232px]');
+      expect(header).toHaveClass('min-[1025px]:left-[256px]');
+      const main = screen.getByRole('main');
+      expect(main).toHaveClass('min-[1025px]:pl-[256px]');
     });
 
     it('toggles sidebar with Ctrl+B and Meta+B keyboard shortcut', () => {
@@ -613,15 +615,15 @@ describe('Phase 3: AppShell & Navigation', () => {
       );
 
       const sidebar = screen.getByRole('complementary', { name: /Desktop Sidebar/i });
-      expect(sidebar).toHaveClass('translate-x-0');
+      expect(sidebar).toHaveClass('w-[256px]');
 
-      // Ctrl+B hides sidebar
+      // Ctrl+B collapses sidebar to slim rail
       fireEvent.keyDown(window, { key: 'b', ctrlKey: true });
-      expect(sidebar).toHaveClass('-translate-x-full');
+      expect(sidebar).toHaveClass('w-[68px]');
 
-      // Meta+B shows sidebar
+      // Meta+B expands sidebar back
       fireEvent.keyDown(window, { key: 'b', metaKey: true });
-      expect(sidebar).toHaveClass('translate-x-0');
+      expect(sidebar).toHaveClass('w-[256px]');
     });
   });
 });

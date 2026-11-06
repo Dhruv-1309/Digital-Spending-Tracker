@@ -11,7 +11,8 @@ import {
   WifiOffIcon,
   UserIcon,
   LogOutIcon,
-  PanelLeftIcon,
+  MenuIcon,
+  XIcon,
 } from '../icons';
 
 export interface AppShellProps {
@@ -38,25 +39,26 @@ function getPageTitle(tab: NavTab): string {
 }
 
 /**
- * AppShell Component (SPEC Section 5 Navigation & Section 6 All Screens)
+ * AppShell Component — Google Gemini Web-Browser Style Layout
  *
  * 1. Desktop (>= 1025px):
- *    - Open: 232px left rail with brand logo, collapse button, 4 navigation items with labels,
- *      profile entry at the bottom.
- *    - Closed: Sidebar smoothly hides off-screen (-translate-x-full) and content expands to full width (pl-0).
- *      A toggle button [ ◨ ] in the top-left header allows instant reopening.
- * 2. Tablet & Phone (< 1025px): Bottom tab bar with same 4 items, icons and labels;
- *    profile entry in the top bar.
- * 3. Top bar with page title, Add transaction button, and Offline chip.
- *    Pressing 'N' when no input has focus opens the add-transaction form.
- *    Pressing 'Ctrl+B' or 'Cmd+B' toggles sidebar collapse/expand.
- * 4. Content area with 160ms route cross-fade (instant swap under reduced motion).
+ *    - Expanded State (256px): Brand & hamburger toggle at top, prominent "+ New Transaction"
+ *      capsule pill, smooth rounded-full navigation items with active accent styling,
+ *      and full profile footer.
+ *    - Collapsed State (68px Slim Rail): Centered hamburger button, centered circular "+" button,
+ *      centered icon navigation with floating hover tooltips, and compact avatar button.
+ * 2. Tablet & Phone (< 1025px):
+ *    - Top bar has hamburger menu icon that slides out a Gemini-style drawer overlay with backdrop blur.
+ *    - Also preserves one-thumb bottom tab navigation for quick mobile ergonomics.
+ * 3. Keyboard Shortcuts:
+ *    - Pressing 'N' when no input has focus triggers "+ New Transaction".
+ *    - Pressing 'Ctrl+B' or 'Cmd+B' smoothly toggles the sidebar between expanded and collapsed rail.
  */
 export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: AppShellProps) {
   const { user, signOut } = useAuth();
   const { currentTab, setCurrentTab, isOnline } = useTracker();
 
-  // Collapsed / hidden state persisted in localStorage or driven by URL param (?sidebar=collapsed)
+  // Desktop sidebar collapsed state (persisted in localStorage or driven by URL param)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (defaultSidebarCollapsed !== undefined) return defaultSidebarCollapsed;
     try {
@@ -76,6 +78,9 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
     }
     return false;
   });
+
+  // Mobile drawer state (< 1025px)
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarCollapsed((prev) => {
@@ -111,8 +116,14 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
   // Keyboard shortcuts:
   // - Pressing 'N' when no input is focused opens add-transaction form
   // - Pressing 'Ctrl+B' or 'Cmd+B' toggles the sidebar
+  // - Pressing 'Escape' closes the mobile drawer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileDrawerOpen) {
+        setIsMobileDrawerOpen(false);
+        return;
+      }
+
       // Toggle sidebar shortcut: Ctrl+B or Cmd+B
       if ((e.key === 'b' || e.key === 'B') && (e.ctrlKey || e.metaKey)) {
         const activeEl = document.activeElement as HTMLElement | null;
@@ -158,7 +169,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [setCurrentTab, toggleSidebar]);
+  }, [setCurrentTab, toggleSidebar, isMobileDrawerOpen]);
 
   const userInitial = useMemo(() => {
     const name = user?.displayName || user?.email || 'U';
@@ -192,140 +203,267 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
   return (
     <div className="min-h-screen bg-bg text-ink flex flex-col font-sans selection:bg-accent-tint selection:text-accent">
       {/* ====================================================================
-          Desktop Left Rail (1025px and wider)
-          - Open: 232px (--nav-rail-width), fixed on left
-          - Hidden/Closed: translated off-screen (-translate-x-full), content gets full width
+          Desktop Left Rail (1025px and wider) — Gemini Web Browser Style
+          - Expanded: 256px wide, with brand, + New Transaction pill, pill navigation items, and profile footer
+          - Collapsed: 68px slim icon rail with tooltips, centered hamburger, + circular button, and icon-only navigation
           ==================================================================== */}
       <aside
         aria-label="Desktop Sidebar"
         style={{ top: 'var(--shell-top-offset, 0px)' }}
-        className={`hidden min-[1025px]:flex fixed inset-y-0 left-0 z-30 w-[232px] flex-col justify-between border-r border-line bg-surface p-4 transition-transform duration-200 ease-out ${
-          isSidebarCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
+        className={`hidden min-[1025px]:flex fixed inset-y-0 left-0 z-30 flex-col justify-between border-r border-line bg-surface transition-[width,padding] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${
+          isSidebarCollapsed ? 'w-[68px] p-2 items-center' : 'w-[256px] p-3.5'
         }`}
       >
-        <div className="flex flex-col gap-6">
-          {/* Logo / Brand & Collapse Toggle Button */}
-          <div className="flex items-center justify-between gap-2 px-1 py-1">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-accent-tint text-accent">
-                <WalletIcon size={22} />
+        <div className="flex flex-col gap-2 w-full">
+          {/* Top Header: Hamburger Toggle & Brand */}
+          {isSidebarCollapsed ? (
+            <div className="flex flex-col items-center pt-0.5 pb-1 w-full">
+              <button
+                type="button"
+                data-testid="sidebar-collapse-btn"
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                title="Expand menu (Ctrl+B)"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <MenuIcon size={20} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2 px-1 pt-0.5 pb-1">
+              <button
+                type="button"
+                data-testid="sidebar-collapse-btn"
+                onClick={toggleSidebar}
+                aria-label="Collapse sidebar"
+                title="Collapse menu (Ctrl+B)"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <MenuIcon size={20} />
+              </button>
+
+              <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-tint text-accent">
+                  <WalletIcon size={18} />
+                </div>
+                <div className="min-w-0">
+                  <span className="font-display text-sm font-semibold tracking-tight text-ink block leading-tight truncate">
+                    MoneyTracker
+                  </span>
+                  <span className="text-[10px] text-ink-3 block whitespace-nowrap">Personal Finance</span>
+                </div>
               </div>
-              <div className="min-w-0">
-                <span className="font-display text-base font-semibold tracking-tight text-ink block leading-tight truncate">
-                  MoneyTracker
+            </div>
+          )}
+
+          {/* Gemini-Style "+ New Transaction" Button */}
+          {isSidebarCollapsed ? (
+            <div className="my-1.5 flex justify-center w-full relative group">
+              <button
+                type="button"
+                id="sidebarNewTxBtnCollapsed"
+                onClick={() => setCurrentTab('add-transaction')}
+                aria-label="New Transaction (Press N)"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-white hover:bg-accent-hover shadow-1 hover:shadow-2 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <PlusIcon size={20} />
+              </button>
+              {/* Floating Tooltip */}
+              <span className="absolute left-full ml-3 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                New Transaction (N)
+              </span>
+            </div>
+          ) : (
+            <div className="my-1.5 px-0.5">
+              <button
+                type="button"
+                id="sidebarNewTxBtn"
+                onClick={() => setCurrentTab('add-transaction')}
+                className="group flex h-10 w-full items-center justify-between rounded-full bg-accent-tint/60 hover:bg-accent-tint border border-accent/25 px-3.5 text-accent font-medium text-sm transition-all shadow-xs hover:shadow-sm active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                title="New Transaction (Press N)"
+              >
+                <span className="flex items-center gap-2.5">
+                  <PlusIcon size={18} className="text-accent shrink-0" />
+                  <span className="font-medium text-sm">New Transaction</span>
                 </span>
-                <span className="text-xs text-ink-3 block whitespace-nowrap">Personal Finance</span>
-              </div>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-sans font-semibold rounded bg-accent/15 text-accent">
+                  N
+                </kbd>
+              </button>
             </div>
+          )}
 
-            {/* Collapse Button in Sidebar Header */}
-            <button
-              type="button"
-              data-testid="sidebar-collapse-btn"
-              onClick={toggleSidebar}
-              aria-label="Hide sidebar"
-              title="Hide sidebar (Ctrl+B)"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-btn text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              <PanelLeftIcon size={18} />
-            </button>
-          </div>
+          {/* Navigation Items (Dashboard, Transactions, Autopay, Analytics) */}
+          {isSidebarCollapsed ? (
+            <nav aria-label="Desktop Navigation" className="flex flex-col gap-1.5 items-center w-full mt-1">
+              {MAIN_NAV_ITEMS.map((item) => {
+                const isActive = currentTab === item.id;
+                const IconComponent = item.icon;
 
-          {/* Navigation Items (4 items: Dashboard, Transactions, Autopay, Analytics) */}
-          <nav aria-label="Desktop Navigation" className="flex flex-col gap-1.5">
-            {MAIN_NAV_ITEMS.map((item) => {
-              const isActive = currentTab === item.id;
-              const IconComponent = item.icon;
+                return (
+                  <div key={item.id} className="relative group flex justify-center w-full">
+                    <button
+                      type="button"
+                      data-tab={item.id}
+                      aria-current={isActive ? 'page' : undefined}
+                      onClick={() => setCurrentTab(item.id)}
+                      aria-label={item.label}
+                      className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                        isActive
+                          ? 'bg-accent-tint text-accent shadow-xs font-semibold'
+                          : 'text-ink-3 hover:bg-surface-2 hover:text-ink'
+                      }`}
+                    >
+                      {isActive && (
+                        <span
+                          aria-hidden="true"
+                          data-testid="active-accent-bar"
+                          className="sr-only"
+                        />
+                      )}
+                      <IconComponent
+                        size={20}
+                        className={isActive ? 'text-accent' : 'text-ink-3 group-hover:text-ink'}
+                      />
+                    </button>
+                    {/* Floating Tooltip */}
+                    <span className="absolute left-full ml-3 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                      {item.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </nav>
+          ) : (
+            <nav aria-label="Desktop Navigation" className="flex flex-col gap-1 w-full mt-1">
+              {MAIN_NAV_ITEMS.map((item) => {
+                const isActive = currentTab === item.id;
+                const IconComponent = item.icon;
 
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  data-tab={item.id}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => setCurrentTab(item.id)}
-                  className={`group relative flex h-11 w-full items-center gap-3 rounded-btn px-3 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-                    isActive
-                      ? 'bg-accent-tint text-accent font-semibold'
-                      : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
-                  }`}
-                >
-                  {/* 3px Accent Bar */}
-                  {isActive && (
-                    <span
-                      aria-hidden="true"
-                      data-testid="active-accent-bar"
-                      className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-accent"
-                    />
-                  )}
-                  <IconComponent
-                    size={20}
-                    className={
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-tab={item.id}
+                    aria-current={isActive ? 'page' : undefined}
+                    onClick={() => setCurrentTab(item.id)}
+                    className={`group relative flex h-10 w-full items-center gap-3.5 rounded-full px-3.5 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       isActive
-                        ? 'text-accent shrink-0'
-                        : 'text-ink-3 group-hover:text-ink shrink-0 transition-colors duration-fast'
-                    }
-                  />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+                        ? 'bg-accent-tint text-accent font-semibold'
+                        : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
+                    }`}
+                  >
+                    {/* Active Accent Bar */}
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        data-testid="active-accent-bar"
+                        className="absolute left-1 top-2.5 bottom-2.5 w-[3px] rounded-full bg-accent"
+                      />
+                    )}
+                    <IconComponent
+                      size={20}
+                      className={
+                        isActive
+                          ? 'text-accent shrink-0'
+                          : 'text-ink-3 group-hover:text-ink shrink-0 transition-colors duration-fast'
+                      }
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
         </div>
 
-        {/* Profile Entry at Bottom of Left Rail */}
-        <div className="border-t border-line pt-3 mt-auto flex flex-col gap-1.5">
-          <button
-            id="profileBtn"
-            type="button"
-            onClick={onOpenProfile}
-            aria-label="Open profile settings"
-            className="group flex w-full items-center gap-3 rounded-btn p-2 hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent text-left"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-tint font-display text-sm font-semibold text-accent">
-              {userInitial}
+        {/* Profile & Footer Area at Bottom */}
+        {isSidebarCollapsed ? (
+          <div className="border-t border-line pt-3 mt-auto flex flex-col gap-2 items-center w-full">
+            <div className="relative group flex justify-center">
+              <button
+                id="profileBtn"
+                type="button"
+                onClick={onOpenProfile}
+                aria-label="Open profile settings"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-tint font-display text-sm font-semibold text-accent hover:ring-2 hover:ring-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {userInitial}
+              </button>
+              <span className="absolute left-full ml-3 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                Profile ({displayName})
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-medium text-ink group-hover:text-accent transition-colors duration-fast">
-                {displayName}
-              </p>
-              <p id="userEmail" className="truncate text-xs text-ink-3">
-                {user?.email || ''}
-              </p>
+
+            <div className="relative group flex justify-center">
+              <button
+                id="signOutBtn"
+                type="button"
+                onClick={() => signOut()}
+                aria-label="Sign out"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <LogOutIcon size={18} />
+              </button>
+              <span className="absolute left-full ml-3 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                Sign out
+              </span>
             </div>
-            <UserIcon size={16} className="text-ink-3 group-hover:text-ink shrink-0" />
-          </button>
-
-          <button
-            id="signOutBtn"
-            type="button"
-            onClick={() => signOut()}
-            aria-label="Sign out"
-            className="flex w-full items-center gap-3 rounded-btn px-3 py-2 text-xs font-medium text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <LogOutIcon size={16} className="shrink-0" />
-            <span>Sign out</span>
-          </button>
-
-          {/* Legal Links at Bottom of Left Rail */}
-          <div className="flex items-center justify-center gap-2 pt-2 px-1 text-[11px] text-ink-3 border-t border-line/60">
-            <a
-              href="/terms"
-              onClick={handleNavigateLegal('/terms', 'terms')}
-              className="hover:text-ink hover:underline transition-colors"
-            >
-              Terms
-            </a>
-            <span>•</span>
-            <a
-              href="/privacy"
-              onClick={handleNavigateLegal('/privacy', 'privacy')}
-              className="hover:text-ink hover:underline transition-colors"
-            >
-              Privacy
-            </a>
           </div>
-        </div>
+        ) : (
+          <div className="border-t border-line pt-3 mt-auto flex flex-col gap-1.5 w-full">
+            <button
+              id="profileBtn"
+              type="button"
+              onClick={onOpenProfile}
+              aria-label="Open profile settings"
+              className="group flex w-full items-center gap-3 rounded-full p-1.5 hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent text-left"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-tint font-display text-sm font-semibold text-accent">
+                {userInitial}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-sm font-medium text-ink group-hover:text-accent transition-colors duration-fast">
+                  {displayName}
+                </p>
+                <p id="userEmail" className="truncate text-xs text-ink-3">
+                  {user?.email || ''}
+                </p>
+              </div>
+              <UserIcon size={16} className="text-ink-3 group-hover:text-ink shrink-0 mr-1" />
+            </button>
+
+            <button
+              id="signOutBtn"
+              type="button"
+              onClick={() => signOut()}
+              aria-label="Sign out"
+              className="flex w-full items-center gap-3 rounded-full px-3 py-2 text-xs font-medium text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <LogOutIcon size={16} className="shrink-0" />
+              <span>Sign out</span>
+            </button>
+
+            {/* Legal Links at Bottom of Left Rail */}
+            <div className="flex items-center justify-center gap-2 pt-2 px-1 text-[11px] text-ink-3 border-t border-line/60">
+              <a
+                href="/terms"
+                onClick={handleNavigateLegal('/terms', 'terms')}
+                className="hover:text-ink hover:underline transition-colors"
+              >
+                Terms
+              </a>
+              <span>•</span>
+              <a
+                href="/privacy"
+                onClick={handleNavigateLegal('/privacy', 'privacy')}
+                className="hover:text-ink hover:underline transition-colors"
+              >
+                Privacy
+              </a>
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* ====================================================================
@@ -334,29 +472,33 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
       <header
         aria-label="App Header"
         style={{ top: 'var(--shell-top-offset, 0px)' }}
-        className={`fixed top-0 right-0 left-0 h-16 z-20 bg-surface/95 backdrop-blur-sm border-b border-line flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-[left] duration-200 ease-out ${
-          isSidebarCollapsed ? 'min-[1025px]:left-0' : 'min-[1025px]:left-[232px]'
+        className={`fixed top-0 right-0 left-0 h-16 z-20 bg-surface/95 backdrop-blur-sm border-b border-line flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-[left] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${
+          isSidebarCollapsed ? 'min-[1025px]:left-[68px]' : 'min-[1025px]:left-[256px]'
         }`}
       >
-        {/* Left: Mobile Brand Icon, Desktop Sidebar Toggle, Page Title */}
+        {/* Left: Mobile Hamburger, Desktop Toggle (when collapsed), Page Title */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          {/* Mobile Brand Icon (tablet & phone) */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-btn bg-accent-tint text-accent min-[1025px]:hidden shrink-0">
-            <WalletIcon size={20} />
-          </div>
+          {/* Mobile Hamburger Button (< 1025px) */}
+          <button
+            type="button"
+            aria-label="Open navigation menu"
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors min-[1025px]:hidden shrink-0"
+          >
+            <MenuIcon size={20} />
+          </button>
 
-          {/* Desktop Sidebar Toggle Button:
-              - Only visible when sidebar is collapsed, placed at the left edge to restore sidebar with one click */}
+          {/* Desktop Sidebar Toggle Button (header toggle for testing / convenience when collapsed) */}
           {isSidebarCollapsed && (
             <button
               type="button"
               data-testid="header-sidebar-toggle"
               onClick={toggleSidebar}
-              aria-label="Show sidebar"
-              title="Show sidebar (Ctrl+B)"
-              className="hidden min-[1025px]:inline-flex h-9 w-9 items-center justify-center rounded-btn text-ink-2 hover:text-ink hover:bg-surface-2 border border-line/60 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
+              aria-label="Expand sidebar"
+              title="Expand sidebar (Ctrl+B)"
+              className="hidden min-[1025px]:inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 border border-line/60 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
             >
-              <PanelLeftIcon size={18} />
+              <MenuIcon size={18} />
             </button>
           )}
 
@@ -411,12 +553,148 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
       </header>
 
       {/* ====================================================================
+          Mobile Slide-in Drawer (< 1025px) — Gemini Web Style
+          ==================================================================== */}
+      {isMobileDrawerOpen && (
+        <div className="min-[1025px]:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm animate-fadeIn"
+            onClick={() => setIsMobileDrawerOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Drawer Sheet */}
+          <div
+            role="dialog"
+            aria-label="Mobile Navigation Menu"
+            className="relative w-[280px] max-w-[85vw] bg-surface h-full shadow-3 border-r border-line p-4 flex flex-col justify-between animate-fadeIn z-10"
+          >
+            <div className="flex flex-col gap-3">
+              {/* Drawer Header with Brand & Close Button */}
+              <div className="flex items-center justify-between pb-2 border-b border-line">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-tint text-accent">
+                    <WalletIcon size={18} />
+                  </div>
+                  <span className="font-display text-base font-semibold text-ink">MoneyTracker</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  aria-label="Close menu"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors"
+                >
+                  <XIcon size={18} />
+                </button>
+              </div>
+
+              {/* Mobile Drawer "+ New Transaction" Pill */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentTab('add-transaction');
+                  setIsMobileDrawerOpen(false);
+                }}
+                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-accent text-white font-medium text-sm shadow-1 hover:bg-accent-hover transition-colors"
+              >
+                <PlusIcon size={18} />
+                <span>New Transaction</span>
+              </button>
+
+              {/* Mobile Drawer Navigation Items */}
+              <nav aria-label="Mobile Drawer Navigation" className="flex flex-col gap-1 mt-2">
+                {MAIN_NAV_ITEMS.map((item) => {
+                  const isActive = currentTab === item.id;
+                  const IconComponent = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setCurrentTab(item.id);
+                        setIsMobileDrawerOpen(false);
+                      }}
+                      className={`flex h-11 w-full items-center gap-3 rounded-full px-3.5 text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-accent-tint text-accent font-semibold'
+                          : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
+                      }`}
+                    >
+                      <IconComponent size={20} className={isActive ? 'text-accent' : 'text-ink-3'} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Mobile Drawer Profile & Legal Footer */}
+            <div className="border-t border-line pt-3 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenProfile();
+                  setIsMobileDrawerOpen(false);
+                }}
+                className="flex w-full items-center gap-3 rounded-full p-1.5 hover:bg-surface-2 transition-colors text-left"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-tint font-display text-sm font-semibold text-accent">
+                  {userInitial}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">{displayName}</p>
+                  <p className="truncate text-xs text-ink-3">{user?.email || ''}</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  signOut();
+                  setIsMobileDrawerOpen(false);
+                }}
+                className="flex w-full items-center gap-3 rounded-full px-3 py-2 text-xs font-medium text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors"
+              >
+                <LogOutIcon size={16} />
+                <span>Sign out</span>
+              </button>
+
+              <div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-ink-3 border-t border-line/60">
+                <a
+                  href="/terms"
+                  onClick={(e) => {
+                    handleNavigateLegal('/terms', 'terms')(e);
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className="hover:text-ink hover:underline"
+                >
+                  Terms
+                </a>
+                <span>•</span>
+                <a
+                  href="/privacy"
+                  onClick={(e) => {
+                    handleNavigateLegal('/privacy', 'privacy')(e);
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className="hover:text-ink hover:underline"
+                >
+                  Privacy
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
           Main Content Area (160ms CSS Cross-Fade on Route Change)
           ==================================================================== */}
       <main
         style={{ paddingTop: 'calc(4rem + var(--shell-top-offset, 0px))' }}
-        className={`flex-1 w-full pt-16 pb-20 min-[1025px]:pb-10 transition-[padding-left] duration-200 ease-out flex flex-col ${
-          isSidebarCollapsed ? 'min-[1025px]:pl-0' : 'min-[1025px]:pl-[232px]'
+        className={`flex-1 w-full pt-16 pb-20 min-[1025px]:pb-10 transition-[padding-left] duration-200 ease-[cubic-bezier(0.2,0,0,1)] flex flex-col ${
+          isSidebarCollapsed ? 'min-[1025px]:pl-[68px]' : 'min-[1025px]:pl-[256px]'
         }`}
       >
         <div className="mx-auto max-w-content w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col justify-between">
