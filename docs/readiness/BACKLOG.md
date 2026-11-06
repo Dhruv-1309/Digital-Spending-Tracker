@@ -77,16 +77,16 @@ Launch blockers must be 100% resolved before MoneyTracker can be publicly launch
   - [x] AmountInput UI displays inline error and prevents submission when amount exceeds limits
 - **How It Will Be Tested:** Unit tests in validation.test.ts and schemas.test.ts verifying rejection of 1e6, -50, 10000000001, and 12.345.
 
-### 4. [SEC-6] CSV export formula injection (CSV injection / DDE) neutralization
+### 4. [SEC-6] CSV export formula injection (CSV injection / DDE) neutralization [DONE]
 
 - **Priority:** `P0` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** None
 - **Files Likely Touched:**
   - `packages/shared/src/calculations/transactions.ts`
 - **Acceptance Criteria:**
-  - [ ] Cells starting with formula trigger characters (=, +, -, @) are sanitized with a leading single quote (')
-  - [ ] Prevents spreadsheet formula execution when exported CSV is opened in Excel, Google Sheets, or LibreOffice
-  - [ ] Normal text values remain uncorrupted
+  - [x] Cells starting with formula trigger characters (=, +, -, @, \t, \r) are sanitized with a leading single quote (')
+  - [x] Prevents spreadsheet formula execution when exported CSV is opened in Excel, Google Sheets, or LibreOffice
+  - [x] Normal text values remain uncorrupted
 - **How It Will Be Tested:** Unit test verifying that descriptions like "=cmd|...", "+2+5", "-10", "@SUM" are exported as "'=cmd|...", etc.
 
 ### 5. [AUTH-1] Decouple Sign In and Sign Up to prevent silent account creation on typos

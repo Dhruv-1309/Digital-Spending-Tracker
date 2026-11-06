@@ -61,6 +61,17 @@ describe('transactions', () => {
     expect(toCsvSafeValue(null)).toBe('""');
   });
 
+  it('toCsvSafeValue neutralizes formula injection triggers (=, +, -, @, tab, cr)', () => {
+    expect(toCsvSafeValue('=SUM(A1:A10)')).toBe('"\'=SUM(A1:A10)"');
+    expect(toCsvSafeValue('+12345')).toBe('"\'+12345"');
+    expect(toCsvSafeValue('-cmd|calc')).toBe('"\'-cmd|calc"');
+    expect(toCsvSafeValue('@payload')).toBe('"\'@payload"');
+    expect(toCsvSafeValue('\tcmd')).toBe('"\'\tcmd"');
+    expect(toCsvSafeValue('  =formula')).toBe('"\'  =formula"');
+    // Normal text without leading triggers remains untouched
+    expect(toCsvSafeValue('Dinner with friends - great food')).toBe('"Dinner with friends - great food"');
+  });
+
   it('exportTransactionsCsv exports basic and detailed formats', () => {
     const basicCsv = exportTransactionsCsv(sampleTransactions, 'csv-basic');
     expect(basicCsv).toContain('Date,Type,Category,Description,Payment Method,Amount');

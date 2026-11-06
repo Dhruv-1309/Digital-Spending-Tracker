@@ -135,7 +135,11 @@ export function parseCsvLine(line: string): string[] {
 }
 
 export function toCsvSafeValue(value: unknown): string {
-  const text = value == null ? '' : String(value);
+  let text = value == null ? '' : String(value);
+  // Neutralize formula injection / DDE (OWASP CWE-1236):
+  if (/^[\t\r]/.test(text) || /^\s*[=+\-@]/.test(text)) {
+    text = `'${text}`;
+  }
   return `"${text.replace(/"/g, '""')}"`;
 }
 
