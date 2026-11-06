@@ -609,16 +609,16 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Provides smooth user experience during backend spin-up or momentary network reconnect
 - **How It Will Be Tested:** Unit test in apiClient.test.ts mocking 503 followed by 200 OK and asserting retry.
 
-### 25. [OPS-11] Operations Runbook expansion: database restore rehearsal and secret rotation procedures
+### 25. [OPS-11] Operations Runbook expansion: database restore rehearsal and secret rotation procedures [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `OPS`
 - **Dependencies:** None
 - **Files Likely Touched:**
   - `docs/RUNBOOK.md`
 - **Acceptance Criteria:**
-  - [ ] Adds step-by-step procedure for database backup restore to test target
-  - [ ] Adds step-by-step guide for rotating Firebase Service Account keys and DATABASE_URL passwords
-  - [ ] Adds debugging steps for stalled pg-boss jobs
+  - [x] Adds step-by-step procedure for database backup restore to test target
+  - [x] Adds step-by-step guide for rotating Firebase Service Account keys and DATABASE_URL passwords
+  - [x] Adds debugging steps for stalled pg-boss jobs
 - **How It Will Be Tested:** Review documentation for clarity and completeness.
 
 ### 26. [WEB-3] Public landing page with product benefits, privacy stance, and interactive demo entry

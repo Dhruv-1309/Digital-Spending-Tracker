@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{315.5}{499} = \mathbf{63.2\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{317.0}{499} = \mathbf{63.5\%}$$
 
-- **Current Readiness Score:** **63.2%** (Baseline: 56.8%)
+- **Current Readiness Score:** **63.5%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **315.5 points**
+- **Earned Weight:** **317.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **83** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **46** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **84** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **45** |
 | **MISSING** | Not implemented | **40** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -41,7 +41,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **UX** | Frontend, UX and Accessibility | 24 | 13D / 4P / 6M (1 other) | **68.2%** | 37.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
 | **QA** | Testing and Code Quality | 18 | 8D / 5P / 4M (1 other) | **64.1%** | 29.5 / 46 |
-| **OPS** | DevOps, Hosting and Operations | 21 | 5D / 3P / 4M (9 other) | **33.6%** | 18.5 / 55 |
+| **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 4D / 6P / 9M (1 other) | **50.0%** | 21.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
 | **X** | Additional Operational Excellence | 4 | 0D / 2P / 1M (1 other) | **25%** | 2.5 / 10 |
@@ -271,7 +271,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **OPS-8** | Structured logs carry a request ID and no personal data | `DONE` | apps/api/src/middleware/requestId.ts, apps/api/src/utils/logger.ts, pino-http in app.ts | - |
 | **OPS-9** | Error tracking with an alert, or logs reviewed on a schedule if no third-party tool is used | `NEEDS-USER` | apps/api/src/middleware/errorHandler.ts logs errors with logger.error | Requires owner setting up alert integration (Sentry, GCP Error Reporting, or log alerts). |
 | **OPS-10** | Uptime monitoring with an alert | `NEEDS-USER` | /healthz and /readyz endpoints implemented | Requires owner configuring Better Uptime, UptimeRobot, or Google Cloud Monitoring. |
-| **OPS-11** | A runbook covers deploy, rollback, restore, rotating secrets and debugging a failed job | `PARTIAL` | docs/RUNBOOK.md covers deploy, rollback, and pg-boss job queries | Missing restore rehearsal steps and secret rotation instructions. |
+| **OPS-11** | A runbook covers deploy, rollback, restore, rotating secrets and debugging a failed job | `DONE` | docs/RUNBOOK.md:1-195 | Comprehensive runbook covering deploy, rollback, pg-boss job debugging, Firebase API key rotation/restrictions, HSTS domain setup, multi-environment provisioning, and database backup and restore rehearsal commands. | None |
 | **OPS-12** | A custom domain with DNS set up and www and non-www redirected | `NEEDS-USER` | None | Requires owner to purchase domain and configure DNS records. |
 | **OPS-13** | Metrics for request rate, latency, error rate and job success | `MISSING` | Pino logs request duration | No Prometheus / OpenTelemetry metrics endpoint configured. |
 | **OPS-14** | A Dockerfile and docker-compose file make local setup reproducible | `PARTIAL` | docker-compose.yml exists for PostgreSQL 16 | Dockerfile for apps/api and apps/web not yet committed. |
