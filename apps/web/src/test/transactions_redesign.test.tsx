@@ -536,6 +536,8 @@ describe('Phase 5: Transactions Redesign Screen', () => {
         expect(toastValue.showToast).toHaveBeenCalledWith(
           'Deleted Food & Dining transaction',
           'info',
+          expect.any(Number),
+          expect.objectContaining({ label: 'Undo' }),
         );
       });
     });

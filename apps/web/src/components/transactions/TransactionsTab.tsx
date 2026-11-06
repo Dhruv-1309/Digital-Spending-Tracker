@@ -84,6 +84,7 @@ export function TransactionsTab() {
     transactions,
     autopays,
     budgetGoal,
+    addTransaction,
     deleteTransaction,
     importTransactions,
     isLoading,
@@ -227,12 +228,34 @@ export function TransactionsTab() {
 
       try {
         await deleteTransaction(tx.id);
-        showToast(`Deleted ${tx.category} transaction`, 'info');
+        showToast(
+          `Deleted ${tx.category} transaction`,
+          'info',
+          6000,
+          {
+            label: 'Undo',
+            onClick: async () => {
+              try {
+                await addTransaction({
+                  amount: tx.amount,
+                  category: tx.category,
+                  date: tx.date,
+                  type: tx.type,
+                  description: tx.description,
+                  paymentMethod: tx.paymentMethod,
+                });
+                showToast(`Restored ${tx.category} transaction`, 'success');
+              } catch (restoreErr: unknown) {
+                showToast(toUserFriendlyError(restoreErr, 'Failed to restore transaction.'), 'error');
+              }
+            },
+          },
+        );
       } catch (err: unknown) {
         showToast(toUserFriendlyError(err, 'Failed to delete transaction. Please try again.'), 'error');
       }
     },
-    [showConfirm, deleteTransaction, showToast],
+    [showConfirm, deleteTransaction, addTransaction, showToast],
   );
 
   const handleDeleteWithUndo = handleDeleteTransaction;

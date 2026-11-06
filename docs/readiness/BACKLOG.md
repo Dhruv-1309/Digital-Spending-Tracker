@@ -358,7 +358,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Provides offline fallback view if user opens app disconnected without cached shell
 - **How It Will Be Tested:** Component tests in legal_routes.test.tsx and not_found.test.tsx verifying 404 page on unknown paths.
 
-### 5. [CORE-9] Recoverable transaction deletion (Undo toast action and soft-delete state)
+### 5. [CORE-9] Recoverable transaction deletion (Undo toast action and soft-delete state) [DONE]
 
 - **Priority:** `P1` | **Effort:** `M` | **Category:** `CORE`
 - **Dependencies:** `CORE-1`
@@ -366,9 +366,9 @@ Expected of a production-grade personal financial application. These ensure robu
   - `apps/web/src/context/TrackerContext.tsx`
   - `apps/web/src/components/transactions/TransactionsTab.tsx`
 - **Acceptance Criteria:**
-  - [ ] Deleting a transaction displays a toast notification with an interactive "Undo" action
-  - [ ] Clicking Undo within 5 seconds restores the transaction in local state and cancels pending server deletion
-  - [ ] If not undone, transaction proceeds to soft-delete
+  - [x] Deleting a transaction displays a toast notification with an interactive "Undo" action
+  - [x] Clicking Undo within 5 seconds restores the transaction in local state and cancels pending server deletion
+  - [x] If not undone, transaction proceeds to soft-delete
 - **How It Will Be Tested:** Component test simulating delete, clicking Undo in toast, and asserting transaction reappears.
 
 ### 6. [CORE-10] Exact boundary evaluations for budget thresholds (just below, at threshold, at limit, over limit)

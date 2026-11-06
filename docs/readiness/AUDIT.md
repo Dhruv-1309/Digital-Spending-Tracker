@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{326.5}{499} = \mathbf{65.4\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{329.5}{499} = \mathbf{66.0\%}$$
 
-- **Current Readiness Score:** **65.4%** (Baseline: 56.8%)
+- **Current Readiness Score:** **66.0%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **326.5 points**
+- **Earned Weight:** **329.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **88** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **89** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **43** |
-| **MISSING** | Not implemented | **38** |
+| **MISSING** | Not implemented | **37** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 14D / 6P / 1M (1 other) | **79.5%** | 52.5 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 15D / 6P / 0M (1 other) | **84.1%** | 55.5 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 7D / 4P / 2M (1 other) | **68.8%** | 27.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 17D / 2P / 2M  | **90.9%** | 60 / 66 |
 | **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
@@ -98,7 +98,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **CORE-6** | Autopay creates exactly one transaction per plan per month, even with repeated page loads or two devices open | `DONE` | apps/api/src/services/autopayService.ts:38-70, unique constraint uq_txn_autopay_period in prisma migration 0_init | - |
 | **CORE-7** | Forecast and runway handle zero spend, no data, negative balance and a single day of history with no NaN or Infinity on screen | `DONE` | packages/shared/src/calculations/analytics.ts:336,424, apps/web/src/components/analytics/AnalyticsTab.tsx:1032,1064,1110, apps/web/src/test/analytics_redesign.test.tsx:580-640 | calculateMoneyRunway returns daysRemaining: null on zero spend, 0 on negative balance; table renders "N/A (Sustainable)" or "0"; zero spend, negative balance, and single-day tests assert zero NaN/Infinity leaks. |
 | **CORE-8** | Transactions can be edited, not only created and deleted, and editing updates totals, charts, budget status and anomaly state | `DONE` | apps/web/src/components/transactions/TransactionSlideOver.tsx, TransactionsTab.tsx:258-261, apps/api/src/routes/transactionRoutes.ts:50 | - |
-| **CORE-9** | Deleting a transaction is recoverable (undo or trash) | `MISSING` | apps/web/src/context/TrackerContext.tsx:401-420 immediately removes from state and queues DELETE | No Undo toast action, no 30-day Trash view or restore mechanism. |
+| **CORE-9** | Deleting a transaction is recoverable (undo or trash) | `DONE` | apps/web/src/components/transactions/TransactionsTab.tsx:215-265, apps/web/src/test/transactions_undo.test.tsx | Deleting a transaction displays a 6-second persistent toast with an interactive 'Undo' action that restores the transaction to state and synchronizes it; backed by PostgreSQL soft-delete tombstones on server. | None |
 | **CORE-10** | Budget status is exact at the boundaries (just below threshold, at threshold, at limit, over limit) | `PARTIAL` | packages/shared/src/calculations/budget.ts:64-87, packages/shared/test/budget.test.ts:30-55 | When currentSpent === limit, returns Near limit (₹0 left) instead of At limit; boundary edge cases untested. |
 | **CORE-11** | Anomaly detection handles categories with fewer than 3 items, zero variance and one very large value | `DONE` | packages/shared/src/calculations/anomalies.ts:38-46, packages/shared/test/anomalies.test.ts:5-48 | - |
 | **CORE-12** | CSV import handles malformed rows, quoted commas, BOM, Windows line endings, wrong headers, duplicate rows and very large files with clear messages and no crash | `PARTIAL` | packages/shared/src/calculations/transactions.ts:240-343 | UTF-8 BOM (\uFEFF) breaks header indexing; synchronous parsing on main thread can freeze UI on large files. |
