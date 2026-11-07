@@ -636,4 +636,45 @@ describe('Phase 5: Transactions Redesign Screen', () => {
       expect(parsed.recurringPlans.length).toBe(1);
     });
   });
+
+  /* ========================================================================
+     9. File Upload Security & Size Limits (SEC-13)
+     ======================================================================== */
+  describe('9. File Upload Security & Size Limits (SEC-13)', () => {
+    it('rejects CSV file uploads larger than 5MB with friendly error toast', async () => {
+      const { toastValue } = renderTransactions();
+
+      const fileInput = document.getElementById('importCsvInput') as HTMLInputElement;
+      expect(fileInput).toBeInTheDocument();
+
+      // Create a mock File object simulating a 6MB file
+      const oversizedFile = new File(['x'], 'large_transactions.csv', { type: 'text/csv' });
+      Object.defineProperty(oversizedFile, 'size', { value: 6 * 1024 * 1024 });
+
+      fireEvent.change(fileInput, { target: { files: [oversizedFile] } });
+
+      await waitFor(() => {
+        expect(toastValue.showToast).toHaveBeenCalledWith(
+          'File size exceeds the 5MB limit. Please choose a smaller CSV file.',
+          'error',
+        );
+      });
+    });
+
+    it('rejects invalid non-CSV files uploaded to CSV input', async () => {
+      const { toastValue } = renderTransactions();
+
+      const fileInput = document.getElementById('importCsvInput') as HTMLInputElement;
+
+      const nonCsvFile = new File(['malicious script'], 'script.exe', { type: 'application/x-msdownload' });
+      fireEvent.change(fileInput, { target: { files: [nonCsvFile] } });
+
+      await waitFor(() => {
+        expect(toastValue.showToast).toHaveBeenCalledWith(
+          'Invalid file format. Please upload a .csv file.',
+          'error',
+        );
+      });
+    });
+  });
 });

@@ -330,10 +330,30 @@ export function TransactionsTab() {
     showToast(`Exported ${transactions.length} transactions as ${filename}.`, 'success');
   };
 
-  // Import handler
+  // 5MB file upload limit (SEC-13)
+  const MAX_IMPORT_FILE_SIZE = 5 * 1024 * 1024;
+
+  // Import handler (SEC-13: 5MB size limit & format validation)
   const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate extension & MIME type
+    const isCsvName = file.name.toLowerCase().endsWith('.csv');
+    if (!isCsvName) {
+      showToast('Invalid file format. Please upload a .csv file.', 'error');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setIsMoreMenuOpen(false);
+      return;
+    }
+
+    // Validate file size before reading into memory (max 5MB)
+    if (file.size > MAX_IMPORT_FILE_SIZE) {
+      showToast('File size exceeds the 5MB limit. Please choose a smaller CSV file.', 'error');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setIsMoreMenuOpen(false);
+      return;
+    }
 
     try {
       const text = await file.text();
@@ -368,10 +388,25 @@ export function TransactionsTab() {
     }
   };
 
-  // JSON Backup Import handler (CORE-13)
+  // JSON Backup Import handler (CORE-13, SEC-13: 5MB size limit & format validation)
   const handleImportJsonChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const isJsonName = file.name.toLowerCase().endsWith('.json');
+    if (!isJsonName) {
+      showToast('Invalid file format. Please upload a .json backup file.', 'error');
+      if (jsonFileInputRef.current) jsonFileInputRef.current.value = '';
+      setIsMoreMenuOpen(false);
+      return;
+    }
+
+    if (file.size > MAX_IMPORT_FILE_SIZE) {
+      showToast('File size exceeds the 5MB limit. Please choose a smaller JSON file.', 'error');
+      if (jsonFileInputRef.current) jsonFileInputRef.current.value = '';
+      setIsMoreMenuOpen(false);
+      return;
+    }
 
     try {
       const text = await file.text();

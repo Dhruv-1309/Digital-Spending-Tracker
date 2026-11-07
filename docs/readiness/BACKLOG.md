@@ -526,15 +526,15 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] TextInput UI component enforces maxLength and displays character count when nearing limit
 - **How It Will Be Tested:** Unit tests in schemas.test.ts verifying rejection of overly long strings.
 
-### 18. [SEC-13] CSV import file size limit (5MB) and type validation
+### 18. [SEC-13] CSV import file size limit (5MB) and type validation `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** `CORE-12`
 - **Files Likely Touched:**
   - `apps/web/src/components/transactions/TransactionsTab.tsx`
 - **Acceptance Criteria:**
-  - [ ] Files larger than 5MB are rejected before reading into browser memory with a friendly error toast
-  - [ ] Only .csv and text/csv MIME types are accepted
+  - [x] Files larger than 5MB are rejected before reading into browser memory with a friendly error toast
+  - [x] Only .csv and text/csv MIME types are accepted
 - **How It Will Be Tested:** Component test in transactions_redesign.test.tsx attempting to upload file > 5MB and asserting toast error.
 
 ### 19. [SEC-14] Formal third-party service requests documentation and SRI pinning policy
