@@ -657,6 +657,17 @@ export function AuthModal() {
         <span className="font-medium text-slate-400">MoneyTracker • Personal Finance Manager</span>
         <div className="flex items-center gap-4">
           <a
+            href="/landing"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateTo('/landing');
+            }}
+            className="text-slate-300 hover:text-white transition-colors hover:underline font-medium"
+          >
+            About & Features
+          </a>
+          <span className="text-slate-600">•</span>
+          <a
             href="/terms"
             onClick={(e) => {
               e.preventDefault();

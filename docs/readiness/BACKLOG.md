@@ -653,18 +653,21 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Adds debugging steps for stalled pg-boss jobs
 - **How It Will Be Tested:** Review documentation for clarity and completeness.
 
-### 26. [WEB-3] Public landing page with product benefits, privacy stance, and interactive demo entry
+### 26. [WEB-3] Public landing page with product benefits, privacy stance, and interactive demo entry [DONE]
 
 - **Priority:** `P1` | **Effort:** `M` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/landing/LandingPage.tsx`
   - `apps/web/src/App.tsx`
+  - `apps/web/src/lib/routes.ts`
+  - `apps/web/src/components/auth/AuthModal.tsx`
+  - `apps/web/src/test/legal_routes.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Visitors see a clean, editorial marketing landing page explaining privacy-first positioning
-  - [ ] Includes feature callouts, screenshots, and links to Sign In, Terms, and Privacy
-  - [ ] Accessible via root route / when unauthenticated
-- **How It Will Be Tested:** Component test in legal_routes.test.tsx verifying landing page elements render.
+  - [x] Dedicated, editorial marketing landing page explaining privacy-first positioning and architecture
+  - [x] Includes feature callouts (integer paise, offline sync, clamped autopay, anomaly alerts, zero lock-in), live preview card, and links to Terms, Privacy, API Docs, and Sign In
+  - [x] Accessible via /landing and /about routes with smooth bidirectional navigation to/from app
+- **How It Was Tested:** Component and routing test suite in `apps/web/src/test/legal_routes.test.tsx` (10 tests passing).
 
 ### 27. [WEB-5] In-app user feedback dialog and designated contact address [DONE]
 

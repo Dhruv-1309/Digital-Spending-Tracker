@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{370.0}{499} = \mathbf{74.1\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{371.5}{499} = \mathbf{74.4\%}$$
 
-- **Current Readiness Score:** **74.1%** (Baseline: 56.8%)
+- **Current Readiness Score:** **74.4%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **370.0 points**
+- **Earned Weight:** **371.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **111** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **26** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **112** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **25** |
 | **MISSING** | Not implemented | **33** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -42,7 +42,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **PERF** | Performance, Offline and PWA | 15 | 6D / 3P / 3M (3 other) | **52.9%** | 18.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
-| **WEB** | Web Presence, Legal and Documentation | 20 | 7D / 4P / 8M (1 other) | **64.0%** | 27.5 / 43 |
+| **WEB** | Web Presence, Legal and Documentation | 20 | 8D / 3P / 8M (1 other) | **67.4%** | 29.0 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
 | **X** | Additional Operational Excellence | 4 | 2D / 1P / 0M (1 other) | **75.0%** | 7.5 / 10 |
 
@@ -289,7 +289,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | :--- | :--- | :--- | :--- | :--- |
 | **WEB-1** | README with what the product is, screenshots, features, tech stack, architecture diagram, setup, environment variables, scripts, tests, deployment and roadmap | `DONE` | README.md:1-190 | Modern comprehensive README rewrite documenting React 19 / Express 5 / Prisma architecture, Mermaid topology diagram, monorepo workspaces, setup instructions, scripts, testing, security, and runbook links. | None |
 | **WEB-2** | Privacy Policy page, linked from sign-up and the footer | `DONE` | apps/web/src/components/legal/PrivacyPage.tsx, AuthModal.tsx:685, ProfileModal.tsx:520 | - |
-| **WEB-3** | A public landing page that explains the product, its privacy stance and shows screenshots, with a sign-in link | `PARTIAL` | apps/web/src/components/auth/AuthModal.tsx:250-320 (marketing hero highlights) | Dedicated standalone public marketing landing page (/index or /landing) not separate from auth screen. |
+| **WEB-3** | A public landing page that explains the product, its privacy stance and shows screenshots, with a sign-in link | `DONE` | apps/web/src/components/landing/LandingPage.tsx, apps/web/src/App.tsx:59-71, apps/web/src/test/legal_routes.test.tsx | Dedicated public landing page at /landing and /about with hero benefits, live metrics preview, integer-paise and offline highlights, privacy manifesto, and sign-in CTA. | None |
 | **WEB-4** | Terms of Use page | `DONE` | apps/web/src/components/legal/TermsPage.tsx:1-180, AuthModal.tsx:680, ProfileModal.tsx:510 | - |
 | **WEB-5** | A contact address and an in-app way to send feedback | `DONE` | apps/web/src/components/common/FeedbackModal.tsx, AppShell.tsx:497,698,799, apps/web/src/test/feedback_modal.test.tsx | Dedicated in-app Send Feedback modal with category, rating, pre-filled diagnostics, mailto dispatch to support@moneytracker.app, and clipboard export. | None |
 | **WEB-6** | A disclaimer that the app is not financial advice and that forecasts are estimates | `DONE` | apps/web/src/components/legal/TermsPage.tsx:85-115 (Section 4 disclaimer) | - |

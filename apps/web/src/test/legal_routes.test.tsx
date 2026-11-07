@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TermsPage } from '../components/legal/TermsPage';
 import { PrivacyPage } from '../components/legal/PrivacyPage';
+import { LandingPage } from '../components/landing/LandingPage';
 import { AuthModal } from '../components/auth/AuthModal';
 import { AuthContext } from '../context/authContextDef';
 import { ToastContext } from '../context/toastContextDef';
@@ -114,12 +115,38 @@ describe('Legal & Signup Protection Specifications', () => {
       const footer = screen.getByRole('contentinfo', { name: /Website Footer/i });
       expect(footer).toBeInTheDocument();
       expect(footer).toHaveTextContent(/MoneyTracker • Personal Finance Manager/i);
+      expect(footer).toHaveTextContent(/About & Features/i);
       expect(footer).toHaveTextContent(/Terms and Conditions/i);
       expect(footer).toHaveTextContent(/Privacy Policy/i);
     });
   });
 
+  describe('LandingPage (/landing, WEB-3)', () => {
+    it('renders hero headline, integer-paise badge, and privacy manifesto', () => {
+      const onGetStarted = vi.fn();
+      const onNavigateLegal = vi.fn();
+      render(<LandingPage onGetStarted={onGetStarted} onNavigateLegal={onNavigateLegal} />);
+
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Master your cashflow/i);
+      expect(screen.getByText(/Zero Account Aggregators/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 3, name: /Integer Paise Exactness/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 3, name: /Offline-First IndexedDB/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 3, name: /Clamped Autopay Engine/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 2, name: /Our Privacy Stance/i })).toBeInTheDocument();
+
+      const getStartedBtn = screen.getByRole('button', { name: /Get Started Free/i });
+      fireEvent.click(getStartedBtn);
+      expect(onGetStarted).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('Route Handling in App', () => {
+    it('renders LandingPage when location hash is #landing', () => {
+      window.location.hash = '#landing';
+      render(<App />);
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Master your cashflow/i);
+      window.location.hash = '';
+    });
     it('renders TermsPage when location hash is #terms', () => {
       window.location.hash = '#terms';
       render(<App />);

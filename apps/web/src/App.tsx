@@ -9,6 +9,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NotFoundPage } from './components/common/NotFoundPage';
 import { TermsPage } from './components/legal/TermsPage';
 import { PrivacyPage } from './components/legal/PrivacyPage';
+import { LandingPage } from './components/landing/LandingPage';
 import { type AppRoute, resolveAppRoute, navigateTo } from './lib/routes';
 
 // Dev-only routes /design and /audit, completely pruned from production builds via import.meta.env.DEV
@@ -50,6 +51,22 @@ export function App() {
   const handleBackToApp = () => {
     navigateTo('/');
   };
+
+  const handleNavigateLegal = (path: '/terms' | '/privacy') => (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigateTo(path);
+  };
+
+  if (route === 'landing') {
+    return (
+      <LazyMotion features={domAnimation} strict>
+        <LandingPage
+          onGetStarted={handleBackToApp}
+          onNavigateLegal={handleNavigateLegal}
+        />
+      </LazyMotion>
+    );
+  }
 
   if (route === 'terms') {
     return (

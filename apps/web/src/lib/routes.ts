@@ -1,11 +1,12 @@
 import { logger } from './logger';
 
-export type AppRoute = 'terms' | 'privacy' | 'design' | 'audit' | 'not-found' | null;
+export type AppRoute = 'landing' | 'terms' | 'privacy' | 'design' | 'audit' | 'not-found' | null;
 
 export function resolveAppRoute(pathname: string, hash: string): AppRoute {
   const cleanPath = pathname.replace(/\/+$/, '') || '/';
   const cleanHash = hash.replace(/^#\/?/, '');
 
+  if (cleanPath === '/landing' || cleanHash === 'landing' || cleanPath === '/about' || cleanHash === 'about') return 'landing';
   if (cleanPath === '/terms' || cleanHash === 'terms') return 'terms';
   if (cleanPath === '/privacy' || cleanHash === 'privacy') return 'privacy';
 
