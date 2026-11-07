@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { LazyMotion, domAnimation } from 'motion/react';
 import { AuthContext } from '../context/authContextDef';
@@ -74,6 +74,7 @@ function renderWithProviders(
   trackerOverrides: Partial<TrackerContextValue> = {},
   toastOverrides = {},
   confirmOverrides = {},
+  authOverrides = {},
 ) {
   const authValue = {
     user,
@@ -87,6 +88,9 @@ function renderWithProviders(
     updateDisplayName: vi.fn(),
     updatePassword: vi.fn(),
     deleteAccount: vi.fn(),
+    resendVerificationEmail: vi.fn(),
+    reloadUser: vi.fn(),
+    ...authOverrides,
   };
 
   const toastValue = {
@@ -667,6 +671,98 @@ describe('Phase 3: AppShell & Navigation', () => {
       // Clicking logo button collapses sidebar
       fireEvent.click(logoToggleBtn);
       expect(sidebar).toHaveClass('w-[68px]');
+    });
+  });
+
+  describe('Email Verification Banner (AUTH-4)', () => {
+    it('renders verification banner when user.emailVerified is false', () => {
+      const unverifiedUser: UserProfile = {
+        ...mockUser,
+        emailVerified: false,
+      };
+
+      const { container } = renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()}>
+          <div>Content</div>
+        </AppShell>,
+        unverifiedUser,
+      );
+
+      const banner = container.querySelector('#emailVerificationBanner');
+      expect(banner).toBeInTheDocument();
+      expect(screen.getByText(/Please verify your email address/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Resend email/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /I've verified/i })).toBeInTheDocument();
+    });
+
+    it('does not render verification banner when user.emailVerified is true', () => {
+      const verifiedUser: UserProfile = {
+        ...mockUser,
+        emailVerified: true,
+      };
+
+      const { container } = renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()}>
+          <div>Content</div>
+        </AppShell>,
+        verifiedUser,
+      );
+
+      const banner = container.querySelector('#emailVerificationBanner');
+      expect(banner).toBeNull();
+    });
+
+    it('calls resendVerificationEmail when clicking Resend email button', async () => {
+      const unverifiedUser: UserProfile = {
+        ...mockUser,
+        emailVerified: false,
+      };
+      const resendMock = vi.fn().mockResolvedValue(undefined);
+      const showToastMock = vi.fn();
+
+      renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()}>
+          <div>Content</div>
+        </AppShell>,
+        unverifiedUser,
+        {},
+        { showToast: showToastMock },
+        {},
+        { resendVerificationEmail: resendMock },
+      );
+
+      const resendBtn = screen.getByRole('button', { name: /Resend email/i });
+      await act(async () => {
+        fireEvent.click(resendBtn);
+      });
+
+      expect(resendMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls reloadUser when clicking I have verified button', async () => {
+      const unverifiedUser: UserProfile = {
+        ...mockUser,
+        emailVerified: false,
+      };
+      const reloadMock = vi.fn().mockResolvedValue(undefined);
+
+      renderWithProviders(
+        <AppShell onOpenProfile={vi.fn()}>
+          <div>Content</div>
+        </AppShell>,
+        unverifiedUser,
+        {},
+        {},
+        {},
+        { reloadUser: reloadMock },
+      );
+
+      const checkBtn = screen.getByRole('button', { name: /I've verified/i });
+      await act(async () => {
+        fireEvent.click(checkBtn);
+      });
+
+      expect(reloadMock).toHaveBeenCalledTimes(1);
     });
   });
 });

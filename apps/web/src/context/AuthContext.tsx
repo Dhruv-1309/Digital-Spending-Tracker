@@ -11,6 +11,8 @@ import {
   updateUserDisplayName as apiUpdateDisplayName,
   updateUserPassword as apiUpdatePassword,
   deleteUserAccount as apiDeleteAccount,
+  resendVerificationEmail as apiResendVerificationEmail,
+  reloadCurrentUser as apiReloadCurrentUser,
 } from '../services/auth';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -62,6 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const resendVerificationEmail = useCallback(async () => {
+    await apiResendVerificationEmail();
+  }, []);
+
+  const reloadUser = useCallback(async () => {
+    const refreshed = await apiReloadCurrentUser();
+    setUser(refreshed);
+    return refreshed;
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -75,6 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateDisplayName,
         updatePassword,
         deleteAccount,
+        resendVerificationEmail,
+        reloadUser,
       }}
     >
       {children}

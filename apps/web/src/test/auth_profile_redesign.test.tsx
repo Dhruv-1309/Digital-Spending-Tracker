@@ -41,6 +41,8 @@ function createMockAuthContext(overrides: Partial<AuthContextValue> = {}): AuthC
     updateDisplayName: vi.fn().mockResolvedValue(undefined),
     updatePassword: vi.fn().mockResolvedValue(undefined),
     deleteAccount: vi.fn().mockResolvedValue(undefined),
+    resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+    reloadUser: vi.fn().mockResolvedValue(null),
     ...overrides,
   };
 }

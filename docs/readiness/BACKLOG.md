@@ -424,7 +424,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Proves app UI remains responsive with 10k items
 - **How It Will Be Tested:** Vitest performance benchmark test generating 10,000 mock transactions and asserting execution time.
 
-### 10. [AUTH-4] Post-signup email verification flow with resend option
+### 10. [AUTH-4] Post-signup email verification flow with resend option `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `M` | **Category:** `AUTH`
 - **Dependencies:** `AUTH-1`

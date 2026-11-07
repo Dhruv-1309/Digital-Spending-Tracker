@@ -4,6 +4,7 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   sendPasswordResetEmail,
+  sendEmailVerification,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -29,6 +30,7 @@ export function mapFirebaseUser(user: User): UserProfile {
     createdAt: user.metadata.creationTime || '-',
     lastSignIn: user.metadata.lastSignInTime || '-',
     hasPassword,
+    emailVerified: user.emailVerified,
   };
 }
 
@@ -123,7 +125,12 @@ export async function signUpWithEmail(
   }
 
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    try {
+      await sendEmailVerification(cred.user);
+    } catch {
+      // Non-blocking in case email dispatch is delayed or fails
+    }
   } catch (error: unknown) {
     const err = error as { code?: string; message?: string };
     if (err.code === 'auth/email-already-in-use') {
@@ -136,6 +143,21 @@ export async function signUpWithEmail(
       throw new Error(toUserFriendlyError(err, 'Unable to create account. Please try again.'));
     }
   }
+}
+
+export async function resendVerificationEmail(): Promise<void> {
+  const auth = getFirebaseAuth();
+  if (!auth.currentUser) {
+    throw new Error('No authenticated user found.');
+  }
+  await sendEmailVerification(auth.currentUser);
+}
+
+export async function reloadCurrentUser(): Promise<UserProfile | null> {
+  const auth = getFirebaseAuth();
+  if (!auth.currentUser) return null;
+  await auth.currentUser.reload();
+  return mapFirebaseUser(auth.currentUser);
 }
 
 export async function signInWithGoogle(): Promise<void> {

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { NavTab } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useTracker } from '../../hooks/useTracker';
+import { useToast } from '../../hooks/useToast';
+import { toUserFriendlyError } from '../../lib/errorMessages';
 import { Button } from '../ui/Button';
 import { NavigationTabs } from './NavigationTabs';
 import { MAIN_NAV_ITEMS } from './navItems';
@@ -15,6 +17,7 @@ import {
   PanelLeftIcon,
   PanelLeftOpenIcon,
   SettingsIcon,
+  AlertCircleIcon,
 } from '../icons';
 
 export interface AppShellProps {
@@ -57,8 +60,48 @@ function getPageTitle(tab: NavTab): string {
  *    - Pressing 'Ctrl+B' or 'Cmd+B' smoothly toggles the sidebar between expanded and collapsed rail.
  */
 export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: AppShellProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, resendVerificationEmail, reloadUser } = useAuth();
   const { currentTab, setCurrentTab, isOnline } = useTracker();
+  const { showToast } = useToast();
+
+  const [isResending, setIsResending] = useState(false);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+
+  const handleResendVerification = async () => {
+    try {
+      setIsResending(true);
+      await resendVerificationEmail();
+      showToast(
+        `Verification email sent to ${user?.email || 'your address'}. Please check your inbox.`,
+        'success',
+        5000,
+      );
+    } catch (err: unknown) {
+      showToast(toUserFriendlyError(err, 'Unable to send verification email. Please try again later.'), 'error');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleCheckVerification = async () => {
+    try {
+      setIsCheckingVerification(true);
+      const refreshed = await reloadUser();
+      if (refreshed?.emailVerified) {
+        showToast('Email verified successfully! Thank you.', 'success', 4000);
+      } else {
+        showToast(
+          'Your email is not verified yet. Please check your inbox or click Resend.',
+          'info',
+          4000,
+        );
+      }
+    } catch (err: unknown) {
+      showToast(toUserFriendlyError(err, 'Unable to refresh verification status.'), 'error');
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
 
   // Desktop sidebar collapsed state (persisted in localStorage or driven by URL param)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -667,6 +710,44 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
         }`}
       >
         <div className="mx-auto max-w-content w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col justify-between">
+          {/* Email Verification Banner (AUTH-4) */}
+          {user && user.email && user.emailVerified === false && (
+            <div
+              id="emailVerificationBanner"
+              role="alert"
+              className="mb-6 p-3.5 sm:p-4 rounded-card bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-ink"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <AlertCircleIcon size={18} className="text-amber-500 shrink-0" />
+                <span className="truncate">
+                  Please verify your email address (<strong>{user.email}</strong>) to secure your account.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  id="resendVerificationBtn"
+                  disabled={isResending}
+                  onClick={handleResendVerification}
+                >
+                  {isResending ? 'Sending...' : 'Resend email'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  id="checkVerificationBtn"
+                  disabled={isCheckingVerification}
+                  onClick={handleCheckVerification}
+                >
+                  {isCheckingVerification ? 'Checking...' : "I've verified"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div key={currentTab} className="route-fade-content w-full flex-1">
             {children}
           </div>

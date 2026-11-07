@@ -12,6 +12,7 @@ vi.mock('firebase/auth', () => ({
   updatePassword: vi.fn(),
   deleteUser: vi.fn(),
   sendPasswordResetEmail: vi.fn(),
+  sendEmailVerification: vi.fn(),
 }));
 
 const mockDeleteMe = vi.fn();
@@ -42,8 +43,16 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   signOut,
+  sendEmailVerification,
 } from 'firebase/auth';
-import { signInWithEmail, deleteUserAccount, signOutUser } from '../services/auth';
+import {
+  signInWithEmail,
+  signUpWithEmail,
+  deleteUserAccount,
+  signOutUser,
+  resendVerificationEmail,
+  reloadCurrentUser,
+} from '../services/auth';
 
 describe('authService.signInWithEmail [AUTH-1]', () => {
   beforeEach(() => {
@@ -151,5 +160,55 @@ describe('authService.signOutUser [AUTH-3]', () => {
     expect(signOut).toHaveBeenCalledTimes(1);
 
     localSpy.mockRestore();
+  });
+});
+
+describe('authService email verification [AUTH-4]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('triggers sendEmailVerification when signing up with email', async () => {
+    const mockUser = { uid: 'user_123', email: 'new@example.com' };
+    vi.mocked(createUserWithEmailAndPassword).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
+
+    await signUpWithEmail('new@example.com', 'validPass123');
+
+    expect(createUserWithEmailAndPassword).toHaveBeenCalledTimes(1);
+    expect(sendEmailVerification).toHaveBeenCalledWith(mockUser);
+  });
+
+  it('resends verification email to the current authenticated user', async () => {
+    const mockUser = { uid: 'user_123', email: 'unverified@example.com', emailVerified: false };
+    mockCurrentUser = mockUser;
+
+    await resendVerificationEmail();
+
+    expect(sendEmailVerification).toHaveBeenCalledWith(mockUser);
+  });
+
+  it('throws error when resending verification email without an active session', async () => {
+    mockCurrentUser = null;
+    await expect(resendVerificationEmail()).rejects.toThrow(/No authenticated user found/i);
+  });
+
+  it('reloads the current user and returns updated profile', async () => {
+    const reloadMock = vi.fn().mockResolvedValue(undefined);
+    mockCurrentUser = {
+      uid: 'user_123',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      providerData: [{ providerId: 'password' }],
+      metadata: { creationTime: '2026-01-01', lastSignInTime: '2026-01-02' },
+      emailVerified: true,
+      reload: reloadMock,
+    };
+
+    const updated = await reloadCurrentUser();
+
+    expect(reloadMock).toHaveBeenCalledTimes(1);
+    expect(updated?.emailVerified).toBe(true);
   });
 });

@@ -133,6 +133,11 @@ export function AuthModal() {
       setLoading(true);
       if (authMode === 'signup') {
         await signUpWithEmail(cleanEmail, password);
+        showToast(
+          'Account created! A verification link has been sent to your email.',
+          'success',
+          5000,
+        );
       } else {
         await signInWithEmail(cleanEmail, password);
       }

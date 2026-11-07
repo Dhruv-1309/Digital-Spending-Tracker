@@ -111,6 +111,7 @@ export interface UserProfile {
   createdAt: string;
   lastSignIn: string;
   hasPassword?: boolean;
+  emailVerified?: boolean;
 }
 
 export type NavTab =

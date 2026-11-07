@@ -12,6 +12,8 @@ export interface AuthContextValue {
   updateDisplayName: (name: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
+  reloadUser: () => Promise<UserProfile | null>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

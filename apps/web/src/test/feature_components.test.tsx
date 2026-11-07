@@ -102,6 +102,8 @@ function renderWithProviders(
     updateDisplayName: vi.fn(),
     updatePassword: vi.fn(),
     deleteAccount: vi.fn(),
+    resendVerificationEmail: vi.fn(),
+    reloadUser: vi.fn(),
   };
 
   const toastValue = {

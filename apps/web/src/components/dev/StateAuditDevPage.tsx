@@ -158,6 +158,8 @@ export function StateAuditDevPage() {
     updateDisplayName: async () => {},
     updatePassword: async () => {},
     deleteAccount: async () => {},
+    resendVerificationEmail: async () => {},
+    reloadUser: async () => null,
   };
 
   const [toasts, setToasts] = useState<ToastItem[]>([]);
