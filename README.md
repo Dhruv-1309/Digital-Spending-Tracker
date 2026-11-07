@@ -113,6 +113,12 @@ Expenses exceeding 2 standard deviations ($\sigma > 2$) with at least 3 historic
 - **Tenant Isolation:** Enforced via Firebase ID token verification and Prisma queries keyed strictly to the authenticated `userId`.
 - **Rate Limiting:** Token-bucket rate limiter per IP address and authenticated user ID.
 
+### 3.6 Policy on Future-Dated Transactions and Scheduling (CORE-21)
+- **Intra-Month Forward Entries:** Transactions dated between today and the end of the active calendar month are **counted immediately** in the current month's expense totals and budget consumption. In personal budgeting, commitments within the billing cycle represent earmarked capital; counting them immediately prevents overspending before payment dates.
+- **Future-Month Forward Entries:** Transactions dated in future calendar months are saved in the ledger under their future calendar partition and are excluded from active month budget calculations until that month becomes current.
+- **Scheduling vs. Manual Forward Entries:** Repeating commitments (EMIs, SIPs, utilities, subscriptions) should be configured as **Autopay Plans** in the Autopay tab rather than entered manually for upcoming months. Autopay provides month-end clamping (28/29/30/31 days) and guaranteed single-execution idempotency.
+- **Retroactive Past Entries:** Transactions logged with past dates immediately update historical totals, charts, and category statistical baselines without drift.
+
 ---
 
 ## 4. Getting Started
@@ -197,9 +203,10 @@ The codebase enforces strict test coverage and behavior verification:
 
 ---
 
-## 7. Operations & Runbook
+## 7. Documentation & Operations Runbook
 
-For production deployment instructions, database migration procedures (including migrating legacy Firestore datasets to PostgreSQL), and disaster recovery playbooks, consult [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+- **User Guide & Calculation Manual:** For detailed instructions on tracking transactions, future-dated policies, autopay scheduling, budget limits, and keyboard shortcuts, consult [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md).
+- **Operations & Runbook:** For production deployment instructions, database migration procedures (including migrating legacy Firestore datasets to PostgreSQL), and disaster recovery playbooks, consult [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
 ---
 

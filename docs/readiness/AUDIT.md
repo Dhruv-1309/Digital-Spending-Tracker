@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{387.5}{499} = \mathbf{77.7\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{388.5}{499} = \mathbf{77.9\%}$$
 
-- **Current Readiness Score:** **77.7%** (Baseline: 56.8%)
+- **Current Readiness Score:** **77.9%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **387.5 points**
+- **Earned Weight:** **388.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **125** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **15** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **126** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **14** |
 | **MISSING** | Not implemented | **30** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 21D / 1P / 0M | **98.5%** | 65.0 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 22D / 0P / 0M | **100.0%** | 66.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 11D / 1P / 1M (1 other) | **87.5%** | 35.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
@@ -110,7 +110,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **CORE-18** | Search is case-insensitive and safe with special and regex characters | `DONE` | packages/shared/src/calculations/transactions.ts:354-360 (toLowerCase().includes), apps/api/src/repositories/transactionRepository.ts:149 | - |
 | **CORE-19** | Categories can be renamed and deleted with reassignment; duplicates and case variants are prevented | `DONE` | apps/api/src/repositories/categoryRepository.ts:15-115, apps/api/src/routes/categoryRoutes.ts:15-100, apps/web/src/components/profile/CategorySettingsModal.tsx, apps/api/test/categories.test.ts:35-150, apps/web/src/test/category_settings_modal.test.tsx:20-140 | None. Case-insensitive duplicate prevention, category renaming with atomic cascade to transactions and autopay plans, deletion rejection with 409 if category in use, and reassignment flow implemented and verified end-to-end. |
 | **CORE-20** | Very long descriptions and category names truncate without breaking layout | `DONE` | apps/web/src/components/transactions/TransactionsTab.tsx:816,877 (truncate max-w-xs md:max-w-md), DashboardTab.tsx:321 | - |
-| **CORE-21** | Future-dated transactions behave in a defined way (counted in month totals or not) and that is documented | `PARTIAL` | packages/shared/src/calculations/budget.ts:20-33 (includes transactions up to active month end) | Behavior is not explained or documented in README, user guides, or Help pages. |
+| **CORE-21** | Future-dated transactions behave in a defined way (counted in month totals or not) and that is documented | `DONE` | packages/shared/src/calculations/budget.ts:20-33, README.md:115-125, docs/USER_GUIDE.md:65-115, apps/web/src/components/help/HelpPage.tsx:60-140, apps/web/src/test/help_page.test.tsx:15-40 | None. Policy fully documented in README, comprehensive User Guide, and dedicated interactive Help/FAQ page: intra-month entries count towards active month budget/totals immediately, future-month entries reside in future partition, recurring bills use Autopay, and retroactive entries recalculate history. |
 | **CORE-22** | Negative and zero balances display correctly in cards, charts and runway | `DONE` | apps/web/src/components/dashboard/DashboardTab.tsx:64-75, AnalyticsTab.tsx:1093, formatIndianGrouping.ts:22-32 | - |
 
 ### AUTH: Authentication and Accounts

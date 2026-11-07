@@ -9,6 +9,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NotFoundPage } from './components/common/NotFoundPage';
 import { TermsPage } from './components/legal/TermsPage';
 import { PrivacyPage } from './components/legal/PrivacyPage';
+import { HelpPage } from './components/help/HelpPage';
 import { LandingPage } from './components/landing/LandingPage';
 import { type AppRoute, resolveAppRoute, navigateTo } from './lib/routes';
 
@@ -52,7 +53,7 @@ export function App() {
     navigateTo('/');
   };
 
-  const handleNavigateLegal = (path: '/terms' | '/privacy') => (e: React.MouseEvent) => {
+  const handleNavigateLegal = (path: '/terms' | '/privacy' | '/help') => (e: React.MouseEvent) => {
     e.preventDefault();
     navigateTo(path);
   };
@@ -80,6 +81,14 @@ export function App() {
     return (
       <LazyMotion features={domAnimation} strict>
         <PrivacyPage onBack={handleBackToApp} />
+      </LazyMotion>
+    );
+  }
+
+  if (route === 'help') {
+    return (
+      <LazyMotion features={domAnimation} strict>
+        <HelpPage onBack={handleBackToApp} />
       </LazyMotion>
     );
   }

@@ -17,7 +17,7 @@ import {
 
 export interface LandingPageProps {
   onGetStarted: () => void;
-  onNavigateLegal: (path: '/terms' | '/privacy') => (e: React.MouseEvent) => void;
+  onNavigateLegal: (path: '/terms' | '/privacy' | '/help') => (e: React.MouseEvent) => void;
 }
 
 export function LandingPage({ onGetStarted, onNavigateLegal }: LandingPageProps) {
@@ -48,6 +48,7 @@ export function LandingPage({ onGetStarted, onNavigateLegal }: LandingPageProps)
             <a href="#architecture" className="hover:text-ink transition-colors">Architecture</a>
             <a href="/terms" onClick={onNavigateLegal('/terms')} className="hover:text-ink transition-colors">Terms</a>
             <a href="/privacy" onClick={onNavigateLegal('/privacy')} className="hover:text-ink transition-colors">Privacy</a>
+            <a href="/help" onClick={onNavigateLegal('/help')} className="hover:text-ink transition-colors">Help</a>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -382,6 +383,9 @@ export function LandingPage({ onGetStarted, onNavigateLegal }: LandingPageProps)
             </a>
             <a href="/privacy" onClick={onNavigateLegal('/privacy')} className="hover:text-ink transition-colors">
               Privacy Policy
+            </a>
+            <a href="/help" onClick={onNavigateLegal('/help')} className="hover:text-ink transition-colors">
+              Help & FAQ
             </a>
             <a href="/api/docs" className="hover:text-ink transition-colors">
               API Docs

@@ -75,3 +75,4 @@ export * from "./GoogleIcon";
 export * from "./PanelLeftIcon";
 export * from "./PanelLeftOpenIcon";
 export * from "./MenuIcon";
+export * from "./HelpCircleIcon";

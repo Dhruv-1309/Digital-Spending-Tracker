@@ -1000,17 +1000,28 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 8 backend tests in `apps/api/test/categories.test.ts` verifying duplicate rejection, cascade rename across transactions and autopays, deletion rejection when in use, and deletion with reassignment.
   - 8 UI tests in `apps/web/src/test/category_settings_modal.test.tsx` verifying inline rename, duplicate validation, and reassignment flow.
 
-### 9. [CORE-21] Document future-dated transactions policy in user guides and Help page
+### 9. [CORE-21] Document future-dated transactions policy in user guides and Help page [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `README.md`
   - `docs/USER_GUIDE.md`
   - `apps/web/src/components/help/HelpPage.tsx`
+  - `apps/web/src/components/icons/HelpCircleIcon.tsx`
+  - `apps/web/src/components/icons/index.ts`
+  - `apps/web/src/lib/routes.ts`
+  - `apps/web/src/App.tsx`
+  - `apps/web/src/components/layout/AppShell.tsx`
+  - `apps/web/src/components/landing/LandingPage.tsx`
+  - `apps/web/src/test/help_page.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Documents that future-dated entries within current month are counted in month totals, while future months appear in upcoming schedules
-  - [ ] Provides clear guidance on scheduling vs retroactive entry
-- **How It Will Be Tested:** Verify documentation in help screen.
+  - [x] Documents that future-dated entries within current month are counted in month totals, while future months appear in upcoming schedules
+  - [x] Provides clear guidance on scheduling vs retroactive entry
+  - [x] Creates comprehensive User Guide (`docs/USER_GUIDE.md`) and updates repository `README.md`
+  - [x] Implements accessible interactive Help & FAQ page (`/help` and `#help`) with real-time topic search and accordion navigation
+- **How It Was Tested:**
+  - 9 automated unit and component tests in `apps/web/src/test/help_page.test.tsx` verifying future-dated policy rendering, live search filtering, category filtering, accordion expansion, back navigation, and `/help` / `/faq` route parsing.
 
 ### 10. [AUTH-12] Protected route deep-linking and post-login redirect restoration
 

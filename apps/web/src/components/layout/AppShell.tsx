@@ -498,6 +498,14 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                 Privacy
               </a>
               <span>•</span>
+              <a
+                href="/help"
+                onClick={handleNavigateLegal('/help')}
+                className="hover:text-ink hover:underline transition-colors"
+              >
+                Help
+              </a>
+              <span>•</span>
               <button
                 id="feedbackBtn"
                 type="button"
@@ -701,6 +709,17 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                   Privacy
                 </a>
                 <span>•</span>
+                <a
+                  href="/help"
+                  onClick={(e) => {
+                    handleNavigateLegal('/help')(e);
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className="hover:text-ink hover:underline"
+                >
+                  Help
+                </a>
+                <span>•</span>
                 <button
                   id="mobileFeedbackBtn"
                   type="button"
@@ -796,6 +815,14 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                 className="hover:text-ink transition-colors hover:underline font-medium"
               >
                 Privacy Policy
+              </a>
+              <span>•</span>
+              <a
+                href="/help"
+                onClick={handleNavigateLegal('/help')}
+                className="hover:text-ink transition-colors hover:underline font-medium"
+              >
+                Help &amp; FAQ
               </a>
               <span>•</span>
               <button
