@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext, useCallback } from 'react';
 import { m } from 'motion/react';
+import type { NavTab } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
+import { TrackerContext } from '../../context/trackerContextDef';
 import { toUserFriendlyError } from '../../lib/errorMessages';
 import { validatePassword } from '../../lib/validation';
-import { navigateTo } from '../../lib/routes';
+import { navigateTo, getTabFromRoute, isValidNavTab } from '../../lib/routes';
 import { Button } from '../ui/Button';
 import { TextInput } from '../ui/TextInput';
 import { SegmentedControl } from '../ui/SegmentedControl';
@@ -118,6 +120,44 @@ export function AuthModal() {
     setStatusMessage({ text: msg, type: 'success' });
   };
 
+  const trackerContext = useContext(TrackerContext);
+  const setCurrentTab = trackerContext?.setCurrentTab;
+
+  const getIntendedRedirectTab = useCallback((): NavTab | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = sessionStorage.getItem('post_login_redirect');
+      if (stored && isValidNavTab(stored)) {
+        return stored;
+      }
+    } catch {
+      // ignore session error
+    }
+    return getTabFromRoute(window.location.pathname, window.location.hash, window.location.search);
+  }, []);
+
+  const intendedTab = useMemo(() => getIntendedRedirectTab(), [getIntendedRedirectTab]);
+
+  const restoreIntendedRoute = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const targetTab = getIntendedRedirectTab();
+    try {
+      sessionStorage.removeItem('post_login_redirect');
+    } catch {
+      // ignore
+    }
+    if (targetTab && targetTab !== 'dashboard') {
+      if (setCurrentTab) {
+        setCurrentTab(targetTab);
+      }
+      navigateTo(`/${targetTab}`);
+    } else {
+      if (window.location.search.includes('redirect')) {
+        navigateTo('/');
+      }
+    }
+  }, [getIntendedRedirectTab, setCurrentTab]);
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim();
@@ -144,6 +184,7 @@ export function AuthModal() {
       } else {
         await signInWithEmail(cleanEmail, password);
       }
+      restoreIntendedRoute();
     } catch (err: unknown) {
       triggerError(
         toUserFriendlyError(
@@ -163,6 +204,7 @@ export function AuthModal() {
       setStatusMessage(null);
       setGoogleLoading(true);
       await signInWithGoogle();
+      restoreIntendedRoute();
     } catch (err: unknown) {
       triggerError(
         toUserFriendlyError(
@@ -354,6 +396,20 @@ export function AuthModal() {
                 : 'Access your spending dashboard securely.'}
             </p>
           </div>
+
+          {/* Deep link redirect notice (AUTH-12) */}
+          {intendedTab && intendedTab !== 'dashboard' && (
+            <div
+              data-testid="auth-redirect-notice"
+              role="status"
+              className="mb-4 p-3 rounded-card bg-accent-tint border border-accent/20 flex items-center gap-2.5 text-xs text-ink"
+            >
+              <ShieldIcon size={16} className="text-accent shrink-0" />
+              <span>
+                Please sign in to access <strong>{intendedTab === 'transactions' ? 'Transactions' : intendedTab === 'autopay' ? 'Autopay' : intendedTab === 'analytics' ? 'Analytics' : intendedTab === 'add-transaction' ? 'New Transaction' : 'Dashboard'}</strong>.
+              </span>
+            </div>
+          )}
 
           {/* Status Alert with Shake */}
           {statusMessage && (

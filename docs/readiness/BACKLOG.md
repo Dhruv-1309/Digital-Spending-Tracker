@@ -1023,16 +1023,23 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 9 automated unit and component tests in `apps/web/src/test/help_page.test.tsx` verifying future-dated policy rendering, live search filtering, category filtering, accordion expansion, back navigation, and `/help` / `/faq` route parsing.
 
-### 10. [AUTH-12] Protected route deep-linking and post-login redirect restoration
+### 10. [AUTH-12] Protected route deep-linking and post-login redirect restoration [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `AUTH`
 - **Dependencies:** `AUTH-1`
-- **Files Likely Touched:**
-  - `apps/web/src/App.tsx`
+- **Files Touched:**
+  - `apps/web/src/lib/routes.ts`
+  - `apps/web/src/context/TrackerContext.tsx`
+  - `apps/web/src/components/layout/AppLayout.tsx`
+  - `apps/web/src/components/auth/AuthModal.tsx`
+  - `apps/web/src/test/auth_deep_linking.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Visiting /transactions while signed out redirects to sign-in modal with redirect query param
-  - [ ] Successful authentication automatically redirects to original intended route
-- **How It Will Be Tested:** Test browser navigation to deep route and assert destination after login.
+  - [x] Visiting /transactions while signed out redirects to sign-in modal with redirect query param
+  - [x] Preserves intended deep-link paths in sessionStorage across refresh and sign-in modes
+  - [x] Displays contextual redirect notice in AuthModal informing the user of the protected destination
+  - [x] Successful authentication (both email/password and Google) automatically redirects to original intended route and updates tab state
+- **How It Was Tested:**
+  - 10 automated unit and component tests in `apps/web/src/test/auth_deep_linking.test.tsx` verifying protected route resolution, deep-link tab parsing from path, hash, and `?redirect=` param, redirect notice rendering, and post-login route restoration.
 
 ### 11. [BE-18] Soft-delete retention documentation and configurable purge threshold
 

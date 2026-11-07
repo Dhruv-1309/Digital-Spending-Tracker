@@ -21,6 +21,7 @@ import { isOnline as checkOnline, subscribeNetworkStatus } from '../services/net
 import { DEFAULT_CATEGORIES } from '../lib/categories.js';
 import { toUserFriendlyError } from '../lib/errorMessages.js';
 import { logger } from '../lib/logger.js';
+import { getTabFromRoute } from '../lib/routes.js';
 import { rupeesToPaise } from '@moneytracker/shared';
 import {
   getOfflineTrash,
@@ -42,7 +43,43 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
+  const [currentTab, setCurrentTabState] = useState<NavTab>(() => {
+    if (typeof window !== 'undefined') {
+      const tab = getTabFromRoute(window.location.pathname, window.location.hash, window.location.search);
+      if (tab) return tab;
+    }
+    return 'dashboard';
+  });
+
+  const setCurrentTab = useCallback((tab: NavTab) => {
+    setCurrentTabState(tab);
+    if (typeof window !== 'undefined') {
+      const targetPath = tab === 'dashboard' ? '/' : `/${tab}`;
+      if (window.location.pathname !== targetPath && window.location.hash !== `#${tab}`) {
+        try {
+          window.history.pushState({}, '', targetPath);
+        } catch {
+          window.location.hash = tab === 'dashboard' ? '' : tab;
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleUrlChange = () => {
+      const tab = getTabFromRoute(window.location.pathname, window.location.hash, window.location.search);
+      if (tab) {
+        setCurrentTabState(tab);
+      }
+    };
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, []);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [trashTransactions, setTrashTransactions] = useState<Transaction[]>(getOfflineTrash());
   const [activityHistory, setActivityHistory] = useState<ActivityLogItem[]>(getActivityHistory());

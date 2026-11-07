@@ -1,6 +1,7 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTracker } from '../../hooks/useTracker';
+import { getTabFromRoute } from '../../lib/routes';
 import { ToastContainer } from '../common/ToastContainer';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { AuthModal } from '../auth/AuthModal';
@@ -46,6 +47,28 @@ export function AppLayout() {
   const { user } = useAuth();
   const { currentTab } = useTracker();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Protected route deep-linking: preserve intended route on sign-out and reflect redirect param (AUTH-12)
+  useEffect(() => {
+    if (!user && typeof window !== 'undefined') {
+      const targetTab = getTabFromRoute(window.location.pathname, window.location.hash, window.location.search);
+      if (targetTab && targetTab !== 'dashboard') {
+        try {
+          sessionStorage.setItem('post_login_redirect', targetTab);
+        } catch {
+          // ignore session quota error
+        }
+        const searchParams = new URLSearchParams(window.location.search);
+        if (!searchParams.get('redirect')) {
+          try {
+            window.history.replaceState({}, '', `/?redirect=/${targetTab}`);
+          } catch {
+            // ignore pushState error
+          }
+        }
+      }
+    }
+  }, [user]);
 
   return (
     <>

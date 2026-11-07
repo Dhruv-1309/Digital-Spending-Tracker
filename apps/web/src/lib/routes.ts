@@ -1,10 +1,60 @@
+import type { NavTab } from '../types';
 import { logger } from './logger';
 
 export type AppRoute = 'landing' | 'terms' | 'privacy' | 'help' | 'design' | 'audit' | 'not-found' | null;
 
+export const VALID_NAV_TABS: readonly NavTab[] = [
+  'dashboard',
+  'transactions',
+  'autopay',
+  'analytics',
+  'add-transaction',
+] as const;
+
+export function isValidNavTab(tab: string): tab is NavTab {
+  return VALID_NAV_TABS.includes(tab as NavTab);
+}
+
+/**
+ * Extracts the intended NavTab from pathname, hash, or search params (?redirect=/transactions or ?tab=analytics).
+ */
+export function getTabFromRoute(pathname: string, hash: string, search: string = ''): NavTab | null {
+  // Check search query param (?redirect=/transactions or ?tab=analytics)
+  if (search) {
+    try {
+      const searchStr = search.startsWith('?') ? search.slice(1) : search;
+      const params = new URLSearchParams(searchStr);
+      const redirectParam = params.get('redirect') || params.get('tab');
+      if (redirectParam) {
+        const cleanParam = redirectParam.replace(/^\/+/, '').replace(/^#\/?/, '').split('?')[0];
+        if (isValidNavTab(cleanParam)) {
+          return cleanParam;
+        }
+      }
+    } catch {
+      // ignore malformed query string
+    }
+  }
+
+  // Check hash first (e.g. #transactions, #autopay)
+  const cleanHash = hash.replace(/^#\/?/, '').split('?')[0];
+  if (isValidNavTab(cleanHash)) {
+    return cleanHash;
+  }
+
+  // Check path (e.g. /transactions, /autopay)
+  const cleanPath = pathname.replace(/\/+$/, '') || '/';
+  const pathSegment = cleanPath.replace(/^\/+/, '').split('?')[0];
+  if (isValidNavTab(pathSegment)) {
+    return pathSegment;
+  }
+
+  return null;
+}
+
 export function resolveAppRoute(pathname: string, hash: string): AppRoute {
   const cleanPath = pathname.replace(/\/+$/, '') || '/';
-  const cleanHash = hash.replace(/^#\/?/, '');
+  const cleanHash = hash.replace(/^#\/?/, '').split('?')[0];
 
   if (cleanPath === '/landing' || cleanHash === 'landing' || cleanPath === '/about' || cleanHash === 'about') return 'landing';
   if (cleanPath === '/terms' || cleanHash === 'terms') return 'terms';
@@ -16,7 +66,18 @@ export function resolveAppRoute(pathname: string, hash: string): AppRoute {
     if (cleanPath === '/audit' || cleanHash === 'audit') return 'audit';
   }
 
+  // Root or login/signin aliases
   if (cleanPath === '/' && (!cleanHash || cleanHash === '')) {
+    return null;
+  }
+
+  if (cleanPath === '/login' || cleanPath === '/signin' || cleanHash === 'login' || cleanHash === 'signin') {
+    return null;
+  }
+
+  // Check if it matches an internal application tab (e.g. /transactions, /autopay, etc.)
+  const tabFromPath = cleanPath.replace(/^\/+/, '').split('?')[0];
+  if (isValidNavTab(tabFromPath) || isValidNavTab(cleanHash)) {
     return null;
   }
 
