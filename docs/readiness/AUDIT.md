@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{376.5}{499} = \mathbf{75.5\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{377.5}{499} = \mathbf{75.7\%}$$
 
-- **Current Readiness Score:** **75.5%** (Baseline: 56.8%)
+- **Current Readiness Score:** **75.7%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **376.5 points**
+- **Earned Weight:** **377.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **115** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **24** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **116** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **23** |
 | **MISSING** | Not implemented | **31** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -42,7 +42,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **PERF** | Performance, Offline and PWA | 15 | 7D / 2P / 3M (3 other) | **55.9%** | 19.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
-| **WEB** | Web Presence, Legal and Documentation | 20 | 10D / 3P / 6M (1 other) | **76.7%** | 33.0 / 43 |
+| **WEB** | Web Presence, Legal and Documentation | 20 | 11D / 2P / 6M (1 other) | **79.1%** | 34.0 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
 | **X** | Additional Operational Excellence | 4 | 2D / 1P / 0M (1 other) | **75.0%** | 7.5 / 10 |
 
@@ -297,7 +297,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **WEB-8** | API documentation published from the OpenAPI file | `DONE` | apps/api/src/routes/docsRoutes.ts, docs/openapi.yaml, apps/api/test/health.test.ts | Interactive Scalar UI served at /api/docs and /docs; raw OpenAPI 3.1 specification served at /api/openapi.yaml with cache headers. | None |
 | **WEB-9** | Page titles, meta descriptions, canonical URLs, Open Graph and Twitter card images on public pages | `DONE` | apps/web/index.html:5-25, apps/web/public/og-image.png, apps/web/src/test/seo_and_brand_assets.test.ts | Complete SEO meta tags, canonical URL, Open Graph, and Twitter summary_large_image card headers with 1200x630 og-image.png. | None |
 | **WEB-10** | robots.txt and sitemap.xml for public pages, and noindex on the signed-in app screens | `DONE` | apps/web/public/robots.txt, apps/web/public/sitemap.xml, apps/web/src/test/robots_and_sitemap.test.ts | robots.txt and sitemap.xml configured with public routes (/landing, /terms, /privacy) and dev route restrictions. | None |
-| **WEB-11** | Favicon set, apple-touch-icon and theme-color | `PARTIAL` | apps/web/public/favicon.svg exists | apple-touch-icon.png and meta theme-color missing in index.html. |
+| **WEB-11** | Favicon set, apple-touch-icon and theme-color | `DONE` | apps/web/index.html:27-37, apps/web/public/apple-touch-icon.png, apps/web/src/test/seo_and_brand_assets.test.ts | 180x180 PNG apple-touch-icon, light/dark theme-color meta headers, and iOS web app capable configurations. | None |
 | **WEB-12** | A Help or FAQ page explaining autopay, anomalies, forecasts and runway in plain language | `MISSING` | None | No dedicated /help or /faq route or documentation page. |
 | **WEB-13** | An architecture document and short decision records for the major choices | `PARTIAL` | docs/PRD_v3.0.md covers architecture | Architectural Decision Records (ADR) directory and records not created. |
 | **WEB-14** | A demo account or demo mode, and a short demo recording | `PARTIAL` | DevDesignPage and DevStateAuditPage exist in dev builds | One-click "Demo Mode" for public visitors without credentials not enabled. |

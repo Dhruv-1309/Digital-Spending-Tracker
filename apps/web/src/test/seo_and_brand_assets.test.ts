@@ -29,3 +29,18 @@ describe('SEO, Canonical URLs, and Social Previews (WEB-9)', () => {
     expect(indexHtml).toContain('<meta name="twitter:image" content="https://moneytracker.app/og-image.png" />');
   });
 });
+
+describe('Touch Icons, Theme Color, and PWA Headers (WEB-11)', () => {
+  it('configures light and dark theme-color meta headers', () => {
+    expect(indexHtml).toContain('<meta name="theme-color" content="#2563EB" media="(prefers-color-scheme: light)" />');
+    expect(indexHtml).toContain('<meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)" />');
+  });
+
+  it('configures apple-touch-icon and web app capable headers', () => {
+    expect(indexHtml).toContain('<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />');
+    expect(indexHtml).toContain('<meta name="mobile-web-app-capable" content="yes" />');
+    expect(indexHtml).toContain('<meta name="apple-mobile-web-app-capable" content="yes" />');
+    expect(indexHtml).toContain('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />');
+    expect(indexHtml).toContain('<meta name="apple-mobile-web-app-title" content="MoneyTracker" />');
+  });
+});

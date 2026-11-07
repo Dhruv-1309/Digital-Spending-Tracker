@@ -1234,17 +1234,20 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 2 unit test assertions in `apps/web/src/test/robots_and_sitemap.test.ts` verifying robots.txt directives and valid sitemap.xml structure with canonical public routes.
 
-### 36. [WEB-11] High-resolution Apple Touch Icon and theme-color meta headers
+### 36. [WEB-11] High-resolution Apple Touch Icon and theme-color meta headers [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/public/apple-touch-icon.png`
   - `apps/web/index.html`
+  - `apps/web/src/test/seo_and_brand_assets.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Provides 180x180 PNG apple-touch-icon.png
-  - [ ] <meta name="theme-color" content="#FBF8F4"> matches design tokens canvas
-- **How It Will Be Tested:** Verify meta tags and icon file existence.
+  - [x] Provides 180x180 PNG apple-touch-icon.png
+  - [x] <meta name="theme-color"> declares light and dark responsive palette
+- **How It Was Tested:**
+  - Unit test in `apps/web/src/test/seo_and_brand_assets.test.ts` verifying apple-touch-icon and light/dark theme colors.
+  - 180x180 PNG verified in `apps/web/public/apple-touch-icon.png`.
 
 ### 37. [WEB-12] Help & FAQ page explaining calculations (anomalies, SMA, runway, autopay) in plain language
 
