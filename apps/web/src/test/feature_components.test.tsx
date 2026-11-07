@@ -104,6 +104,7 @@ function renderWithProviders(
     deleteAccount: vi.fn(),
     resendVerificationEmail: vi.fn(),
     reloadUser: vi.fn(),
+    reauthenticate: vi.fn(),
   };
 
   const toastValue = {

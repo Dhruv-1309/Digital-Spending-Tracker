@@ -14,6 +14,7 @@ export interface AuthContextValue {
   deleteAccount: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   reloadUser: () => Promise<UserProfile | null>;
+  reauthenticate: (password?: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

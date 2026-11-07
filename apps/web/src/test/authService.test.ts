@@ -13,6 +13,11 @@ vi.mock('firebase/auth', () => ({
   deleteUser: vi.fn(),
   sendPasswordResetEmail: vi.fn(),
   sendEmailVerification: vi.fn(),
+  EmailAuthProvider: {
+    credential: vi.fn((email, pass) => ({ email, pass })),
+  },
+  reauthenticateWithCredential: vi.fn(),
+  reauthenticateWithPopup: vi.fn(),
 }));
 
 const mockDeleteMe = vi.fn();
@@ -45,6 +50,8 @@ import {
   signOut,
   sendEmailVerification,
   sendPasswordResetEmail,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
 } from 'firebase/auth';
 import {
   signInWithEmail,
@@ -54,6 +61,7 @@ import {
   resendVerificationEmail,
   reloadCurrentUser,
   sendPasswordReset,
+  reauthenticateCurrentUser,
 } from '../services/auth';
 
 describe('authService.signInWithEmail [AUTH-1]', () => {
@@ -245,5 +253,59 @@ describe('authService.sendPasswordReset [AUTH-6]', () => {
     vi.mocked(sendPasswordResetEmail).mockRejectedValueOnce({ code: 'auth/too-many-requests' });
 
     await expect(sendPasswordReset('user@example.com')).rejects.toThrow(/too many failed attempts/i);
+  });
+});
+
+describe('authService.reauthenticateCurrentUser [AUTH-10]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('throws error if no user is signed in', async () => {
+    mockCurrentUser = null;
+    await expect(reauthenticateCurrentUser('password123')).rejects.toThrow(/sign in to continue/i);
+  });
+
+  it('reauthenticates password user with EmailAuthProvider credential', async () => {
+    const mockUser = {
+      uid: 'user_123',
+      email: 'user@example.com',
+      providerData: [{ providerId: 'password' }],
+    };
+    mockCurrentUser = mockUser;
+    vi.mocked(reauthenticateWithCredential).mockResolvedValueOnce({} as any);
+
+    await reauthenticateCurrentUser('currentPass123!');
+
+    expect(reauthenticateWithCredential).toHaveBeenCalledWith(
+      mockUser,
+      expect.objectContaining({ email: 'user@example.com', pass: 'currentPass123!' }),
+    );
+  });
+
+  it('throws friendly error on incorrect password during re-authentication', async () => {
+    const mockUser = {
+      uid: 'user_123',
+      email: 'user@example.com',
+      providerData: [{ providerId: 'password' }],
+    };
+    mockCurrentUser = mockUser;
+    vi.mocked(reauthenticateWithCredential).mockRejectedValueOnce({ code: 'auth/wrong-password' });
+
+    await expect(reauthenticateCurrentUser('wrongPass')).rejects.toThrow(/Incorrect password/i);
+  });
+
+  it('reauthenticates Google federated user with reauthenticateWithPopup', async () => {
+    const mockUser = {
+      uid: 'user_456',
+      email: 'googleuser@example.com',
+      providerData: [{ providerId: 'google.com' }],
+    };
+    mockCurrentUser = mockUser;
+    vi.mocked(reauthenticateWithPopup).mockResolvedValueOnce({} as any);
+
+    await reauthenticateCurrentUser();
+
+    expect(reauthenticateWithPopup).toHaveBeenCalledWith(mockUser, expect.anything());
   });
 });

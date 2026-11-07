@@ -68,6 +68,7 @@ describe('Legal & Signup Protection Specifications', () => {
       deleteAccount: vi.fn(),
       resendVerificationEmail: vi.fn(),
       reloadUser: vi.fn(),
+      reauthenticate: vi.fn(),
     };
 
     const mockToastContext = {

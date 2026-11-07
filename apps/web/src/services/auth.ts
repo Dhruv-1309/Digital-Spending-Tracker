@@ -3,6 +3,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
   sendPasswordResetEmail,
   sendEmailVerification,
   signOut,
@@ -278,5 +281,38 @@ export async function deleteUserAccount(): Promise<void> {
     await deleteUser(user);
   } catch (err: unknown) {
     throw new Error(toUserFriendlyError(err, 'Unable to delete account. Please try again.'));
+  }
+}
+
+export async function reauthenticateCurrentUser(password?: string): Promise<void> {
+  const user = getFirebaseAuth().currentUser;
+  if (!user) throw new Error('Please sign in to continue.');
+
+  const isPasswordUser = user.providerData.some((p) => p.providerId === 'password');
+
+  if (isPasswordUser) {
+    if (!password) {
+      throw new Error('Please enter your current password.');
+    }
+    if (!user.email) {
+      throw new Error('User email not found for re-authentication.');
+    }
+    const cred = EmailAuthProvider.credential(user.email, password);
+    try {
+      await reauthenticateWithCredential(user, cred);
+    } catch (err: unknown) {
+      const e = err as { code?: string };
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        throw new Error('Incorrect password. Please verify and try again.');
+      }
+      throw new Error(toUserFriendlyError(err, 'Re-authentication failed. Please try again.'));
+    }
+  } else {
+    const provider = new GoogleAuthProvider();
+    try {
+      await reauthenticateWithPopup(user, provider);
+    } catch (err: unknown) {
+      throw new Error(toUserFriendlyError(err, 'Google verification failed. Please try again.'));
+    }
   }
 }

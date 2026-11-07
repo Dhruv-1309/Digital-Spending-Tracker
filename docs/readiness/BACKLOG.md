@@ -462,7 +462,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Never returns "No account found with this email" to unauthenticated visitors
 - **How It Will Be Tested:** Unit test asserting generic response for auth/user-not-found in sendPasswordReset.
 
-### 13. [AUTH-10] Re-authentication prompt for sensitive actions (change password, delete account)
+### 13. [AUTH-10] Re-authentication prompt for sensitive actions (change password, delete account) `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `M` | **Category:** `AUTH`
 - **Dependencies:** `AUTH-2`

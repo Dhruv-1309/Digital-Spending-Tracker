@@ -160,6 +160,7 @@ export function StateAuditDevPage() {
     deleteAccount: async () => {},
     resendVerificationEmail: async () => {},
     reloadUser: async () => null,
+    reauthenticate: async () => {},
   };
 
   const [toasts, setToasts] = useState<ToastItem[]>([]);

@@ -43,6 +43,7 @@ function createMockAuthContext(overrides: Partial<AuthContextValue> = {}): AuthC
     deleteAccount: vi.fn().mockResolvedValue(undefined),
     resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
     reloadUser: vi.fn().mockResolvedValue(null),
+    reauthenticate: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -481,6 +482,45 @@ describe('Phase 8: Profile Redesign Screen', () => {
         expect(toastValue.showToast).toHaveBeenCalledWith('Password updated successfully!', 'success');
       });
     });
+
+    it('handles auth/requires-recent-login by prompting for re-authentication and retrying (AUTH-10)', async () => {
+      const updatePasswordMock = vi
+        .fn()
+        .mockRejectedValueOnce({ code: 'auth/requires-recent-login' })
+        .mockResolvedValueOnce(undefined);
+      const reauthMock = vi.fn().mockResolvedValue(undefined);
+
+      const { toastValue } = renderProfileModal({
+        user: mockUserWithPassword,
+        authContextOverrides: {
+          updatePassword: updatePasswordMock,
+          reauthenticate: reauthMock,
+        },
+      });
+
+      const newPassInput = screen.getByLabelText(/^New Password/i);
+      const confirmPassInput = screen.getByLabelText(/^Confirm Password/i);
+
+      fireEvent.change(newPassInput, { target: { value: 'brandnewpass123' } });
+      fireEvent.change(confirmPassInput, { target: { value: 'brandnewpass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /Update Password/i }));
+
+      // Re-authentication prompt should open
+      expect(await screen.findByRole('dialog', { name: /Confirm Your Identity/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/Current Password/i)).toBeInTheDocument();
+
+      // Enter current password and submit
+      fireEvent.change(screen.getByLabelText(/Current Password/i), {
+        target: { value: 'currentPass123!' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /Verify & Continue/i }));
+
+      await waitFor(() => {
+        expect(reauthMock).toHaveBeenCalledWith('currentPass123!');
+        expect(updatePasswordMock).toHaveBeenCalledTimes(2);
+        expect(toastValue.showToast).toHaveBeenCalledWith('Password updated successfully!', 'success');
+      });
+    });
   });
 
   describe('5. Danger Zone & Account Deletion', () => {
@@ -524,6 +564,43 @@ describe('Phase 8: Profile Redesign Screen', () => {
       await waitFor(() => {
         expect(confirmValue.showConfirm).toHaveBeenCalledTimes(1);
         expect(authValue.deleteAccount).not.toHaveBeenCalled();
+      });
+    });
+
+    it('prompts for re-authentication on deleteAccount if auth/requires-recent-login occurs (AUTH-10)', async () => {
+      const deleteAccountMock = vi
+        .fn()
+        .mockRejectedValueOnce({ code: 'auth/requires-recent-login' })
+        .mockResolvedValueOnce(undefined);
+      const reauthMock = vi.fn().mockResolvedValue(undefined);
+
+      const { toastValue, onClose } = renderProfileModal({
+        user: mockUserWithPassword,
+        authContextOverrides: {
+          deleteAccount: deleteAccountMock,
+          reauthenticate: reauthMock,
+        },
+      });
+
+      const deleteBtn = screen.getByRole('button', { name: /Delete Account/i });
+      fireEvent.click(deleteBtn);
+
+      // Re-authentication modal opens
+      expect(await screen.findByRole('dialog', { name: /Confirm Your Identity/i })).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(/Current Password/i), {
+        target: { value: 'passwordVerification123' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /Verify & Continue/i }));
+
+      await waitFor(() => {
+        expect(reauthMock).toHaveBeenCalledWith('passwordVerification123');
+        expect(deleteAccountMock).toHaveBeenCalledTimes(2);
+        expect(onClose).toHaveBeenCalled();
+        expect(toastValue.showToast).toHaveBeenCalledWith(
+          'Your account has been deleted successfully.',
+          'success'
+        );
       });
     });
   });

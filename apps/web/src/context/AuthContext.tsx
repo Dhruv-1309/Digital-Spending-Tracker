@@ -13,6 +13,7 @@ import {
   deleteUserAccount as apiDeleteAccount,
   resendVerificationEmail as apiResendVerificationEmail,
   reloadCurrentUser as apiReloadCurrentUser,
+  reauthenticateCurrentUser as apiReauthenticateCurrentUser,
 } from '../services/auth';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -74,6 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return refreshed;
   }, []);
 
+  const reauthenticate = useCallback(async (password?: string) => {
+    await apiReauthenticateCurrentUser(password);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -89,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         deleteAccount,
         resendVerificationEmail,
         reloadUser,
+        reauthenticate,
       }}
     >
       {children}

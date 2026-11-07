@@ -20,6 +20,7 @@ import {
   AlertCircleIcon,
   AlertTriangleIcon,
   CheckCircleIcon,
+  GoogleIcon,
 } from '../icons';
 
 export interface ProfileModalProps {
@@ -38,7 +39,7 @@ export interface ProfileModalProps {
  *    ConfirmDialog and the same deletion logic.
  */
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
-  const { user, updateDisplayName, updatePassword, deleteAccount } = useAuth();
+  const { user, updateDisplayName, updatePassword, deleteAccount, reauthenticate } = useAuth();
   const { showConfirm } = useConfirm();
   const { showToast } = useToast();
 
@@ -56,6 +57,12 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [passSuccess, setPassSuccess] = useState<string | null>(null);
   const [passLoading, setPassLoading] = useState(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Re-authentication state for sensitive operations (AUTH-10)
+  const [reauthAction, setReauthAction] = useState<'update-password' | 'delete-account' | null>(null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [reauthError, setReauthError] = useState<string | null>(null);
+  const [reauthLoading, setReauthLoading] = useState(false);
 
   // Preserve and restore focus on open/close
   useEffect(() => {
@@ -139,6 +146,15 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: unknown) {
+      const e = err as { code?: string; message?: string };
+      if (
+        e.code === 'auth/requires-recent-login' ||
+        (e.message && e.message.includes('requires-recent-login')) ||
+        (e.message && e.message.includes('sign out and sign back in'))
+      ) {
+        setReauthAction('update-password');
+        return;
+      }
       const errMsg = toUserFriendlyError(err, 'Failed to update password. Please try again.');
       setPassError(errMsg);
       showToast(errMsg, 'error');
@@ -175,6 +191,15 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       onClose();
       showToast('Your account has been deleted successfully.', 'success');
     } catch (err: unknown) {
+      const e = err as { code?: string; message?: string };
+      if (
+        e.code === 'auth/requires-recent-login' ||
+        (e.message && e.message.includes('requires-recent-login')) ||
+        (e.message && e.message.includes('sign out and sign back in'))
+      ) {
+        setReauthAction('delete-account');
+        return;
+      }
       showToast(
         toUserFriendlyError(
           err,
@@ -182,6 +207,38 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
         ),
         'error',
       );
+    }
+  };
+
+  const handleConfirmReauth = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    try {
+      setReauthLoading(true);
+      setReauthError(null);
+      await reauthenticate(currentPassword);
+      const action = reauthAction;
+      setReauthAction(null);
+      setCurrentPassword('');
+
+      if (action === 'update-password') {
+        setPassLoading(true);
+        await updatePassword(newPassword);
+        const msg = 'Password updated successfully!';
+        setPassSuccess(msg);
+        showToast(msg, 'success');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else if (action === 'delete-account') {
+        await deleteAccount();
+        onClose();
+        showToast('Your account has been deleted successfully.', 'success');
+      }
+    } catch (err: unknown) {
+      const msg = toUserFriendlyError(err, 'Verification failed. Please try again.');
+      setReauthError(msg);
+    } finally {
+      setReauthLoading(false);
+      setPassLoading(false);
     }
   };
 
@@ -549,6 +606,118 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           </div>
         </div>
       </div>
+
+      {/* Re-authentication Dialog for Sensitive Operations (AUTH-10) */}
+      {reauthAction && (
+        <div
+          id="reauthModal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reauthTitle"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm"
+        >
+          <div className="bg-surface rounded-card border border-line p-5 sm:p-6 shadow-3 max-w-md w-full space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-accent-tint text-accent flex items-center justify-center shrink-0">
+                <KeyIcon size={18} />
+              </div>
+              <div>
+                <h3 id="reauthTitle" className="font-display font-semibold text-base text-ink">
+                  Confirm Your Identity
+                </h3>
+                <p className="text-xs text-ink-3">
+                  For your security, please verify your credentials to continue.
+                </p>
+              </div>
+            </div>
+
+            {reauthError && (
+              <div
+                role="alert"
+                id="reauthErrorAlert"
+                className="p-3 rounded-btn bg-danger-tint border border-danger/30 text-xs text-danger font-medium"
+              >
+                {reauthError}
+              </div>
+            )}
+
+            {user.hasPassword ? (
+              <form onSubmit={handleConfirmReauth} className="space-y-3.5">
+                <TextInput
+                  id="currentPasswordInput"
+                  label="Current Password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    setReauthError(null);
+                  }}
+                  placeholder="Enter your current password"
+                  autoFocus
+                  required
+                />
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    onClick={() => {
+                      setReauthAction(null);
+                      setCurrentPassword('');
+                      setReauthError(null);
+                    }}
+                    disabled={reauthLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    id="confirmReauthBtn"
+                    loading={reauthLoading}
+                    disabled={reauthLoading || !currentPassword}
+                  >
+                    Verify & Continue
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-3.5">
+                <p className="text-xs text-ink-2">
+                  Please re-authenticate with your Google account to confirm this action.
+                </p>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    onClick={() => {
+                      setReauthAction(null);
+                      setReauthError(null);
+                    }}
+                    disabled={reauthLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    id="confirmGoogleReauthBtn"
+                    onClick={handleConfirmReauth}
+                    loading={reauthLoading}
+                    disabled={reauthLoading}
+                    icon={<GoogleIcon size={16} />}
+                  >
+                    Verify with Google
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
