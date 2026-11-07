@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'motion/react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Dropdown } from '../ui/Dropdown';
@@ -80,7 +81,11 @@ function getCategoryIcon(category: string, size = 15) {
   return <TagIcon size={size} />;
 }
 
-export function TransactionsTab() {
+export interface TransactionsTabProps {
+  searchDebounceMs?: number;
+}
+
+export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps = {}) {
   const {
     transactions,
     autopays,
@@ -103,6 +108,7 @@ export function TransactionsTab() {
 
   // Filters & Pagination State
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, searchDebounceMs);
   const [typeFilter, setTypeFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('all');
   const [sortBy, setSortBy] = useState<TransactionSortOption>('date-desc');
@@ -147,12 +153,12 @@ export function TransactionsTab() {
   const filtered = useMemo(() => {
     return filterTransactions(
       transactions,
-      searchQuery,
+      debouncedSearchQuery,
       typeFilter,
       monthFilter,
       sortBy,
     );
-  }, [transactions, searchQuery, typeFilter, monthFilter, sortBy]);
+  }, [transactions, debouncedSearchQuery, typeFilter, monthFilter, sortBy]);
 
   // Filtered cashflow summary metrics
   const filteredMetrics = useMemo(() => {

@@ -562,15 +562,19 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Emits no chunks larger than 500 kB after minification
 - **How It Will Be Tested:** Run `npm --workspace=@moneytracker/web run build` and inspect chunk sizes.
 
-### 21. [PERF-4] Search input debouncing (300ms) to eliminate redundant filtering cycles
+### 21. [PERF-4] Search input debouncing (300ms) to eliminate redundant filtering cycles [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `PERF`
 - **Dependencies:** None
 - **Files Likely Touched:**
+  - `apps/web/src/hooks/useDebounce.ts`
   - `apps/web/src/components/transactions/TransactionsTab.tsx`
+  - `apps/web/src/test/useDebounce.test.ts`
+  - `apps/web/src/test/transactions_redesign.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Typing in the search input debounces filtering by 300ms
-  - [ ] Prevents UI stutter on large transaction histories while maintaining snappy typing feel
+  - [x] Typing in the search input debounces filtering by 300ms
+  - [x] Prevents UI stutter on large transaction histories while maintaining snappy typing feel
+  - [x] Immediate reset on clear/empty string
 - **How It Will Be Tested:** Component test asserting filterTransactions is invoked only once after typing burst.
 
 ### 22. [QA-6] End-to-end (E2E) testing suite with Playwright covering critical user journeys

@@ -269,22 +269,28 @@ describe('Phase 5: Transactions Redesign Screen', () => {
       expect(selects.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('filters live when typing into search input and displays active chip', () => {
+    it('filters live when typing into search input and displays active chip', async () => {
       renderTransactions();
 
       const searchInput = screen.getByPlaceholderText('Search transactions...');
       fireEvent.change(searchInput, { target: { value: 'Dinner' } });
 
-      // Active chip row appears with search chip and Clear all
+      // Active chip row appears immediately with search chip and Clear all
       expect(screen.getByText(/Search: “Dinner”/i)).toBeInTheDocument();
       expect(screen.getByText('Clear all')).toBeInTheDocument();
-      expect(screen.getAllByText('Dinner with friends').length).toBeGreaterThan(0);
-      expect(screen.queryAllByText('Electricity bill').length).toBe(0);
 
-      // Clear search chip
+      // List filters after 300ms debounce
+      await waitFor(() => {
+        expect(screen.getAllByText('Dinner with friends').length).toBeGreaterThan(0);
+        expect(screen.queryAllByText('Electricity bill').length).toBe(0);
+      });
+
+      // Clear search chip resets immediately
       const removeChipBtn = screen.getByLabelText('Remove search filter');
       fireEvent.click(removeChipBtn);
-      expect(screen.getAllByText('Electricity bill').length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(screen.getAllByText('Electricity bill').length).toBeGreaterThan(0);
+      });
     });
 
     it('filters by transaction type using SegmentedControl and shows removable chip', () => {
@@ -305,7 +311,7 @@ describe('Phase 5: Transactions Redesign Screen', () => {
       expect(screen.getAllByText('Dinner with friends').length).toBeGreaterThan(0);
     });
 
-    it('live count badge #txCount updates dynamically with filtered items', () => {
+    it('live count badge #txCount updates dynamically with filtered items', async () => {
       renderTransactions();
 
       const countBadge = document.getElementById('txCount');
@@ -313,7 +319,30 @@ describe('Phase 5: Transactions Redesign Screen', () => {
 
       const searchInput = screen.getByPlaceholderText('Search transactions...');
       fireEvent.change(searchInput, { target: { value: 'Electricity' } });
-      expect(countBadge).toHaveTextContent('1');
+      await waitFor(() => {
+        expect(countBadge).toHaveTextContent('1');
+      });
+    });
+
+    it('debounces search input by 300ms before filtering transactions', async () => {
+      renderTransactions();
+
+      const searchInput = screen.getByPlaceholderText('Search transactions...');
+
+      // Rapid typing burst
+      fireEvent.change(searchInput, { target: { value: 'E' } });
+      fireEvent.change(searchInput, { target: { value: 'El' } });
+      fireEvent.change(searchInput, { target: { value: 'Electricity' } });
+
+      // Search input updates immediately
+      expect(searchInput).toHaveValue('Electricity');
+      expect(screen.getByText(/Search: “Electricity”/i)).toBeInTheDocument();
+
+      // List filters after 300ms debounce
+      await waitFor(() => {
+        expect(screen.getAllByText('Electricity bill').length).toBeGreaterThan(0);
+        expect(screen.queryAllByText('Dinner with friends').length).toBe(0);
+      });
     });
   });
 
@@ -576,17 +605,21 @@ describe('Phase 5: Transactions Redesign Screen', () => {
       expect(screen.getByRole('button', { name: /Add your first transaction/i })).toBeInTheDocument();
     });
 
-    it('renders separate EmptyState when search yields 0 matches with Clear filters button', () => {
+    it('renders separate EmptyState when search yields 0 matches with Clear filters button', async () => {
       renderTransactions();
 
       const searchInput = screen.getByPlaceholderText('Search transactions...');
       fireEvent.change(searchInput, { target: { value: 'NonexistentSearchQueryXYZ' } });
 
-      expect(screen.getByText('No matching transactions')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('No matching transactions')).toBeInTheDocument();
+      });
       const clearBtn = screen.getByRole('button', { name: 'Clear filters' });
       fireEvent.click(clearBtn);
 
-      expect(screen.getAllByText('Dinner with friends').length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(screen.getAllByText('Dinner with friends').length).toBeGreaterThan(0);
+      });
     });
 
     it('renders Error state with Retry button when loadError is present', () => {
