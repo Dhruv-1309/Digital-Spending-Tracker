@@ -8,6 +8,7 @@ import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { AutopaySlideOver } from './AutopaySlideOver';
+import { RecurringSuggestionsCard } from './RecurringSuggestionsCard';
 import { calculateAutopayFlows, calculateMonthlyFlow, getUpcomingAutopays } from '../../lib/autopay';
 import { getNextDeductionDate, getCountdownChipText } from './autopayHelpers';
 import { useReducedMotion } from '../../ui/motion';
@@ -341,6 +342,9 @@ export function AutopayTab() {
           </div>
         </div>
       </Card>
+
+      {/* Recurring Charge Suggestions, Price Changes & Missed Renewals (DIFF-3) */}
+      <RecurringSuggestionsCard />
 
       {/* 3. Empty State: Warm illustration + Add your first plan button (Prompt Item 5) */}
       {autopays.length === 0 ? (

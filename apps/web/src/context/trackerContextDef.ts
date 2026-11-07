@@ -32,6 +32,7 @@ export interface TrackerContextValue {
   approveAnomaly: (transactionId: string) => Promise<boolean>;
   dismissAnomaly: (transactionId: string) => Promise<boolean>;
   addAutopay: (plan: Omit<AutopayPlan, 'id' | 'createdAt'>) => Promise<boolean>;
+  updateAutopay?: (id: string, updates: Partial<AutopayPlan>) => Promise<boolean>;
   deleteAutopay: (id: string) => Promise<boolean>;
   toggleAutopay: (id: string) => Promise<boolean>;
   updateBudgetGoal: (goal: BudgetGoal) => Promise<boolean>;

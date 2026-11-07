@@ -857,18 +857,30 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 1 integration test in `apps/web/src/test/transactions_redesign.test.tsx` (100% passing).
   - Clean TypeScript compilation, linting, and full production build.
 
-### 3. [DIFF-3] Recurring charge detection from transaction history with autopay conversion suggestion
+### 3. [DIFF-3] Recurring charge detection from transaction history with autopay conversion suggestion [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** `CORE-1`
-- **Files Likely Touched:**
-  - `packages/shared/src/calculations/recurringDetector.ts`
-  - `apps/web/src/components/autopay/RecurringSuggestionsCard.tsx`
+- **Files Touched:**
+  - `packages/shared/src/calculations/recurringDetector.ts`: Shared calculation engine for merchant descriptor normalization, chronological cluster analysis, monthly cadence & day-of-month calculation, Autopay cross-referencing, price change detection, and missed renewal alerting.
+  - `packages/shared/test/recurringDetector.test.ts`: 9 unit tests verifying descriptor normalization, interval calculation, monthly detection, Autopay cross-referencing, price hikes, missed renewals, and dismissed patterns.
+  - `packages/shared/src/calculations/index.ts`: Exported recurring detector engine.
+  - `apps/web/src/context/trackerContextDef.ts`: Added `updateAutopay` to context definition.
+  - `apps/web/src/context/TrackerContext.tsx`: Implemented `updateAutopay` with local state update, cache persistence, and offline queue mutation.
+  - `apps/web/src/lib/recurringDetector.ts`: Client-side persistence for dismissed pattern signatures in localStorage.
+  - `apps/web/src/components/autopay/RecurringSuggestionsCard.tsx`: Interactive card in Autopay screen showing detected subscriptions, one-click Autopay conversion, price increase alerts with quick update, missed renewal alerts, and dismissal with undo toast.
+  - `apps/web/src/components/autopay/AutopayTab.tsx`: Integrated `RecurringSuggestionsCard` above main layout.
+  - `apps/web/src/test/recurring_suggestions_card.test.tsx`: 4 component unit tests verifying suggestion rendering, Autopay conversion, dismissal with undo, and price change updates.
 - **Acceptance Criteria:**
-  - [ ] Analyzes transaction history to identify repeating charges (similar description, similar amount, approx. 28-31 days apart)
-  - [ ] Offers one-click action to convert detected pattern into active Autopay plan
-  - [ ] Flags renewal price increases or expected subscriptions that did not arrive
-- **How It Will Be Tested:** Unit test detecting monthly subscription patterns in 3 months of mock history.
+  - [x] Analyzes transaction history to identify repeating charges (similar description, similar amount, approx. 24-36 days apart)
+  - [x] Offers one-click action to convert detected pattern into active Autopay plan
+  - [x] Flags renewal price increases on existing Autopay plans with quick-update action
+  - [x] Flags expected monthly subscriptions that did not arrive (>30 days since last charge)
+- **How It Was Tested:**
+  - 9 unit tests in `packages/shared/test/recurringDetector.test.ts` (100% passing).
+  - 4 component tests in `apps/web/src/test/recurring_suggestions_card.test.tsx` (100% passing).
+  - 22 tests in `apps/web/src/test/autopay_redesign.test.tsx` (100% passing).
+  - Clean TypeScript compilation, linting, and full production build.
 
 ### 4. [DIFF-4] Explainable insights and month-end spending projection with "Show calculation" breakdowns
 

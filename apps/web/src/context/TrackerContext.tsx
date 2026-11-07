@@ -723,6 +723,43 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     [user, autopays, refreshQueueCount, triggerDrain],
   );
 
+  // Autopay: Update
+  const updateAutopay = useCallback(
+    async (id: string, updates: Partial<AutopayPlan>): Promise<boolean> => {
+      if (!user) return false;
+
+      const updated = autopays.map((a) => (a.id === id ? { ...a, ...updates } : a));
+      setAutopays(updated);
+      syncQueue.setCachedData('autopays', updated);
+
+      const opId = generateClientId();
+      const body: Record<string, unknown> = {};
+      if (updates.name !== undefined) body.name = updates.name;
+      if (updates.amount !== undefined) body.amountPaise = rupeesToPaise(updates.amount);
+      if (updates.day !== undefined) body.day = updates.day;
+      if (updates.type !== undefined) body.type = updates.type;
+      if (updates.category !== undefined) body.category = updates.category;
+      if (updates.active !== undefined) body.active = updates.active;
+
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: `/autopay/${id}`,
+        method: 'PATCH',
+        body,
+        entityType: 'autopay',
+        entityId: id,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return true;
+    },
+    [user, autopays, refreshQueueCount, triggerDrain],
+  );
+
   // Budget: Update
   const updateBudgetGoal = useCallback(
     async (goal: BudgetGoal): Promise<boolean> => {
@@ -779,6 +816,7 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         addAutopay,
         deleteAutopay,
         toggleAutopay,
+        updateAutopay,
         updateBudgetGoal,
       }}
     >
