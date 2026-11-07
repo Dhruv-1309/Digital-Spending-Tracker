@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{352.0}{499} = \mathbf{70.5\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{353.5}{499} = \mathbf{70.8\%}$$
 
-- **Current Readiness Score:** **70.5%** (Baseline: 56.8%)
+- **Current Readiness Score:** **70.8%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **352.0 points**
+- **Earned Weight:** **353.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **102** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **32** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **103** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **31** |
 | **MISSING** | Not implemented | **36** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -37,7 +37,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **CORE** | Core Behavior and Data Correctness | 22 | 19D / 2P / 0M (1 other) | **95.5%** | 63.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 11D / 1P / 1M (1 other) | **87.5%** | 35.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
-| **SEC** | Security and Privacy | 22 | 14D / 1P / 4M (3 other) | **73.2%** | 50.5 / 69 |
+| **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
 | **QA** | Testing and Code Quality | 18 | 9D / 4P / 4M (1 other) | **67.4%** | 31.0 / 46 |
@@ -175,7 +175,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **SEC-11** | Firebase API key restrictions and authorised domains are configured | `NEEDS-USER` | apps/web/.env.example | Requires configuration in Google Cloud & Firebase Console. |
 | **SEC-12** | Every input field has a length limit, enforced on the server as well | `DONE` | packages/shared/src/schemas/transactions.ts:35-65, packages/shared/src/schemas/autopay.ts:4-18, apps/web/src/components/ui/TextInput.tsx:4-95 | Server & client enforce length caps on descriptions (255), names/display names (100), categories (50), and timezones (50); TextInput enforces maxLength and dynamically renders character counters. |
 | **SEC-13** | CSV import is size and type limited and parsed so a huge file cannot freeze the tab | `DONE` | apps/web/src/components/transactions/TransactionsTab.tsx:334-398, apps/web/src/test/transactions_redesign.test.tsx:640-675 | Enforces 5MB maximum file size limit before loading into memory and strictly verifies .csv / .json extensions and MIME types with friendly error notifications. |
-| **SEC-14** | Every third-party request is listed; scripts and styles are self-hosted or pinned with integrity hashes | `PARTIAL` | Fonts self-hosted in assets/fonts; external CDNs eliminated | Missing formal third-party service disclosure manifest. |
+| **SEC-14** | Every third-party request is listed; scripts and styles are self-hosted or pinned with integrity hashes | `DONE` | docs/security/THIRD_PARTY_SERVICES.md:1-65, apps/web/public/_headers:7 | Formal third-party network manifest documents all outbound requests (Firebase Auth, API, Neon); affirms zero trackers/pixels/ads; all scripts/fonts are 100% self-hosted with strict CSP. |
 | **SEC-15** | Users can export all their data in a machine-readable format | `DONE` | packages/shared/src/calculations/transactions.ts:140-238, TransactionsTab.tsx:274-310 (Detailed CSV and JSON backup) | - |
 | **SEC-16** | Cookie and browser storage use is disclosed; nothing non-essential is stored without consent | `DONE` | apps/web/src/components/legal/PrivacyPage.tsx:115-135 | - |
 | **SEC-17** | Authentication does not rely on cookies, or cookies use Secure, HttpOnly and SameSite, and CSRF has been considered | `DONE` | Bearer tokens in Authorization header; no cookie-based auth session state | - |

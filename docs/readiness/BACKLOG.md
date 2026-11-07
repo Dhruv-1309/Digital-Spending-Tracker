@@ -537,15 +537,15 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Only .csv and text/csv MIME types are accepted
 - **How It Will Be Tested:** Component test in transactions_redesign.test.tsx attempting to upload file > 5MB and asserting toast error.
 
-### 19. [SEC-14] Formal third-party service requests documentation and SRI pinning policy
+### 19. [SEC-14] Formal third-party service requests documentation and SRI pinning policy `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** None
 - **Files Likely Touched:**
   - `docs/security/THIRD_PARTY_SERVICES.md`
 - **Acceptance Criteria:**
-  - [ ] Documents all outbound network requests (Firebase Auth domains, Google Fonts self-hosted)
-  - [ ] Affirms zero tracking pixels, zero analytics scripts, and zero advertising SDKs
+  - [x] Documents all outbound network requests (Firebase Auth domains, Google Fonts self-hosted)
+  - [x] Affirms zero tracking pixels, zero analytics scripts, and zero advertising SDKs
 - **How It Will Be Tested:** Review documentation against network observer logs.
 
 ### 20. [PERF-2] Bundle code splitting: route-level lazy loading and lazy-loaded Chart.js
