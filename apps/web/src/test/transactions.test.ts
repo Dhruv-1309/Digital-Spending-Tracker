@@ -5,6 +5,7 @@ import {
   exportTransactionsCsv,
   exportTransactionsJson,
   importTransactionsFromCsv,
+  importBackupFromJson,
   filterTransactions,
   paginateTransactions,
   extractUniqueMonths,
@@ -186,6 +187,67 @@ describe('transactions', () => {
       expect(newTransactions.length).toBe(1);
       expect(newTransactions[0].amount).toBe(3200);
       expect(skippedCount).toBe(2);
+    });
+  });
+
+  describe('JSON backup import and round-trip data fidelity (CORE-13)', () => {
+    it('exports and restores dataset with 100% record equality and fidelity', () => {
+      const budgetGoal = { monthlyExpenseLimit: 45000, thresholdPercent: 80 };
+      const autopays: AutopayPlan[] = [
+        {
+          id: 'ap_1',
+          name: 'Netflix',
+          amount: 649,
+          type: 'expense',
+          category: 'Entertainment',
+          day: 15,
+          active: true,
+        },
+      ];
+
+      const jsonString = exportTransactionsJson({
+        transactions: sampleTransactions,
+        autopays,
+        budgetGoal,
+      });
+
+      const { newTransactions, skippedCount, recurringPlans, budgetGoal: restoredBudget, error } =
+        importBackupFromJson(jsonString, []);
+
+      expect(error).toBeUndefined();
+      expect(skippedCount).toBe(0);
+      expect(newTransactions.length).toBe(sampleTransactions.length);
+
+      for (let i = 0; i < sampleTransactions.length; i++) {
+        expect(newTransactions[i].id).toBe(sampleTransactions[i].id);
+        expect(newTransactions[i].amount).toBe(sampleTransactions[i].amount);
+        expect(newTransactions[i].type).toBe(sampleTransactions[i].type);
+        expect(newTransactions[i].date).toBe(sampleTransactions[i].date);
+        expect(newTransactions[i].category).toBe(sampleTransactions[i].category);
+      }
+
+      expect(restoredBudget).toEqual(budgetGoal);
+      expect(recurringPlans).toEqual(autopays);
+    });
+
+    it('rejects malformed or non-array JSON backup files with user-friendly errors', () => {
+      const badJson = importBackupFromJson('{ invalid json', []);
+      expect(badJson.error).toBe('Invalid JSON format. Please upload a valid JSON backup file.');
+
+      const missingTxs = importBackupFromJson(JSON.stringify({ exportedAt: 'now' }), []);
+      expect(missingTxs.error).toBe('Backup JSON is missing a valid transactions list.');
+    });
+
+    it('skips duplicate transactions when importing JSON into existing dataset', () => {
+      const jsonString = exportTransactionsJson({
+        transactions: sampleTransactions,
+        autopays: [],
+        budgetGoal: { monthlyExpenseLimit: 0, thresholdPercent: 80 },
+      });
+
+      const { newTransactions, skippedCount } = importBackupFromJson(jsonString, sampleTransactions);
+      expect(newTransactions.length).toBe(0);
+      expect(skippedCount).toBe(sampleTransactions.length);
     });
   });
 });

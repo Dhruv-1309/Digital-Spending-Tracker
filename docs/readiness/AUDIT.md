@@ -12,16 +12,16 @@
 ### 1.1 Overall Readiness Score
 $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{329.5}{499} = \mathbf{66.0\%}$$
 
-- **Current Readiness Score:** **66.6%** (Baseline: 56.8%)
+- **Current Readiness Score:** **66.9%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **332.5 points**
+- **Earned Weight:** **334.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **91** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **41** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **92** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **40** |
 | **MISSING** | Not implemented | **37** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **4** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 17D / 4P / 0M (1 other) | **88.6%** | 58.5 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 18D / 3P / 0M (1 other) | **90.9%** | 60.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 7D / 4P / 2M (1 other) | **68.8%** | 27.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 17D / 2P / 2M  | **90.9%** | 60 / 66 |
 | **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
@@ -102,7 +102,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **CORE-10** | Budget status is exact at the boundaries (just below threshold, at threshold, at limit, over limit) | `DONE` | packages/shared/src/calculations/budget.ts:63-87, packages/shared/test/budget.test.ts:57-110, apps/web/src/lib/budget.ts:43-86 | Exact boundary evaluations asserted for 79.99%, 80.00%, 99.99%, 100.00% (At limit), and 100.01% (Over budget). |
 | **CORE-11** | Anomaly detection handles categories with fewer than 3 items, zero variance and one very large value | `DONE` | packages/shared/src/calculations/anomalies.ts:38-46, packages/shared/test/anomalies.test.ts:5-48 | - |
 | **CORE-12** | CSV import handles malformed rows, quoted commas, BOM, Windows line endings, wrong headers, duplicate rows and very large files with clear messages and no crash | `DONE` | packages/shared/src/calculations/transactions.ts:109-280, packages/shared/test/transactions.test.ts:192-260, apps/web/src/lib/transactions.ts:8-230 | parseCsvRecords RFC 4180 parser handles UTF-8 BOM stripping, quoted multiline fields, CRLF, escaped quotes, uneven rows without crashing, and missing columns validation. | None |
-| **CORE-13** | Export then import gives identical data (round trip) | `PARTIAL` | packages/shared/src/calculations/transactions.ts:140-238, apps/web/src/components/transactions/TransactionsTab.tsx:274-340 | JSON backup import is missing in UI; CSV import does not retain original transaction IDs or source tags. |
+| **CORE-13** | Export then import gives identical data (round trip) | `DONE` | packages/shared/src/calculations/transactions.ts:241-450, packages/shared/test/transactions.test.ts:265-330, apps/web/src/components/transactions/TransactionsTab.tsx:372-520 | exportTransactionsJson and importBackupFromJson preserve 100% data fidelity for transactions, recurring autopay plans, and budget goals with checksum validation and duplicate prevention. | None |
 | **CORE-14** | The app stays responsive with 10,000 or more transactions | `UNVERIFIED` | apps/web/src/components/transactions/TransactionsTab.tsx:170-220 (paginated at 10 items/page) | No responsiveness benchmark test or calculation performance assertion for 10,000 transactions. |
 | **CORE-15** | Every screen has a first-use state with no data | `DONE` | apps/web/src/components/ui/EmptyState.tsx, DashboardTab.tsx:351, TransactionsTab.tsx:720, AutopayTab.tsx:349, AnalyticsTab.tsx:626 | - |
 | **CORE-16** | Indian number grouping and the rupee sign are used consistently on screens, charts and exports | `DONE` | apps/web/src/components/ui/formatIndianGrouping.ts, apps/web/src/ui/chartTheme.ts:15-30, packages/shared/src/calculations/formatters.ts | - |

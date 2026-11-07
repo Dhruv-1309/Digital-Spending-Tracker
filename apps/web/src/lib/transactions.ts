@@ -265,6 +265,112 @@ export function importTransactionsFromCsv(
   };
 }
 
+export interface JsonBackupImportResult {
+  newTransactions: Transaction[];
+  skippedCount: number;
+  recurringPlans?: AutopayPlan[];
+  budgetGoal?: BudgetGoal;
+  summary?: {
+    transactionCount: number;
+    recurringCount: number;
+    totalIncome: number;
+    totalExpense: number;
+    balance: number;
+  };
+  error?: string;
+}
+
+export function importBackupFromJson(
+  jsonContent: string,
+  existingTransactions: Transaction[] = [],
+): JsonBackupImportResult {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonContent);
+  } catch {
+    return {
+      newTransactions: [],
+      skippedCount: 0,
+      error: 'Invalid JSON format. Please upload a valid JSON backup file.',
+    };
+  }
+
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.transactions)) {
+    return {
+      newTransactions: [],
+      skippedCount: 0,
+      error: 'Backup JSON is missing a valid transactions list.',
+    };
+  }
+
+  const existingSignatures = new Set(
+    existingTransactions.map(
+      (t) =>
+        t.id ||
+        `${t.date}|${t.type}|${Number(t.amount).toFixed(2)}|${t.category}|${(t.description || '').trim()}`,
+    ),
+  );
+
+  const imported: Transaction[] = [];
+  let skipped = 0;
+
+  for (const raw of parsed.transactions) {
+    if (!raw || typeof raw !== 'object') {
+      skipped += 1;
+      continue;
+    }
+
+    const date = typeof raw.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw.date)
+      ? raw.date.slice(0, 10)
+      : '';
+    const amountNum = Math.abs(parseFloat(String(raw.amount ?? 0)));
+
+    if (!date || isNaN(amountNum) || amountNum <= 0) {
+      skipped += 1;
+      continue;
+    }
+
+    const type = raw.type === 'income' ? 'income' : 'expense';
+    const category = (raw.category || '').trim() || (type === 'income' ? 'Other Income' : 'Other Expenses');
+    const description = (raw.description || '').trim();
+    const paymentMethod = (raw.paymentMethod || 'other').trim().toLowerCase();
+    const id = typeof raw.id === 'string' && raw.id.trim() ? raw.id.trim() : `tx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    const sigById = id;
+    const sigByContent = `${date}|${type}|${amountNum.toFixed(2)}|${category}|${description}`;
+
+    if (existingSignatures.has(sigById) || existingSignatures.has(sigByContent)) {
+      skipped += 1;
+      continue;
+    }
+
+    existingSignatures.add(sigById);
+    existingSignatures.add(sigByContent);
+
+    imported.push({
+      id,
+      amount: amountNum,
+      type,
+      category,
+      paymentMethod,
+      description,
+      date,
+      createdAt: raw.createdAt || new Date().toISOString(),
+      source: raw.source || 'json_backup',
+      autopayId: raw.autopayId,
+      isAnomaly: Boolean(raw.isAnomaly),
+    });
+  }
+
+  return {
+    newTransactions: imported,
+    skippedCount: skipped,
+    recurringPlans: Array.isArray(parsed.recurringPlans) ? parsed.recurringPlans : undefined,
+    budgetGoal: parsed.budgetGoal && typeof parsed.budgetGoal === 'object' ? parsed.budgetGoal : undefined,
+    summary: parsed.summary,
+  };
+}
+
 export function filterTransactions(
   transactions: Transaction[],
   query: string,

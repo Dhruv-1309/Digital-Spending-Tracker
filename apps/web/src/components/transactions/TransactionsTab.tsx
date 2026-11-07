@@ -19,6 +19,7 @@ import {
   exportTransactionsCsv,
   exportTransactionsJson,
   importTransactionsFromCsv,
+  importBackupFromJson,
 } from '../../lib/transactions';
 import { formatCurrency, formatCalendarDate, getLocalDateString } from '../../lib/formatters';
 import { toUserFriendlyError } from '../../lib/errorMessages';
@@ -87,6 +88,7 @@ export function TransactionsTab() {
     addTransaction,
     deleteTransaction,
     importTransactions,
+    updateBudgetGoal,
     isLoading,
     loadError,
     refreshData,
@@ -95,6 +97,7 @@ export function TransactionsTab() {
   const { showConfirm } = useConfirm();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const jsonFileInputRef = useRef<HTMLInputElement>(null);
   const listTopRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -365,6 +368,53 @@ export function TransactionsTab() {
     }
   };
 
+  // JSON Backup Import handler (CORE-13)
+  const handleImportJsonChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const result = importBackupFromJson(text, transactions);
+
+      if (result.error) {
+        showToast(result.error, 'error');
+        return;
+      }
+
+      if (result.newTransactions.length > 0) {
+        await importTransactions(result.newTransactions);
+      }
+
+      if (result.budgetGoal) {
+        await updateBudgetGoal(result.budgetGoal);
+      }
+
+      const count = result.newTransactions.length;
+      const skipped = result.skippedCount;
+      if (count > 0) {
+        showToast(
+          `Restored ${count} transactions from JSON backup (${skipped} duplicates skipped).`,
+          'success',
+        );
+      } else {
+        showToast(
+          skipped > 0
+            ? `Backup processed: all ${skipped} transactions already exist in your account.`
+            : 'No valid transaction records found in backup.',
+          'info',
+        );
+      }
+    } catch (err: unknown) {
+      showToast(toUserFriendlyError(err, 'Failed to read JSON backup file.'), 'error');
+    } finally {
+      if (jsonFileInputRef.current) {
+        jsonFileInputRef.current.value = '';
+      }
+      setIsMoreMenuOpen(false);
+    }
+  };
+
   // Check active filter chips
   const hasActiveFilters = searchQuery.trim() !== '' || typeFilter !== 'all' || monthFilter !== 'all';
   const selectedMonthOption = monthOptions.find((m) => m.value === monthFilter);
@@ -415,6 +465,16 @@ export function TransactionsTab() {
               onChange={handleImportFileChange}
             />
 
+            {/* Hidden JSON backup file input (CORE-13) */}
+            <input
+              ref={jsonFileInputRef}
+              type="file"
+              id="importJsonInput"
+              accept=".json,application/json"
+              style={{ display: 'none' }}
+              onChange={handleImportJsonChange}
+            />
+
             {/* More Menu Dropdown Panel */}
             <AnimatePresence>
               {isMoreMenuOpen && (
@@ -429,11 +489,23 @@ export function TransactionsTab() {
                   <button
                     type="button"
                     role="menuitem"
+                    id="importCsvBtn"
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
                   >
                     <UploadIcon size={16} className="text-ink-2" />
                     <span>Import CSV</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    id="importJsonBtn"
+                    onClick={() => jsonFileInputRef.current?.click()}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <UploadIcon size={16} className="text-ink-2" />
+                    <span>Import JSON Backup</span>
                   </button>
 
                   <div className="my-1 border-t border-line" />

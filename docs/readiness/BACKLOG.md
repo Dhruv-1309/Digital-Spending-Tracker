@@ -399,7 +399,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Recovers gracefully from quoted multiline fields and uneven column counts
 - **How It Will Be Tested:** Unit test parsing CSV string containing UTF-8 BOM (\uFEFFDate,Type,Amount...).
 
-### 8. [CORE-13] Bidirectional JSON backup import and round-trip data fidelity
+### 8. [CORE-13] Bidirectional JSON backup import and round-trip data fidelity `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `M` | **Category:** `CORE`
 - **Dependencies:** `CORE-12`
