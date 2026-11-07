@@ -1220,18 +1220,19 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 4 assertions in `apps/web/src/test/seo_and_brand_assets.test.ts` verifying page title, description, canonical link, Open Graph, and Twitter summary_large_image card tags.
   - Branded 1200x630 `og-image.png` generated and verified.
 
-### 35. [WEB-10] Public robots.txt and sitemap.xml with noindex tags on private authenticated views
+### 35. [WEB-10] Public robots.txt and sitemap.xml with noindex tags on private authenticated views [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/public/robots.txt`
   - `apps/web/public/sitemap.xml`
-  - `apps/web/index.html`
+  - `apps/web/src/test/robots_and_sitemap.test.ts`
 - **Acceptance Criteria:**
-  - [ ] robots.txt allows indexing on public landing, terms, and privacy pages
-  - [ ] Disallows indexing on private app state (/app/*); sitemap.xml lists public URLs
-- **How It Will Be Tested:** Curl /robots.txt and /sitemap.xml.
+  - [x] robots.txt allows indexing on public landing, terms, and privacy pages
+  - [x] Disallows indexing on private app state (/app/*); sitemap.xml lists public URLs
+- **How It Was Tested:**
+  - 2 unit test assertions in `apps/web/src/test/robots_and_sitemap.test.ts` verifying robots.txt directives and valid sitemap.xml structure with canonical public routes.
 
 ### 36. [WEB-11] High-resolution Apple Touch Icon and theme-color meta headers
 
