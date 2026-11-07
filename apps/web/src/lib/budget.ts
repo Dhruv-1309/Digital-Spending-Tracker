@@ -104,3 +104,11 @@ export function evaluateBudgetStatus(
     metaText: `${formatCurrency(remaining)} remaining this month`,
   };
 }
+
+export {
+  calculateSafeToSpendToday,
+  calculateRemainingExpenseAutopayPaise,
+  type SafeToSpendResult,
+  type SafeToSpendAutopayItem,
+  type SafeToSpendTransactionItem,
+} from '@moneytracker/shared';

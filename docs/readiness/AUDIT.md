@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{379.5}{499} = \mathbf{76.1\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{380.5}{499} = \mathbf{76.3\%}$$
 
-- **Current Readiness Score:** **76.1%** (Baseline: 56.8%)
+- **Current Readiness Score:** **76.3%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **379.5 points**
+- **Earned Weight:** **380.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **118** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **21** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **119** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **20** |
 | **MISSING** | Not implemented | **31** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -43,7 +43,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 11D / 2P / 6M (1 other) | **79.1%** | 34.0 / 43 |
-| **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
+| **DIFF** | Differentiating Features | 9 | 1D / 4P / 4M  | **40.0%** | 6.0 / 15 |
 | **X** | Additional Operational Excellence | 4 | 2D / 1P / 0M (1 other) | **75.0%** | 7.5 / 10 |
 
 ---
@@ -312,7 +312,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
-| **DIFF-1** | Safe to spend today is shown on the Dashboard and matches the formula in section 2, including remaining expense autopay | `PARTIAL` | apps/web/src/components/dashboard/DashboardTab.tsx:220-232 | Formula calculates remaining budget / daysRemaining without subtracting remaining expense autopay due this month. |
+| **DIFF-1** | Safe to spend today is shown on the Dashboard and matches the formula in section 2, including remaining expense autopay | `DONE` | packages/shared/src/calculations/budget.ts:112-255, packages/shared/test/budget.test.ts:136-225, apps/web/src/components/dashboard/DashboardTab.tsx:635-745, apps/web/src/test/dashboard_redesign.test.tsx:444-490 | Exact decimal-safe daily spend calculation deducting current expenses and remaining active expense autopays; inclusive days-left formula; ₹0/day with warning badge when over budget; accessible breakdown tooltip. | None |
 | **DIFF-2** | Bank statement import has column mapping with saved templates, a preview with duplicates and uncategorised rows, and merchant rules that learn from corrections | `PARTIAL` | packages/shared/src/calculations/transactions.ts:240-343 (basic CSV import) | Column mapping, bank templates, duplicate preview modal, and learned merchant rules are not implemented. |
 | **DIFF-3** | Recurring charge detection suggests autopay plans and flags price changes and missed renewals | `MISSING` | None | Statistical recurrence clustering on transaction history is not implemented. |
 | **DIFF-4** | Insights and month-end projection are shown with a Show calculation link for each statement | `PARTIAL` | apps/web/src/components/analytics/analyticsInsights.ts:1-120 | Month-end projection at current pace and interactive 'Show calculation' modal links are not implemented. |

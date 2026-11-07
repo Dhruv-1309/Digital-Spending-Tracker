@@ -8,7 +8,7 @@ import { ConfirmContext } from '../context/confirmContextDef';
 import { DashboardTab } from '../components/dashboard/DashboardTab';
 import { useCountUp } from '../hooks/useCountUp';
 import type { TrackerContextValue } from '../context/trackerContextDef';
-import type { Transaction } from '../types';
+import type { Transaction, AutopayPlan } from '../types';
 
 // Mock chart.js to prevent canvas errors in JSDOM
 vi.mock('react-chartjs-2', () => ({
@@ -438,6 +438,55 @@ describe('Phase 4: Dashboard Redesign (SPEC Section 3, 4, 5 & 6)', () => {
       const budgetProgress = screen.getByRole('progressbar');
       expect(budgetProgress).toHaveAttribute('aria-valuenow', '1650');
       expect(budgetProgress).toHaveAttribute('aria-valuemax', '30000');
+    });
+  });
+
+  describe('10. Safe to Spend Today (DIFF-1)', () => {
+    it('renders Safe to Spend Today card and deducts remaining expense autopay', async () => {
+      const mockAutopays: AutopayPlan[] = [
+        {
+          id: 'ap_1',
+          name: 'Home Broadband',
+          amount: 1500,
+          type: 'expense',
+          category: 'Utilities',
+          day: 28,
+          active: true,
+          lastProcessedMonth: undefined,
+        },
+      ];
+
+      renderDashboard({
+        autopays: mockAutopays,
+        budgetGoal: { monthlyExpenseLimit: 30000, thresholdPercent: 80 },
+      });
+
+      const safeCard = document.getElementById('safeToSpendCard');
+      expect(safeCard).toBeInTheDocument();
+      expect(safeCard).toHaveTextContent('Safe to Spend Today');
+
+      // Check info button exists and tooltip reveals formula upon click
+      const infoBtn = document.getElementById('safeSpendInfoBtn');
+      expect(infoBtn).toBeInTheDocument();
+      fireEvent.click(infoBtn!);
+
+      const tooltip = document.getElementById('safeSpendTooltip');
+      expect(tooltip).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent('Safe Spend Calculation');
+      expect(tooltip).toHaveTextContent('Monthly Budget Limit:');
+      expect(tooltip).toHaveTextContent('Remaining Autopay Due:');
+    });
+
+    it('displays ₹0/day with warning styling and over budget indicator when limit is exceeded', () => {
+      renderDashboard({
+        budgetGoal: { monthlyExpenseLimit: 1000, thresholdPercent: 80 },
+        // mockTransactions has 1650 expenses, which exceeds 1000
+      });
+
+      const safeCard = document.getElementById('safeToSpendCard');
+      expect(safeCard).toBeInTheDocument();
+      expect(safeCard).toHaveTextContent('₹0');
+      expect(safeCard).toHaveTextContent('Over budget');
     });
   });
 });

@@ -4,7 +4,12 @@ import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useCountUp } from '../../hooks/useCountUp';
 import { WeeklyActivityChart } from './WeeklyActivityChart';
-import { getCurrentMonthExpenses, getCurrentMonthRange, evaluateBudgetStatus } from '../../lib/budget';
+import {
+  getCurrentMonthExpenses,
+  getCurrentMonthRange,
+  evaluateBudgetStatus,
+  calculateSafeToSpendToday,
+} from '../../lib/budget';
 import { detectSpendingAnomalies } from '../../lib/anomalies';
 import { formatCurrency, formatCalendarDate } from '../../lib/formatters';
 import { validateBudgetGoalForm } from '../../lib/validation';
@@ -34,6 +39,7 @@ import {
   TrendingDownIcon,
   SparklesIcon,
   FlameIcon,
+  InfoIcon,
 } from '../icons';
 
 /**
@@ -132,6 +138,7 @@ function DashboardSkeleton() {
 export function DashboardTab() {
   const {
     transactions,
+    autopays,
     budgetGoal,
     approvedAnomalies,
     setCurrentTab,
@@ -147,6 +154,7 @@ export function DashboardTab() {
   const { showConfirm } = useConfirm();
 
   const [isBudgetFormOpen, setIsBudgetFormOpen] = useState(false);
+  const [showSafeSpendTooltip, setShowSafeSpendTooltip] = useState(false);
   const [monthlyLimitInput, setMonthlyLimitInput] = useState<string>(
     budgetGoal.monthlyExpenseLimit ? String(budgetGoal.monthlyExpenseLimit) : '',
   );
@@ -217,6 +225,16 @@ export function DashboardTab() {
     return { category: highestCat, amount: highestAmount, sharePercent };
   }, [transactions, currentMonthExpenses]);
 
+  // Safe to Spend Today (DIFF-1) & Daily Pace
+  const safeToSpend = useMemo(() => {
+    return calculateSafeToSpendToday({
+      monthlyLimit: budgetGoal.monthlyExpenseLimit,
+      currentExpenses: currentMonthExpenses,
+      autopays,
+      transactions,
+    });
+  }, [budgetGoal.monthlyExpenseLimit, currentMonthExpenses, autopays, transactions]);
+
   // Daily Burn Rate & Pace
   const dailyBurnRate = useMemo(() => {
     const today = new Date().getDate();
@@ -224,12 +242,13 @@ export function DashboardTab() {
     const avgPerDay = Math.round(currentMonthExpenses / daysElapsed);
     const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
     const daysRemaining = Math.max(0, daysInMonth - today);
-    const remainingBudget = (budgetGoal.monthlyExpenseLimit || 0) - currentMonthExpenses;
-    const safeDailyBudget = remainingBudget > 0 && daysRemaining > 0
-      ? Math.round(remainingBudget / daysRemaining)
-      : null;
-    return { avgPerDay, safeDailyBudget, daysRemaining };
-  }, [currentMonthExpenses, budgetGoal.monthlyExpenseLimit]);
+    return {
+      avgPerDay,
+      safeDailyBudget: safeToSpend.safeDailySpend,
+      daysRemaining,
+      daysRemainingInclusive: safeToSpend.daysRemainingInclusive,
+    };
+  }, [currentMonthExpenses, safeToSpend]);
 
   // Budget Status & Progress
   const budgetStatus = useMemo(
@@ -613,21 +632,119 @@ export function DashboardTab() {
           )}
         </Card>
 
-        {/* Daily Burn Rate & Pace Capsule */}
-        <Card className="p-4 bg-surface border border-line hover:border-line-strong transition-all duration-base">
+        {/* Safe to Spend Today & Daily Pace Capsule (DIFF-1) */}
+        <Card
+          id="safeToSpendCard"
+          className="p-4 bg-surface border border-line hover:border-line-strong transition-all duration-base relative"
+        >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-ink-2">Daily Burn Rate</span>
-            <div className="p-1.5 rounded-full bg-amber-500/10 text-amber-600">
-              <FlameIcon size={14} />
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-ink-2">Safe to Spend Today</span>
+              <div className="relative inline-block">
+                <button
+                  type="button"
+                  id="safeSpendInfoBtn"
+                  onClick={() => setShowSafeSpendTooltip((prev) => !prev)}
+                  onMouseEnter={() => setShowSafeSpendTooltip(true)}
+                  onMouseLeave={() => setShowSafeSpendTooltip(false)}
+                  onFocus={() => setShowSafeSpendTooltip(true)}
+                  onBlur={() => setShowSafeSpendTooltip(false)}
+                  className="p-0.5 rounded text-ink-3 hover:text-ink focus:outline-none focus-visible:ring-1 focus-visible:ring-ink"
+                  aria-label="Show safe to spend calculation breakdown"
+                  aria-expanded={showSafeSpendTooltip}
+                >
+                  <InfoIcon size={13} />
+                </button>
+                {showSafeSpendTooltip && (
+                  <div
+                    id="safeSpendTooltip"
+                    role="tooltip"
+                    className="absolute z-30 left-0 sm:left-auto sm:right-0 top-full mt-2 w-72 p-3 bg-surface border border-line-strong rounded-xl shadow-lg text-xs animate-fadeIn"
+                  >
+                    <div className="font-semibold text-ink mb-1.5 flex items-center justify-between">
+                      <span>Safe Spend Calculation</span>
+                      <span className="text-[10px] text-ink-3 font-normal">DIFF-1</span>
+                    </div>
+                    <div className="bg-canvas p-2 rounded-lg font-mono text-[11px] text-ink-2 mb-2 leading-relaxed border border-line">
+                      {safeToSpend.breakdown.formula}
+                    </div>
+                    <div className="space-y-1 text-ink-3 text-[11px]">
+                      <div className="flex justify-between">
+                        <span>Monthly Budget Limit:</span>
+                        <span className="font-medium text-ink tabular-nums">
+                          {formatCurrency(safeToSpend.monthlyLimit)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Current Month Spent:</span>
+                        <span className="font-medium text-danger tabular-nums">
+                          -{formatCurrency(safeToSpend.currentExpenses)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Remaining Autopay Due:</span>
+                        <span className="font-medium text-amber-600 tabular-nums">
+                          -{formatCurrency(safeToSpend.remainingAutopay)}
+                        </span>
+                      </div>
+                      <div className="border-t border-line pt-1 flex justify-between font-medium">
+                        <span className="text-ink">Safe Remaining Balance:</span>
+                        <span
+                          className={`tabular-nums ${
+                            safeToSpend.remainingSafeSpend >= 0 ? 'text-income' : 'text-danger'
+                          }`}
+                        >
+                          {formatCurrency(safeToSpend.remainingSafeSpend)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-ink-3 pt-0.5">
+                        <span>Days left (inclusive of today):</span>
+                        <span className="tabular-nums">{safeToSpend.daysRemainingInclusive} days</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div
+              className={`p-1.5 rounded-full ${
+                safeToSpend.status === 'critical'
+                  ? 'bg-danger-tint text-danger'
+                  : safeToSpend.status === 'warning'
+                  ? 'bg-amber-500/10 text-amber-600'
+                  : 'bg-emerald-500/10 text-emerald-600'
+              }`}
+            >
+              {safeToSpend.status === 'critical' ? (
+                <AlertCircleIcon size={14} />
+              ) : (
+                <FlameIcon size={14} />
+              )}
             </div>
           </div>
+
           <div className="text-xl sm:text-2xl font-display font-semibold tabular-nums text-ink">
-            {formatCurrency(dailyBurnRate.avgPerDay)}
-            <span className="text-xs font-sans font-normal text-ink-3 ml-1">/ day</span>
+            {safeToSpend.safeDailySpend !== null ? (
+              <span className={safeToSpend.status === 'critical' ? 'text-danger' : 'text-ink'}>
+                {formatCurrency(safeToSpend.safeDailySpend)}
+                <span className="text-xs font-sans font-normal text-ink-3 ml-1">/ day</span>
+              </span>
+            ) : (
+              <span>
+                {formatCurrency(dailyBurnRate.avgPerDay)}
+                <span className="text-xs font-sans font-normal text-ink-3 ml-1">/ day</span>
+              </span>
+            )}
           </div>
-          <div className="text-xs text-ink-3 mt-1">
-            {dailyBurnRate.safeDailyBudget !== null ? (
-              <span>Safe pace: <strong className="text-ink-2 font-medium">{formatCurrency(dailyBurnRate.safeDailyBudget)}/day</strong> remaining</span>
+          <div className="text-xs text-ink-3 mt-1 flex flex-wrap items-center gap-1">
+            {safeToSpend.status === 'critical' ? (
+              <span className="text-danger font-medium">
+                Over budget • {formatCurrency(Math.abs(safeToSpend.remainingSafeSpend))} excess
+              </span>
+            ) : safeToSpend.safeDailySpend !== null ? (
+              <span>
+                Safe pace: <strong className="text-ink-2 font-medium">{formatCurrency(safeToSpend.safeDailySpend)}/day</strong> remaining ({safeToSpend.daysRemainingInclusive}d left{safeToSpend.remainingAutopay > 0 ? `, ${formatCurrency(safeToSpend.remainingAutopay)} reserved` : ''})
+              </span>
             ) : (
               <span>{dailyBurnRate.daysRemaining} days remaining in month</span>
             )}

@@ -815,19 +815,24 @@ Expected of a production-grade personal financial application. These ensure robu
 
 Features that enhance user delight, optimize performance, and deliver MoneyTracker's core differentiating capabilities (DIFF-1 through DIFF-6).
 
-### 1. [DIFF-1] Safe to spend today metric on Dashboard with autopay deduction and days-left formula
+### 1. [DIFF-1] Safe to spend today metric on Dashboard with autopay deduction and days-left formula [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `DIFF`
 - **Dependencies:** `CORE-2`
-- **Files Likely Touched:**
-  - `apps/web/src/components/dashboard/DashboardTab.tsx`
+- **Files Touched:**
   - `packages/shared/src/calculations/budget.ts`
+  - `packages/shared/test/budget.test.ts`
+  - `apps/web/src/lib/budget.ts`
+  - `apps/web/src/components/dashboard/DashboardTab.tsx`
+  - `apps/web/src/test/dashboard_redesign.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Formula matches Section 2: (monthly limit - current month expenses - remaining expense autopay due this month) / days left in month
-  - [ ] Days left in month is calculated inclusively so today is counted (e.g. on last day of month, days left is 1, not 0)
-  - [ ] If remaining safe spend is negative, displays ₹0/day with warning styling
-  - [ ] Displays an explainer tooltip detailing the exact mathematical components
-- **How It Will Be Tested:** Unit test verifying calculation with upcoming autopay plans and end-of-month dates.
+  - [x] Formula matches Section 2: (monthly limit - current month expenses - remaining expense autopay due this month) / days left in month
+  - [x] Days left in month is calculated inclusively so today is counted (e.g. on last day of month, days left is 1, not 0)
+  - [x] If remaining safe spend is negative, displays ₹0/day with warning styling
+  - [x] Displays an explainer tooltip detailing the exact mathematical components
+- **How It Was Tested:**
+  - 5 unit test assertions in `packages/shared/test/budget.test.ts` verifying safe daily spend deduction, inclusive days left on last day of month, ₹0/day on over-budget, and autopay deduction.
+  - 2 component tests in `apps/web/src/test/dashboard_redesign.test.tsx` asserting card rendering, tooltip toggle, and over-budget states.
 
 ### 2. [DIFF-2] Bank statement CSV import with column mapping, duplicate preview, and merchant category rules
 

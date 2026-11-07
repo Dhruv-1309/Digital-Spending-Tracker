@@ -108,3 +108,186 @@ export function evaluateBudgetStatus(
     metaText: `${formatCurrency(remaining)} remaining this month`,
   };
 }
+
+export interface SafeToSpendAutopayItem {
+  id?: string;
+  name?: string;
+  amount: number;
+  type: string;
+  day?: number;
+  active?: boolean;
+  lastProcessedMonth?: string | null;
+}
+
+export interface SafeToSpendTransactionItem {
+  id?: string;
+  amount: number;
+  type: string;
+  date: string;
+  autopayId?: string;
+  description?: string;
+}
+
+export interface SafeToSpendResult {
+  monthlyLimit: number;
+  currentExpenses: number;
+  remainingAutopay: number;
+  remainingSafeSpend: number;
+  daysRemainingInclusive: number;
+  safeDailySpend: number | null;
+  isOverBudget: boolean;
+  status: 'no_budget' | 'safe' | 'warning' | 'critical';
+  breakdown: {
+    monthlyLimitPaise: number;
+    currentExpensesPaise: number;
+    remainingAutopayPaise: number;
+    remainingSafeSpendPaise: number;
+    daysInMonth: number;
+    currentDay: number;
+    daysRemainingInclusive: number;
+    formula: string;
+  };
+}
+
+/**
+ * Calculates remaining active expense autopays due in the current month in integer paise.
+ * Excludes autopays already executed in current month (via lastProcessedMonth or transaction records).
+ */
+export function calculateRemainingExpenseAutopayPaise(
+  autopays: SafeToSpendAutopayItem[] = [],
+  refDate: Date = new Date(),
+  transactions: SafeToSpendTransactionItem[] = [],
+): number {
+  const currentYear = refDate.getFullYear();
+  const currentMonth = refDate.getMonth();
+  const currentMonthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+
+  return autopays
+    .filter((a) => {
+      if (a.active === false) return false;
+      if (a.type !== 'expense') return false;
+      if (a.lastProcessedMonth === currentMonthKey) return false;
+      if (
+        transactions.some(
+          (t) =>
+            t.type === 'expense' &&
+            t.date.startsWith(currentMonthKey) &&
+            ((a.id && t.autopayId === a.id) ||
+              (a.name &&
+                t.description?.toLowerCase().includes('[autopay]') &&
+                t.description?.toLowerCase().includes(a.name.toLowerCase()))),
+        )
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .reduce((sum, a) => sum + rupeesToPaise(a.amount), 0);
+}
+
+/**
+ * Safe to Spend Today calculation (DIFF-1).
+ * Formula: (monthly limit - current month expenses - remaining expense autopay due this month) / days left in month (inclusive of today).
+ * Stored and summed as integer paise with zero floating point drift.
+ */
+export function calculateSafeToSpendToday(params: {
+  monthlyLimit: number;
+  currentExpenses: number;
+  autopays?: SafeToSpendAutopayItem[];
+  transactions?: SafeToSpendTransactionItem[];
+  refDate?: Date;
+}): SafeToSpendResult {
+  const refDate = params.refDate || new Date();
+  const currentYear = refDate.getFullYear();
+  const currentMonth = refDate.getMonth();
+  const today = refDate.getDate();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysRemainingInclusive = Math.max(1, daysInMonth - today + 1);
+
+  const monthlyLimit = params.monthlyLimit || 0;
+  const currentExpenses = Math.max(0, params.currentExpenses || 0);
+
+  const remainingAutopayPaise = calculateRemainingExpenseAutopayPaise(
+    params.autopays,
+    refDate,
+    params.transactions,
+  );
+  const remainingAutopay = paiseToRupees(remainingAutopayPaise);
+
+  const monthlyLimitPaise = rupeesToPaise(monthlyLimit);
+  const currentExpensesPaise = rupeesToPaise(currentExpenses);
+
+  if (monthlyLimit <= 0) {
+    return {
+      monthlyLimit: 0,
+      currentExpenses,
+      remainingAutopay,
+      remainingSafeSpend: 0,
+      daysRemainingInclusive,
+      safeDailySpend: null,
+      isOverBudget: false,
+      status: 'no_budget',
+      breakdown: {
+        monthlyLimitPaise: 0,
+        currentExpensesPaise,
+        remainingAutopayPaise,
+        remainingSafeSpendPaise: 0,
+        daysInMonth,
+        currentDay: today,
+        daysRemainingInclusive,
+        formula: 'No monthly budget limit configured',
+      },
+    };
+  }
+
+  const remainingSafeSpendPaise = monthlyLimitPaise - currentExpensesPaise - remainingAutopayPaise;
+  const remainingSafeSpend = paiseToRupees(remainingSafeSpendPaise);
+
+  if (remainingSafeSpendPaise <= 0) {
+    return {
+      monthlyLimit,
+      currentExpenses,
+      remainingAutopay,
+      remainingSafeSpend,
+      daysRemainingInclusive,
+      safeDailySpend: 0,
+      isOverBudget: true,
+      status: 'critical',
+      breakdown: {
+        monthlyLimitPaise,
+        currentExpensesPaise,
+        remainingAutopayPaise,
+        remainingSafeSpendPaise,
+        daysInMonth,
+        currentDay: today,
+        daysRemainingInclusive,
+        formula: `(${formatCurrency(monthlyLimit)} limit - ${formatCurrency(currentExpenses)} spent - ${formatCurrency(remainingAutopay)} autopay) ÷ ${daysRemainingInclusive} days = ${formatCurrency(0)}/day (Over budget by ${formatCurrency(Math.abs(remainingSafeSpend))})`,
+      },
+    };
+  }
+
+  const safeDailyPaise = Math.floor(remainingSafeSpendPaise / daysRemainingInclusive);
+  const safeDailySpend = paiseToRupees(safeDailyPaise);
+  const isNearBudget = remainingSafeSpendPaise < monthlyLimitPaise * 0.2;
+
+  return {
+    monthlyLimit,
+    currentExpenses,
+    remainingAutopay,
+    remainingSafeSpend,
+    daysRemainingInclusive,
+    safeDailySpend,
+    isOverBudget: false,
+    status: isNearBudget ? 'warning' : 'safe',
+    breakdown: {
+      monthlyLimitPaise,
+      currentExpensesPaise,
+      remainingAutopayPaise,
+      remainingSafeSpendPaise,
+      daysInMonth,
+      currentDay: today,
+      daysRemainingInclusive,
+      formula: `(${formatCurrency(monthlyLimit)} limit - ${formatCurrency(currentExpenses)} spent - ${formatCurrency(remainingAutopay)} autopay) ÷ ${daysRemainingInclusive} days = ${formatCurrency(safeDailySpend)}/day`,
+    },
+  };
+}
