@@ -7,3 +7,4 @@ export * from './formatters.js';
 export * from './transactions.js';
 export * from './validation.js';
 export * from './mathEvaluator.js';
+export * from './merchantRules.js';

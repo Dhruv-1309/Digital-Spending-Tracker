@@ -834,19 +834,28 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 5 unit test assertions in `packages/shared/test/budget.test.ts` verifying safe daily spend deduction, inclusive days left on last day of month, ₹0/day on over-budget, and autopay deduction.
   - 2 component tests in `apps/web/src/test/dashboard_redesign.test.tsx` asserting card rendering, tooltip toggle, and over-budget states.
 
-### 2. [DIFF-2] Bank statement CSV import with column mapping, duplicate preview, and merchant category rules
+### 2. [DIFF-2] Bank statement CSV import with column mapping, duplicate preview, and merchant category rules [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** `CORE-12`
-- **Files Likely Touched:**
-  - `apps/web/src/components/transactions/BankImportModal.tsx`
-  - `packages/shared/src/calculations/merchantRules.ts`
+- **Files Touched:**
+  - `packages/shared/src/calculations/merchantRules.ts`: Core bank CSV parsing, Indian date normalization, bank template detection (HDFC, ICICI, SBI, generic/custom), merchant rule matcher, and duplicate preview generator.
+  - `packages/shared/test/merchantRules.test.ts`: 10 unit tests for rule matching, date parsing, template detection, and preview generation.
+  - `apps/web/src/lib/merchantRules.ts`: Client-side persistence for custom bank templates and learned merchant categorization rules in localStorage.
+  - `apps/web/src/components/transactions/BankImportModal.tsx`: Accessible interactive modal with drag & drop CSV upload, bank template selector, customizable column mapping, live stats bar, duplicate detection, merchant category learning, and row toggles.
+  - `apps/web/src/components/transactions/TransactionsTab.tsx`: More Menu button integration and modal mounting.
+  - `apps/web/src/test/bank_import_modal.test.tsx`: 6 component unit tests verifying upload, template detection, duplicate row flags, mapping customizer, file size limits, and import commit.
+  - `apps/web/src/test/transactions_redesign.test.tsx`: Integration test verifying More Menu opening the Bank Statement Import dialog.
 - **Acceptance Criteria:**
-  - [ ] Allows user to map arbitrary bank CSV columns (Date, Amount, Description, Type) and save mapping as reusable template
-  - [ ] Displays preview grid showing detected duplicates (grayed out) and uncategorized rows before final commit
-  - [ ] Applies learned merchant categorization rules (e.g. description contains "SWIGGY" -> Food & Dining)
-  - [ ] All parsing runs client-side with zero bank credentials or external API calls
-- **How It Will Be Tested:** Unit test verifying merchant rule engine and column mapping parser.
+  - [x] Allows user to map arbitrary bank CSV columns (Date, Amount, Description, Type, Debit/Credit) and save mapping as reusable template
+  - [x] Displays preview grid showing detected duplicates (grayed out) and uncategorized rows before final commit
+  - [x] Applies learned merchant categorization rules (e.g. description contains "SWIGGY" -> Food & Dining) and remembers corrections
+  - [x] All parsing runs client-side with zero bank credentials or external API calls (100% private and offline)
+- **How It Was Tested:**
+  - 10 unit tests in `packages/shared/test/merchantRules.test.ts` (100% passing).
+  - 6 component tests in `apps/web/src/test/bank_import_modal.test.tsx` (100% passing).
+  - 1 integration test in `apps/web/src/test/transactions_redesign.test.tsx` (100% passing).
+  - Clean TypeScript compilation, linting, and full production build.
 
 ### 3. [DIFF-3] Recurring charge detection from transaction history with autopay conversion suggestion
 

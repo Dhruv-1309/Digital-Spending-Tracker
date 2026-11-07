@@ -13,6 +13,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import { Card } from '../ui/Card';
 import { TransactionSlideOver } from './TransactionSlideOver';
+import { BankImportModal } from './BankImportModal';
 import {
   filterTransactions,
   paginateTransactions,
@@ -90,6 +91,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
     transactions,
     autopays,
     budgetGoal,
+    categories,
     addTransaction,
     deleteTransaction,
     importTransactions,
@@ -119,6 +121,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [slideOverTrigger, setSlideOverTrigger] = useState<HTMLElement | null>(null);
+  const [isBankImportOpen, setIsBankImportOpen] = useState(false);
 
   // Close more menu on click outside or Escape
   useEffect(() => {
@@ -456,6 +459,44 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
     }
   };
 
+  // Bank Statement CSV Import handler (DIFF-2)
+  const handleBankImportTransactions = useCallback(
+    async (
+      importedTxs: Array<{
+        amount: number;
+        type: 'income' | 'expense';
+        category: string;
+        description: string;
+        date: string;
+        paymentMethod: string;
+      }>,
+    ) => {
+      if (importedTxs.length === 0) return;
+      const fullTxs: Transaction[] = importedTxs.map((t) => ({
+        id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        amount: t.amount,
+        type: t.type,
+        category: t.category,
+        paymentMethod: t.paymentMethod,
+        description: t.description,
+        date: t.date,
+        createdAt: new Date().toISOString(),
+        source: 'csv_import',
+      }));
+
+      const success = await importTransactions(fullTxs);
+      if (success) {
+        showToast(
+          `Successfully imported ${fullTxs.length} transaction${fullTxs.length === 1 ? '' : 's'} from bank statement.`,
+          'success',
+        );
+      } else {
+        showToast('Failed to import transactions. Please try again.', 'error');
+      }
+    },
+    [importTransactions, showToast],
+  );
+
   // Check active filter chips
   const hasActiveFilters = searchQuery.trim() !== '' || typeFilter !== 'all' || monthFilter !== 'all';
   const selectedMonthOption = monthOptions.find((m) => m.value === monthFilter);
@@ -536,6 +577,20 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                   >
                     <UploadIcon size={16} className="text-ink-2" />
                     <span>Import CSV</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    id="importBankStatementBtn"
+                    onClick={() => {
+                      setIsBankImportOpen(true);
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <UploadIcon size={16} className="text-accent" />
+                    <span>Import Bank Statement</span>
                   </button>
 
                   <button
@@ -1116,6 +1171,15 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
         }}
         initialData={editingTransaction}
         triggerElement={slideOverTrigger}
+      />
+
+      {/* Bank Statement CSV Import Modal (DIFF-2) */}
+      <BankImportModal
+        isOpen={isBankImportOpen}
+        onClose={() => setIsBankImportOpen(false)}
+        onImportTransactions={handleBankImportTransactions}
+        existingTransactions={transactions}
+        availableCategories={categories}
       />
     </div>
   );

@@ -514,9 +514,25 @@ describe('Phase 5: Transactions Redesign Screen', () => {
       fireEvent.click(moreBtn!);
 
       expect(screen.getByRole('menuitem', { name: /Import CSV/i })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Import Bank Statement/i })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: /Export CSV Detailed/i })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: /Export CSV Basic/i })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: /Export JSON Backup/i })).toBeInTheDocument();
+    });
+
+    it('opens Bank Statement Import modal when clicking Import Bank Statement', () => {
+      renderTransactions();
+
+      const moreBtn = document.getElementById('txMoreMenuBtn');
+      fireEvent.click(moreBtn!);
+
+      const bankImportBtn = screen.getByRole('menuitem', { name: /Import Bank Statement/i });
+      expect(bankImportBtn).toBeInTheDocument();
+
+      fireEvent.click(bankImportBtn);
+
+      expect(screen.getByRole('heading', { name: /Import Bank Statement/i })).toBeInTheDocument();
+      expect(screen.getByText(/Upload your bank statement CSV/i)).toBeInTheDocument();
     });
 
     it('shows toast with imported and skipped counts on CSV import', async () => {
