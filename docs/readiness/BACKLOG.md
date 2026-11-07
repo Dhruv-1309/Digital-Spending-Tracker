@@ -1220,18 +1220,27 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 5 automated tests in `apps/web/src/test/render_performance.test.tsx` verifying render isolation of AmountInput/TextInput from sibling cards, profiling filter update commit durations, and asserting search debounce execution. Full test suite passing (699 tests).
 
-### 22. [PERF-9] PWA Web App Manifest and Service Worker for offline app shell caching
+### 22. [PERF-9] PWA Web App Manifest and Service Worker for offline app shell caching [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `PERF`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/public/manifest.json`
   - `apps/web/public/sw.js`
+  - `apps/web/public/pwa-192x192.png`
+  - `apps/web/public/pwa-512x512.png`
+  - `apps/web/public/pwa-maskable-192x192.png`
+  - `apps/web/public/pwa-maskable-512x512.png`
+  - `apps/web/src/registerServiceWorker.ts`
+  - `apps/web/src/main.tsx`
   - `apps/web/index.html`
+  - `apps/web/src/test/pwa_manifest_and_sw.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Provides manifest.json with app name, theme color (#FBF8F4), icons, and standalone display
-  - [ ] Registers lightweight Service Worker caching HTML, CSS, fonts, and JS bundles for offline instant launch
-- **How It Will Be Tested:** Verify Service Worker registration and manifest validation in browser tools.
+  - [x] Provides manifest.json with app name, theme color (#2563EB / #FBF8F4), icons, shortcuts, and standalone display
+  - [x] Registers lightweight Service Worker caching HTML, CSS, fonts, and JS bundles for offline instant launch
+  - [x] Excludes /api and authentication endpoints from service worker caching
+- **How It Was Tested:**
+  - 9 automated unit tests in `apps/web/src/test/pwa_manifest_and_sw.test.ts` verifying W3C manifest schema compliance, icon file existence and byte sizes, service worker lifecycle hooks, API bypass rules, and production registration handling.
 
 ### 23. [PERF-13] HTTP compression middleware (gzip/brotli) for API JSON responses [DONE]
 
@@ -1613,16 +1622,20 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
   - [ ] Hides sidebar and navigation, styling clean tabular summary when printing or saving as PDF
 - **How It Will Be Tested:** Inspect @media print styles.
 
-### 12. [PERF-14] PWA maskable icons and splash screen configuration
+### 12. [PERF-14] PWA maskable icons and splash screen configuration [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `PERF`
 - **Dependencies:** `PERF-9`
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/public/manifest.json`
-  - `apps/web/public/icon-maskable.png`
+  - `apps/web/public/pwa-maskable-192x192.png`
+  - `apps/web/public/pwa-maskable-512x512.png`
+  - `apps/web/src/test/pwa_manifest_and_sw.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Adds purpose: "maskable any" icon entries to manifest.json
-- **How It Will Be Tested:** Validate in Chrome DevTools Application panel.
+  - [x] Adds purpose: "maskable" and "any maskable" icon entries to manifest.json with 80% safe zone padding
+  - [x] Configures theme_color, background_color, and orientation in manifest.json
+- **How It Was Tested:**
+  - Automated tests in `apps/web/src/test/pwa_manifest_and_sw.test.ts` verifying maskable icon attributes, sizes (192x192, 512x512), and non-zero binary asset size on disk.
 
 ### 13. [PERF-15] Predictive route chunk prefetching on link hover
 
