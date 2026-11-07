@@ -11,3 +11,4 @@ export * from './merchantRules.js';
 export * from './recurringDetector.js';
 export * from './projections.js';
 export * from './trash.js';
+export * from './savings.js';

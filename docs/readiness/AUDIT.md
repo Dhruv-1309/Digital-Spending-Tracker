@@ -10,23 +10,23 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{438.5}{499} = \mathbf{87.9\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{442.5}{499} = \mathbf{88.7\%}$$
 
-- **Current Readiness Score:** **87.9%** (Baseline: 56.8%)
-- **Total Audited Items:** **190**
+- **Current Readiness Score:** **88.7%** (Baseline: 56.8%)
+- **Total Audited Items:** **191**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **438.5 points**
+- **Earned Weight:** **442.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **165** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **169** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **0** |
-| **MISSING** | Not implemented | **6** |
+| **MISSING** | Not implemented | **2** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
-| **Total** | | **190** |
+| **Total** | | **191** |
 
 ---
 
@@ -38,12 +38,12 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 21D / 0P / 0M | **100.0%** | 66.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 19D / 0P / 0M (3 other) | **84.1%** | 58.0 / 69 |
-| **UX** | Frontend, UX and Accessibility | 24 | 22D / 0P / 1M (1 other) | **92.7%** | 51.0 / 55 |
+| **UX** | Frontend, UX and Accessibility | 24 | 23D / 0P / 0M (1 other) | **94.5%** | 52.0 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 12D / 0P / 0M (3 other) | **73.5%** | 25.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 18D / 0P / 0M | **100.0%** | 46.0 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 12D / 0P / 0M (9 other) | **57.1%** | 28.0 / 49 |
-| **WEB** | Web Presence, Legal and Documentation | 20 | 18D / 0P / 1M (1 other) | **97.7%** | 42.0 / 43 |
-| **DIFF** | Differentiating Features | 9 | 6D / 0P / 3M | **80.0%** | 12.0 / 15 |
+| **WEB** | Web Presence, Legal and Documentation | 20 | 19D / 0P / 0M (1 other) | **100.0%** | 43.0 / 43 |
+| **DIFF** | Differentiating Features | 9 | 8D / 0P / 1M | **93.3%** | 14.0 / 15 |
 | **X** | Additional Operational Excellence | 4 | 3D / 0P / 0M (1 other) | **94.4%** | 8.5 / 9 |
 
 ---
@@ -211,7 +211,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **UX-20** | A warning appears before leaving a form with unsaved changes | `DONE` | TransactionSlideOver.tsx, AddTransactionTab.tsx, TrackerContext.tsx | Dirty form detection checks amount/category/method/date/description changes. Prompts confirmation dialog on drawer close, tab navigation, or Cancel, and registers beforeunload listener. Verified by 10 unit tests in dirty_form_warning.test.tsx. |
 | **UX-21** | The last-used filters, sort and category are remembered | `DONE` | apps/web/src/components/transactions/TransactionsTab.tsx:135-215, apps/web/src/test/shortcuts_and_persistence.test.tsx | Remembers user filter (typeFilter, monthFilter) and sort (sortBy) selections in localStorage ('mt_tx_filters') with graceful fallback on initial load. | None |
 | **UX-22** | Keyboard shortcuts are listed in a help dialog | `DONE` | apps/web/src/components/layout/ShortcutsModal.tsx, apps/web/src/components/layout/AppShell.tsx, apps/web/src/test/shortcuts_and_persistence.test.tsx | Accessible modal dialog (triggered by pressing ? or clicking button) displaying categorized keyboard shortcuts (Navigation 1-4, Actions N/Ctrl+B/Esc, Math =); fully accessible with Esc dismiss. | None |
-| **UX-23** | Dark theme | `MISSING` | tokens.css defines warm light theme palette | Dark mode tokens and theme toggle are not implemented. |
+| **UX-23** | Dark theme | `DONE` | apps/web/src/styles/tokens.css, apps/web/src/context/ThemeContext.tsx, apps/web/src/components/layout/AppShell.tsx, apps/web/src/test/theme_and_changelog.test.tsx | Full dark theme palette with WCAG AA contrast tokens; ThemeProvider with Light/Dark/System modes; localStorage persistence ('mt_theme'); dynamic theme-color meta tag update; responsive header toggle button. | None |
 | **UX-24** | A print stylesheet for reports | `DONE` | apps/web/src/styles/print.css, apps/web/src/index.css, apps/web/src/test/shortcuts_and_persistence.test.tsx | Dedicated @media print stylesheet hiding navigation, sidebars, interactive buttons, and modals; styling high-contrast tables and reports for PDF export and physical printing. | None |
 
 ### PERF: Performance, Offline and PWA
@@ -303,7 +303,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **WEB-14** | A demo account or demo mode, and a short demo recording | `DONE` | apps/web/src/components/auth/AuthModal.tsx, apps/web/src/context/AuthContext.tsx, apps/web/src/context/TrackerContext.tsx, apps/web/src/test/demo_mode.test.tsx | One-click Demo Mode on login screen with populated sample data, in-memory state mutations, and prominent demo banner without requiring credentials. | None |
 | **WEB-15** | A cookie and storage notice if anything non-essential is stored | `NOT-APPLICABLE` | apps/web/src/components/legal/PrivacyPage.tsx:115-135 | Not applicable: zero non-essential storage or third-party cookies used. |
 | **WEB-16** | An About page with the project's purpose and stack | `DONE` | apps/web/src/components/legal/AboutPage.tsx, apps/web/src/App.tsx, apps/web/src/lib/routes.ts, apps/web/src/test/legal_routes.test.tsx | Public /about route detailing privacy manifesto, integer-paise math architecture, local-first offline storage, and modern full-stack tech stack. | None |
-| **WEB-17** | A What's new or changelog page | `MISSING` | None | What's new / changelog page is missing. |
+| **WEB-17** | A What's new or changelog page | `DONE` | apps/web/src/components/help/ChangelogDrawer.tsx, apps/web/src/components/layout/AppShell.tsx, apps/web/src/test/theme_and_changelog.test.tsx | Accessible in-app Changelog drawer with release notes for v3.0, v2.0, and v1.0; feature badges; unread dot in header; localStorage persistence ('mt_last_seen_changelog'). | None |
 | **WEB-18** | CONTRIBUTING and CODE_OF_CONDUCT files if the repository is public and open to contributions | `DONE` | CONTRIBUTING.md, CODE_OF_CONDUCT.md | Comprehensive open-source guidelines covering development setup, quality gates, PR lifecycle, Contributor Covenant v2.1 code of conduct, and reporting standards. | None |
 | **WEB-19** | JSON-LD structured data (SoftwareApplication) on the landing page | `DONE` | apps/web/index.html:15-30, apps/web/src/test/seo_and_brand_assets.test.ts | Schema.org SoftwareApplication JSON-LD structured data with FinanceApplication classification, free pricing specification, and feature highlights. | None |
 | **WEB-20** | An accessibility statement | `DONE` | apps/web/src/components/legal/AccessibilityPage.tsx, apps/web/src/App.tsx, apps/web/src/lib/routes.ts, apps/web/src/test/legal_routes.test.tsx | Formal accessibility statement conforming to W3C guidelines and WCAG 2.1 Level AA, documenting keyboard navigation, contrast, screen reader compatibility, and feedback contact. | None |
@@ -318,8 +318,8 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **DIFF-4** | Insights and month-end projection are shown with a Show calculation link for each statement | `DONE` | packages/shared/src/calculations/projections.ts, packages/shared/test/projections.test.ts, apps/web/src/components/analytics/CalculationBreakdownModal.tsx, apps/web/src/components/analytics/ExplainableInsightsCard.tsx, apps/web/src/test/explainable_insights.test.tsx, apps/web/src/components/analytics/AnalyticsTab.tsx | Exact decimal-safe month-end spend projection at current daily pace vs monthly budget limit; category 3-month rolling average variance detection (above/below/similar); plain-language explanation with interactive 'Show calculation' modal displaying formula equations, inputs, and step-by-step arithmetic. | None |
 | **DIFF-5** | Trash with 30-day restore and an activity history with undo of a whole import batch | `DONE` | apps/api/src/repositories/transactionRepository.ts, apps/api/src/routes/transactionRoutes.ts, apps/api/test/trash_and_batch_undo.test.ts, packages/shared/src/calculations/trash.ts, packages/shared/test/trash.test.ts, apps/web/src/components/transactions/TrashModal.tsx, apps/web/src/components/transactions/ActivityHistoryModal.tsx, apps/web/src/lib/activityHistory.ts, apps/web/src/test/trash_and_activity_history.test.tsx | Soft-deletion with 30-day retention window; Trash Bin modal with days-left countdown, single-click restoration, permanent purge, and empty trash actions; activity audit log of recent edits, deletions, and imports; 1-click batch undo for CSV and bank statement imports. | None |
 | **DIFF-6** | Passphrase-encrypted backup and restore using Web Crypto | `DONE` | packages/shared/src/crypto/encryptedBackup.ts, packages/shared/test/encryptedBackup.test.ts, apps/web/src/components/transactions/EncryptedBackupModal.tsx, apps/web/src/test/encrypted_backup_modal.test.tsx, apps/web/src/components/transactions/TransactionsTab.tsx | Zero-knowledge client-side backup encryption using browser Web Crypto API (PBKDF2 with SHA-256 and 100,000 iterations, AES-GCM 256-bit with random 16-byte salt and 12-byte IV); exported as .enc JSON envelope; decrypt-and-restore with authentication tag validation, schema validation, and duplicate skipping; 100% offline. | None |
-| **DIFF-7** | Per-category budgets with threshold warnings | `MISSING` | None | Category-level budget limits not implemented (only global monthly budget). |
-| **DIFF-8** | Savings goals with progress and required monthly saving | `MISSING` | None | Savings goals entity and UI not implemented. |
+| **DIFF-7** | Per-category budgets with threshold warnings | `DONE` | packages/shared/src/schemas/budget.ts, packages/shared/src/calculations/budget.ts, packages/shared/test/budget.test.ts, apps/web/src/components/budget/CategoryBudgetModal.tsx, apps/web/src/test/diff_features_category_and_savings.test.tsx | Per-category monthly spending limits with customizable warning threshold % (default 80%); real-time spending aggregation in paise; status badges (On Track, Near Limit, At Limit, Over Budget); progress meter; modal accessible from Dashboard. | None |
+| **DIFF-8** | Savings goals with progress and required monthly saving | `DONE` | packages/shared/src/schemas/savings.ts, packages/shared/src/calculations/savings.ts, packages/shared/test/savings.test.ts, apps/web/src/components/savings/SavingsGoalsModal.tsx, apps/web/src/test/diff_features_category_and_savings.test.tsx | Savings goals tracker with target amount, target date, current saved balance, and required monthly deposit calculation; quick "+ Add Funds" deposit flow; status chips; progress meter; modal accessible from Dashboard. | None |
 | **DIFF-9** | Opt-in weekly summary email | `MISSING` | None | Email digest worker and user subscription opt-in not implemented. |
 
 ### X: Additional Operational Excellence

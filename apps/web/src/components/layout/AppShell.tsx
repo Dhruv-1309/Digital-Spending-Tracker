@@ -10,6 +10,8 @@ import { Button } from '../ui/Button';
 import { NavigationTabs } from './NavigationTabs';
 import { FeedbackModal } from '../common/FeedbackModal';
 import { ShortcutsModal } from './ShortcutsModal';
+import { ChangelogDrawer } from '../help/ChangelogDrawer';
+import { useTheme } from '../../hooks/useTheme';
 import { MAIN_NAV_ITEMS } from './navItems';
 import { prefetchTab } from '../../lib/prefetch';
 import {
@@ -25,6 +27,8 @@ import {
   AlertCircleIcon,
   SparklesIcon,
   HelpCircleIcon,
+  SunIcon,
+  MoonIcon,
 } from '../icons';
 
 export interface AppShellProps {
@@ -75,6 +79,16 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const [hasUnreadChangelog, setHasUnreadChangelog] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('mt_last_seen_changelog') !== '3.0.0';
+    } catch {
+      return false;
+    }
+  });
 
   const handleResendVerification = async () => {
     try {
@@ -658,6 +672,38 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
             </div>
           )}
 
+          {/* What's New Release Updates Button (WEB-17) */}
+          <button
+            id="whatsNewBtn"
+            data-testid="whats-new-btn"
+            type="button"
+            onClick={() => {
+              setIsChangelogOpen(true);
+              setHasUnreadChangelog(false);
+            }}
+            aria-label="What's New release updates"
+            title="What's New (Release updates)"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
+          >
+            <SparklesIcon size={18} />
+            {hasUnreadChangelog && (
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
+            )}
+          </button>
+
+          {/* Dark / Light Theme Toggle (UX-23) */}
+          <button
+            id="themeToggleBtn"
+            data-testid="theme-toggle-btn"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-2 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
+          >
+            {resolvedTheme === 'dark' ? <SunIcon size={18} /> : <MoonIcon size={18} />}
+          </button>
+
           {/* Add Transaction Button */}
           <Button
             variant="primary"
@@ -987,6 +1033,12 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
       <ShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      {/* What's New Changelog Drawer (WEB-17) */}
+      <ChangelogDrawer
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
       />
     </div>
   );

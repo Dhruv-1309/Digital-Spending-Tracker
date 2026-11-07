@@ -150,3 +150,49 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
 }
+
+/* ==========================================================================
+   Dark Theme High-Contrast Night Palette (UX-23)
+   ========================================================================== */
+[data-theme="dark"],
+:root.dark {
+  --bg: #141210;
+  --surface: #1E1A17;
+  --surface-2: #2B2622;
+  --line: #3D3630;
+  --line-strong: #544B43;
+  --ink: #F7F4EE;
+  --ink-2: #C4BCB1;
+  --ink-3: #948A7D;
+  --accent: #5D7FF2;
+  --accent-tint: #1F284D;
+  --income: #3E9E73;
+  --income-tint: #163626;
+  --warning: #D99B26;
+  --warning-tint: #3D2B09;
+  --danger: #E8564D;
+  --danger-tint: #421815;
+
+  /* Category Badges (Dark Mode Contrast) */
+  --cat-terracotta-tint: #4A2218;
+  --cat-terracotta-ink: #F5A894;
+  --cat-olive-tint: #323814;
+  --cat-olive-ink: #CFDC7E;
+  --cat-teal-tint: #143834;
+  --cat-teal-ink: #79D3CA;
+  --cat-rose-tint: #4A1B29;
+  --cat-rose-ink: #F596B2;
+  --cat-sand-tint: #3D3010;
+  --cat-sand-ink: #F0CE7A;
+  --cat-sky-tint: #16324D;
+  --cat-sky-ink: #8EC0F2;
+  --cat-moss-tint: #1B3B1E;
+  --cat-moss-ink: #89D990;
+  --cat-slate-tint: #262C36;
+  --cat-slate-ink: #B0BCCC;
+
+  /* Shadows (Dark Mode Depth) */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+}

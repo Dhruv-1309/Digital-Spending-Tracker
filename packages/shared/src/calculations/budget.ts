@@ -291,3 +291,102 @@ export function calculateSafeToSpendToday(params: {
     },
   };
 }
+
+/**
+ * Category Budget Evaluation (DIFF-7)
+ */
+export interface CategoryBudgetEvaluation {
+  category: string;
+  limitPaise: number;
+  spentPaise: number;
+  remainingPaise: number;
+  percentSpent: number;
+  clampedPercent: number;
+  status: 'on-track' | 'near-limit' | 'at-limit' | 'over-budget';
+  alertLevel: BudgetAlertLevel;
+}
+
+export function evaluateCategoryBudget(
+  category: string,
+  spentPaise: number,
+  limitPaise: number,
+  thresholdPercent: number = 80,
+): CategoryBudgetEvaluation {
+  if (limitPaise <= 0) {
+    return {
+      category,
+      limitPaise: 0,
+      spentPaise,
+      remainingPaise: 0,
+      percentSpent: 0,
+      clampedPercent: 0,
+      status: 'on-track',
+      alertLevel: 'none',
+    };
+  }
+
+  const percentSpent = parseFloat(((spentPaise / limitPaise) * 100).toFixed(2));
+  const clampedPercent = Math.min(100, Math.max(0, percentSpent));
+  const remainingPaise = limitPaise - spentPaise;
+
+  if (spentPaise > limitPaise) {
+    return {
+      category,
+      limitPaise,
+      spentPaise,
+      remainingPaise,
+      percentSpent,
+      clampedPercent: 100,
+      status: 'over-budget',
+      alertLevel: 'critical',
+    };
+  }
+
+  if (spentPaise === limitPaise) {
+    return {
+      category,
+      limitPaise,
+      spentPaise,
+      remainingPaise: 0,
+      percentSpent: 100,
+      clampedPercent: 100,
+      status: 'at-limit',
+      alertLevel: 'critical',
+    };
+  }
+
+  const warningPoint = limitPaise * (thresholdPercent / 100);
+  if (spentPaise >= warningPoint) {
+    return {
+      category,
+      limitPaise,
+      spentPaise,
+      remainingPaise,
+      percentSpent,
+      clampedPercent,
+      status: 'near-limit',
+      alertLevel: 'warning',
+    };
+  }
+
+  return {
+    category,
+    limitPaise,
+    spentPaise,
+    remainingPaise,
+    percentSpent,
+    clampedPercent,
+    status: 'on-track',
+    alertLevel: 'none',
+  };
+}
+
+export function evaluateAllCategoryBudgets(
+  categorySpendingPaise: Record<string, number>,
+  categoryBudgets: Record<string, { limitPaise: number; thresholdPercent?: number }>,
+): CategoryBudgetEvaluation[] {
+  return Object.entries(categoryBudgets).map(([category, config]) => {
+    const spent = categorySpendingPaise[category] || 0;
+    return evaluateCategoryBudget(category, spent, config.limitPaise, config.thresholdPercent ?? 80);
+  });
+}

@@ -4,3 +4,4 @@ export * from './budget.js';
 export * from './categories.js';
 export * from './user.js';
 export * from './sync.js';
+export * from './savings.js';

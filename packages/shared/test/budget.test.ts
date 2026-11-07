@@ -4,6 +4,8 @@ import {
   getCurrentMonthExpenses,
   evaluateBudgetStatus,
   calculateSafeToSpendToday,
+  evaluateCategoryBudget,
+  evaluateAllCategoryBudgets,
 } from '../src/calculations/budget.js';
 
 describe('budget', () => {
@@ -223,6 +225,57 @@ describe('budget', () => {
 
       expect(res.safeDailySpend).toBeNull();
       expect(res.status).toBe('no_budget');
+    });
+  });
+
+  describe('Per-Category Budget Evaluations (DIFF-7)', () => {
+    it('evaluates category within budget limit as on-track', () => {
+      const res = evaluateCategoryBudget('Groceries', 500000, 1000000, 80); // 5k spent of 10k limit
+      expect(res.percentSpent).toBe(50);
+      expect(res.remainingPaise).toBe(500000);
+      expect(res.status).toBe('on-track');
+      expect(res.alertLevel).toBe('none');
+    });
+
+    it('flags near-limit warning when category spending crosses thresholdPercent', () => {
+      const res = evaluateCategoryBudget('Dining', 850000, 1000000, 80); // 85% spent (threshold 80%)
+      expect(res.percentSpent).toBe(85);
+      expect(res.remainingPaise).toBe(150000);
+      expect(res.status).toBe('near-limit');
+      expect(res.alertLevel).toBe('warning');
+    });
+
+    it('evaluates exact boundary when spending equals category limit', () => {
+      const res = evaluateCategoryBudget('Entertainment', 500000, 500000, 80);
+      expect(res.percentSpent).toBe(100);
+      expect(res.remainingPaise).toBe(0);
+      expect(res.status).toBe('at-limit');
+      expect(res.alertLevel).toBe('critical');
+    });
+
+    it('flags critical over-budget status when spending exceeds category limit', () => {
+      const res = evaluateCategoryBudget('Shopping', 1200000, 1000000, 80);
+      expect(res.percentSpent).toBe(120);
+      expect(res.clampedPercent).toBe(100);
+      expect(res.remainingPaise).toBe(-200000);
+      expect(res.status).toBe('over-budget');
+      expect(res.alertLevel).toBe('critical');
+    });
+
+    it('evaluates multiple categories in bulk via evaluateAllCategoryBudgets', () => {
+      const spending = {
+        Groceries: 400000,
+        Dining: 900000,
+      };
+      const budgets = {
+        Groceries: { limitPaise: 1000000, thresholdPercent: 80 },
+        Dining: { limitPaise: 1000000, thresholdPercent: 80 },
+      };
+
+      const results = evaluateAllCategoryBudgets(spending, budgets);
+      expect(results).toHaveLength(2);
+      expect(results.find((r) => r.category === 'Groceries')?.status).toBe('on-track');
+      expect(results.find((r) => r.category === 'Dining')?.status).toBe('near-limit');
     });
   });
 });

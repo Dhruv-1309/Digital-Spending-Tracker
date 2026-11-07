@@ -4,6 +4,8 @@ import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useCountUp } from '../../hooks/useCountUp';
 import { WeeklyActivityChart } from './WeeklyActivityChart';
+import { CategoryBudgetModal } from '../budget/CategoryBudgetModal';
+import { SavingsGoalsModal } from '../savings/SavingsGoalsModal';
 import {
   getCurrentMonthExpenses,
   getCurrentMonthRange,
@@ -138,6 +140,7 @@ function DashboardSkeleton() {
 export function DashboardTab() {
   const {
     transactions,
+    categories,
     autopays,
     budgetGoal,
     approvedAnomalies,
@@ -154,6 +157,8 @@ export function DashboardTab() {
   const { showConfirm } = useConfirm();
 
   const [isBudgetFormOpen, setIsBudgetFormOpen] = useState(false);
+  const [isCatBudgetModalOpen, setIsCatBudgetModalOpen] = useState(false);
+  const [isSavingsModalOpen, setIsSavingsModalOpen] = useState(false);
   const [showSafeSpendTooltip, setShowSafeSpendTooltip] = useState(false);
   const [monthlyLimitInput, setMonthlyLimitInput] = useState<string>(
     budgetGoal.monthlyExpenseLimit ? String(budgetGoal.monthlyExpenseLimit) : '',
@@ -778,16 +783,38 @@ export function DashboardTab() {
               </Badge>
             )}
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="md"
-            id="toggleBudgetFormBtn"
-            onClick={() => setIsBudgetFormOpen((prev) => !prev)}
-            icon={<EditIcon size={16} />}
-          >
-            {isBudgetFormOpen ? 'Close' : 'Edit limit'}
-          </Button>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Button
+              type="button"
+              variant="ghost"
+              size="md"
+              id="openCatBudgetsBtn"
+              onClick={() => setIsCatBudgetModalOpen(true)}
+              className="text-xs"
+            >
+              Category limits
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="md"
+              id="openSavingsGoalsBtn"
+              onClick={() => setIsSavingsModalOpen(true)}
+              className="text-xs"
+            >
+              Savings goals
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="md"
+              id="toggleBudgetFormBtn"
+              onClick={() => setIsBudgetFormOpen((prev) => !prev)}
+              icon={<EditIcon size={16} />}
+            >
+              {isBudgetFormOpen ? 'Close' : 'Edit limit'}
+            </Button>
+          </div>
         </div>
 
         {/* ProgressBar with threshold tick and 3-color behavior */}
@@ -985,6 +1012,20 @@ export function DashboardTab() {
           </div>
         </Card>
       </div>
+
+      {/* Category Budgets Modal (DIFF-7) */}
+      <CategoryBudgetModal
+        isOpen={isCatBudgetModalOpen}
+        onClose={() => setIsCatBudgetModalOpen(false)}
+        categories={categories?.expense || []}
+        transactions={transactions}
+      />
+
+      {/* Savings Goals Modal (DIFF-8) */}
+      <SavingsGoalsModal
+        isOpen={isSavingsModalOpen}
+        onClose={() => setIsSavingsModalOpen(false)}
+      />
     </div>
   );
 }

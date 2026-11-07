@@ -1548,26 +1548,39 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 
 Long-term roadmap items and polish enhancements that can be addressed post-launch.
 
-### 1. [DIFF-7] Per-category budget targets with customizable warning thresholds
+### 1. [DIFF-7] Per-category budget targets with customizable warning thresholds [DONE]
 
 - **Priority:** `P3` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/budget/CategoryBudgetModal.tsx`
+  - `apps/web/src/components/dashboard/DashboardTab.tsx`
   - `packages/shared/src/schemas/budget.ts`
+  - `packages/shared/src/calculations/budget.ts`
+  - `packages/shared/test/budget.test.ts`
+  - `apps/web/src/test/diff_features_category_and_savings.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Optional per-category limits alongside overall monthly budget
-- **How It Will Be Tested:** Unit test verifying category budget threshold evaluation.
+  - [x] Optional per-category limits alongside overall monthly budget
+  - [x] Customizable warning threshold (%) per category with visual status chips (On Track, Near Limit, At Limit, Over Budget)
+  - [x] Local persistence to `localStorage.mt_category_budgets`
+- **How It Was Tested:** Shared unit tests in `packages/shared/test/budget.test.ts` and UI integration tests in `apps/web/src/test/diff_features_category_and_savings.test.tsx`.
 
-### 2. [DIFF-8] Savings goals tracker with target date and required monthly deposit calculation
+### 2. [DIFF-8] Savings goals tracker with target date and required monthly deposit calculation [DONE]
 
 - **Priority:** `P3` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/savings/SavingsGoalsModal.tsx`
+  - `apps/web/src/components/dashboard/DashboardTab.tsx`
+  - `packages/shared/src/schemas/savings.ts`
+  - `packages/shared/src/calculations/savings.ts`
+  - `packages/shared/test/savings.test.ts`
+  - `apps/web/src/test/diff_features_category_and_savings.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Target amount, target date, progress bar, required monthly savings needed
-- **How It Will Be Tested:** Unit test verifying savings calculation.
+  - [x] Target amount, target date, progress bar, required monthly savings needed
+  - [x] Quick fund deposit tracking with inline inputs
+  - [x] Local persistence to `localStorage.mt_savings_goals`
+- **How It Was Tested:** Shared calculations tested in `packages/shared/test/savings.test.ts` and component test suite in `apps/web/src/test/diff_features_category_and_savings.test.tsx`.
 
 ### 3. [DIFF-9] Opt-in weekly financial summary email digest
 
@@ -1644,16 +1657,23 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
   - [x] Pressing ? opens accessible dialog listing N (New Transaction), Ctrl+B (Toggle Sidebar), etc.
 - **How It Was Tested:** Component tests in `apps/web/src/test/shortcuts_and_persistence.test.tsx` asserting modal opens on ? keypress and closes on Esc.
 
-### 10. [UX-23] Dark theme toggle and high-contrast night palette
+### 10. [UX-23] Dark theme toggle and high-contrast night palette [DONE]
 
 - **Priority:** `P3` | **Effort:** `M` | **Category:** `UX`
 - **Dependencies:** None
-- **Files Likely Touched:**
-  - `apps/web/src/tokens.css`
-  - `apps/web/src/components/layout/Header.tsx`
+- **Files Touched:**
+  - `apps/web/src/styles/tokens.css`
+  - `apps/web/src/context/ThemeContext.tsx`
+  - `apps/web/src/context/themeContextDef.ts`
+  - `apps/web/src/components/layout/AppShell.tsx`
+  - `apps/web/src/components/icons/SunIcon.tsx`
+  - `apps/web/src/components/icons/MoonIcon.tsx`
+  - `apps/web/src/test/theme_and_changelog.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Adds dark theme CSS custom properties and header toggle switch
-- **How It Will Be Tested:** Verify dark theme styles and contrast ratios.
+  - [x] Adds dark theme CSS custom properties and header toggle switch
+  - [x] Supports Light, Dark, and System mode with `localStorage.mt_theme` persistence and `matchMedia` listener
+  - [x] Accessible high-contrast color palette conforming to WCAG AA
+- **How It Was Tested:** Component tests in `apps/web/src/test/theme_and_changelog.test.tsx` verifying theme switching, DOM attribute manipulation, and persistence.
 
 ### 11. [UX-24] Print stylesheet for transaction summaries and financial reports [DONE]
 
@@ -1738,15 +1758,19 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
   - [x] Route /about detailing open-source software stack and data privacy mission
 - **How It Was Tested:** Automated tests in `apps/web/src/test/legal_routes.test.tsx` asserting route rendering, mission highlights, and back navigation.
 
-### 18. [WEB-17] In-app "What's New" changelog drawer
+### 18. [WEB-17] In-app "What's New" changelog drawer [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/help/ChangelogDrawer.tsx`
+  - `apps/web/src/components/layout/AppShell.tsx`
+  - `apps/web/src/test/theme_and_changelog.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Displays release notes and newly introduced features to users
-- **How It Will Be Tested:** Component test verifying drawer open.
+  - [x] Displays release notes and newly introduced features to users
+  - [x] Header "What's New" trigger with unread indicator dot
+  - [x] Stores last viewed version in `localStorage.mt_last_seen_changelog`
+- **How It Was Tested:** Automated tests in `apps/web/src/test/theme_and_changelog.test.tsx` verifying drawer rendering, version badges, unread dot disappearance, and escape key handling.
 
 ### 19. [WEB-18] CONTRIBUTING.md and CODE_OF_CONDUCT.md community guidelines [DONE]
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { LazyMotion, domAnimation } from 'motion/react';
+import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ConfirmProvider } from './context/ConfirmContext';
@@ -48,7 +49,7 @@ function useAppRoute(): AppRoute {
   return route;
 }
 
-export function App() {
+function AppContent() {
   const route = useAppRoute();
 
   // Dynamic document.title for public, legal, and auxiliary routes (UX-13)
@@ -190,6 +191,14 @@ export function App() {
         </AuthProvider>
       </LazyMotion>
     </ErrorBoundary>
+  );
+}
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
