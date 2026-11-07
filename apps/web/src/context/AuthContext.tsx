@@ -47,8 +47,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await apiSignInWithEmail(email, pass);
   }, []);
 
-  const signUpWithEmail = useCallback(async (email: string, pass: string) => {
-    await apiSignUpWithEmail(email, pass);
+  const signUpWithEmail = useCallback(async (email: string, pass: string, turnstileToken?: string) => {
+    await apiSignUpWithEmail(email, pass, turnstileToken);
   }, []);
 
   const signInWithGoogle = useCallback(async () => {

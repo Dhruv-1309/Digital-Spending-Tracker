@@ -23,6 +23,7 @@ import {
   ShieldIcon,
   CheckIcon,
 } from '../icons';
+import { TurnstileWidget } from './TurnstileWidget';
 import authWaveUrl from '../../assets/art/auth-wave.svg';
 
 /**
@@ -83,7 +84,11 @@ const AUTH_WAVE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(HAIKEI_
  * - Realtime Colors Principles (clear visual hierarchy, high contrast surfaces, cohesive tones)
  * - Skiper UI & Animata Patterns (live transaction preview card, trust pills, password strength meter)
  */
-export function AuthModal() {
+export function AuthModal({ turnstileSiteKey: propSiteKey }: { turnstileSiteKey?: string } = {}) {
+  const turnstileSiteKey =
+    propSiteKey ??
+    ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_TURNSTILE_SITE_KEY) || '');
+
   const { signInWithEmail, signUpWithEmail, signInWithGoogle, sendPasswordReset } = useAuth();
   const { showToast } = useToast();
 
@@ -93,6 +98,7 @@ export function AuthModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Inline Password Reset state
   const [isResetOpen, setIsResetOpen] = useState(false);
@@ -175,7 +181,17 @@ export function AuthModal() {
           triggerError(passwordValidation.error || 'Password does not meet requirements');
           return;
         }
-        await signUpWithEmail(cleanEmail, password);
+
+        if (turnstileSiteKey && !turnstileToken) {
+          triggerError('Please complete the security verification challenge to create an account.');
+          return;
+        }
+
+        if (turnstileToken) {
+          await signUpWithEmail(cleanEmail, password, turnstileToken);
+        } else {
+          await signUpWithEmail(cleanEmail, password);
+        }
         showToast(
           'Account created! A verification link has been sent to your email.',
           'success',
@@ -380,6 +396,7 @@ export function AuthModal() {
             value={authMode}
             onChange={(val) => {
               setAuthMode(val as 'signin' | 'signup');
+              setTurnstileToken(null);
               setStatusMessage(null);
             }}
             className="w-full mb-4 sm:mb-6"
@@ -562,6 +579,23 @@ export function AuthModal() {
                   {isResetOpen ? 'Close password reset' : 'Forgot password?'}
                 </button>
               </div>
+            )}
+
+            {/* Cloudflare Turnstile Bot Protection (SEC-19) */}
+            {authMode === 'signup' && (
+              <TurnstileWidget
+                siteKey={turnstileSiteKey}
+                onSuccess={(token) => {
+                  setTurnstileToken(token);
+                  setStatusMessage(null);
+                }}
+                onError={() => {
+                  setTurnstileToken(null);
+                }}
+                onExpire={() => {
+                  setTurnstileToken(null);
+                }}
+              />
             )}
 
             {/* Submit Primary Button with Motion spring feedback */}

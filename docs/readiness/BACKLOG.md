@@ -1092,17 +1092,30 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - Automated unit and integration tests in `apps/api/test/seed.test.ts` verifying demo user creation, 14 categories (expense + income), 5 autopay plans, budget goal (₹65,000 / month @ 80%), 46+ transactions across 3 months with linked autopays and anomaly detection, and idempotency.
 
-### 14. [SEC-19] Cloudflare Turnstile bot protection on sign-up form
+### 14. [SEC-19] Cloudflare Turnstile bot protection on sign-up form [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `SEC`
 - **Dependencies:** `AUTH-1`
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/web/src/components/auth/TurnstileWidget.tsx`
   - `apps/web/src/components/auth/AuthModal.tsx`
-  - `apps/api/src/middleware/turnstile.ts`
+  - `apps/web/src/context/authContextDef.ts`
+  - `apps/web/src/context/AuthContext.tsx`
+  - `apps/web/src/services/auth.ts`
+  - `apps/api/src/routes/authRoutes.ts`
+  - `apps/web/.env.example`
+  - `apps/api/.env.example`
+  - `.env.example`
+  - `apps/web/src/test/turnstile_bot_protection.test.tsx`
+  - `apps/api/test/turnstile.test.ts`
+  - `docs/readiness/AUDIT.md`
 - **Acceptance Criteria:**
-  - [ ] Integrates privacy-preserving Cloudflare Turnstile CAPTCHA widget on sign-up form
-  - [ ] Backend verifies Turnstile token before creating account, preventing automated registration abuse
-- **How It Will Be Tested:** Component test verifying Turnstile callback passes token to signUpWithEmail.
+  - [x] Integrates privacy-preserving Cloudflare Turnstile CAPTCHA widget on sign-up form
+  - [x] Backend verifies Turnstile token before creating account, preventing automated registration abuse
+  - [x] Enforces challenge completion when site key is configured and cleanly resets state on mode switches
+- **How It Was Tested:**
+  - 5 automated component tests in `apps/web/src/test/turnstile_bot_protection.test.tsx` verifying widget rendering, token acquisition, challenge blocking, token submission, and unmount cleanup.
+  - 4 automated API tests in `apps/api/test/turnstile.test.ts` verifying missing token rejection (400 CAPTCHA_REQUIRED), invalid token rejection (400 CAPTCHA_FAILED), and valid verification (200 OK).
 
 ### 15. [SEC-20] One-page threat model document (assets, attack vectors, mitigations)
 
