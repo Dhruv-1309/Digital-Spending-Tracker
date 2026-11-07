@@ -1162,17 +1162,20 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 12 automated tests in `apps/web/src/test/route_focus_and_title.test.tsx` verifying document.title synchronization across all 5 app tabs and legal routes, plus accessible programmatic focus shifting to `#pageHeading` with `tabIndex={-1}`. Full test suite passing (676 tests).
 
-### 18. [UX-16] Guided first-run onboarding stepper with sample data walkthrough
+### 18. [UX-16] Guided first-run onboarding stepper with sample data walkthrough [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `UX`
 - **Dependencies:** `CORE-15`
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/onboarding/OnboardingModal.tsx`
+  - `apps/web/src/lib/sampleData.ts`
   - `apps/web/src/components/layout/AppLayout.tsx`
+  - `apps/web/src/test/onboarding_stepper.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] New users without transactions see a friendly 3-step checklist: 1. Set budget, 2. Add first transaction, 3. Schedule bill
-  - [ ] Includes optional "Load Sample Data" button to experiment before logging real expenses
-- **How It Will Be Tested:** Component test asserting onboarding checklist renders for 0-transaction accounts.
+  - [x] New users without transactions see a friendly 3-step checklist: 1. Set budget, 2. Add first transaction, 3. Schedule bill
+  - [x] Includes optional "Load Sample Data" button to experiment before logging real expenses
+- **How It Was Tested:**
+  - 8 automated tests in `apps/web/src/test/onboarding_stepper.test.tsx` asserting auto-triggering on zero-transaction accounts, sequential stepping through 3 steps, instant loading of 8 realistic sample transactions + 4 autopay plans, and persistence of dismissal in localStorage. Full test suite passing (684 tests).
 
 ### 19. [UX-20] Dirty form warning before navigating away or closing drawer with unsaved changes
 

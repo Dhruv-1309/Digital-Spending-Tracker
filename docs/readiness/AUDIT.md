@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{397.5}{499} = \mathbf{79.7\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{398.5}{499} = \mathbf{79.9\%}$$
 
-- **Current Readiness Score:** **79.7%** (Baseline: 56.8%)
+- **Current Readiness Score:** **79.9%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **397.5 points**
+- **Earned Weight:** **398.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **132** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **11** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **133** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **10** |
 | **MISSING** | Not implemented | **27** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -38,7 +38,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 20D / 0P / 1M  | **98.5%** | 65.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 17D / 0P / 2M (3 other) | **81.2%** | 56.0 / 69 |
-| **UX** | Frontend, UX and Accessibility | 24 | 17D / 2P / 4M (1 other) | **82.7%** | 45.5 / 55 |
+| **UX** | Frontend, UX and Accessibility | 24 | 18D / 1P / 4M (1 other) | **84.5%** | 46.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 8D / 1P / 3M (3 other) | **58.8%** | 20.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
@@ -204,7 +204,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **UX-13** | Each route has a distinct page title and heading structure, and focus moves sensibly on route change | `DONE` | apps/web/src/components/layout/AppShell.tsx:235-255,560-565, apps/web/src/App.tsx:50-80, apps/web/src/test/route_focus_and_title.test.tsx | - |
 | **UX-14** | Reduced-motion preference is respected | `DONE` | apps/web/src/ui/motion.ts:60-75, apps/web/src/tokens.css:80-90 | - |
 | **UX-15** | Toasts are dismissible, limited in number and announced to screen readers | `DONE` | apps/web/src/components/ui/Toast.tsx, apps/web/src/test/a11y_axe.test.tsx | - |
-| **UX-16** | A first-run onboarding path: set a budget, add a first transaction, create a first autopay plan; optionally a demo mode with sample data | `PARTIAL` | EmptyState action buttons on each tab | No guided sequential onboarding wizard or preloaded demo walkthrough. |
+| **UX-16** | A first-run onboarding path: set a budget, add a first transaction, create a first autopay plan; optionally a demo mode with sample data | `DONE` | apps/web/src/components/onboarding/OnboardingModal.tsx, apps/web/src/lib/sampleData.ts, apps/web/src/components/layout/AppLayout.tsx:50-70, apps/web/src/test/onboarding_stepper.test.tsx | - |
 | **UX-17** | Microcopy is specific and consistent, with no placeholder text or generic marketing phrases | `DONE` | Verified across UI components and legal copy | - |
 | **UX-18** | Complex metrics (Z-score, 7-day SMA, runway, confidence) have plain-language explanations in the interface | `DONE` | apps/web/src/components/analytics/analyticsInsights.ts:1-120 | - |
 | **UX-19** | Inputs use appropriate mobile keyboards (inputmode, type) | `DONE` | AmountInput.tsx:40 (inputMode="decimal"), AuthModal.tsx (type="email", type="password") | - |

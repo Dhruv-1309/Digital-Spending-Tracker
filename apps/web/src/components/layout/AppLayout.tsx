@@ -9,6 +9,7 @@ import { AppShell } from './AppShell';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { DashboardTab } from '../dashboard/DashboardTab';
 import { ProfileModal } from '../profile/ProfileModal';
+import { OnboardingModal } from '../onboarding/OnboardingModal';
 
 // Route-level lazy loading for secondary tabs (PERF-2)
 const AddTransactionTab = lazy(() =>
@@ -45,8 +46,24 @@ function TabLoadingFallback() {
  */
 export function AppLayout() {
   const { user } = useAuth();
-  const { currentTab } = useTracker();
+  const { currentTab, transactions, autopays, isLoading } = useTracker();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  // First-run onboarding check (UX-16):
+  // Prompt 3-step setup or sample data walkthrough for accounts with zero transactions/autopays
+  useEffect(() => {
+    if (user && !isLoading) {
+      try {
+        const isDismissed = localStorage.getItem(`moneytracker_onboarding_dismissed_${user.uid}`) === 'true';
+        if (!isDismissed && transactions.length === 0 && autopays.length === 0) {
+          setIsOnboardingOpen(true);
+        }
+      } catch {
+        // ignore localStorage access error
+      }
+    }
+  }, [user, isLoading, transactions.length, autopays.length]);
 
   // Dynamic document.title when unauthenticated (UX-13)
   useEffect(() => {
@@ -103,6 +120,11 @@ export function AppLayout() {
           <ProfileModal
             isOpen={isProfileOpen}
             onClose={() => setIsProfileOpen(false)}
+          />
+
+          <OnboardingModal
+            isOpen={isOnboardingOpen}
+            onClose={() => setIsOnboardingOpen(false)}
           />
         </>
       )}
