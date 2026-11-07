@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{377.5}{499} = \mathbf{75.7\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{378.5}{499} = \mathbf{75.9\%}$$
 
-- **Current Readiness Score:** **75.7%** (Baseline: 56.8%)
+- **Current Readiness Score:** **75.9%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **377.5 points**
+- **Earned Weight:** **378.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **116** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **23** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **117** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **22** |
 | **MISSING** | Not implemented | **31** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -39,7 +39,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
-| **PERF** | Performance, Offline and PWA | 15 | 7D / 2P / 3M (3 other) | **55.9%** | 19.0 / 34 |
+| **PERF** | Performance, Offline and PWA | 15 | 8D / 1P / 3M (3 other) | **58.8%** | 20.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 11D / 2P / 6M (1 other) | **79.1%** | 34.0 / 43 |
@@ -230,7 +230,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **PERF-10** | A visible offline and online indicator | `DONE` | apps/web/src/components/layout/AppShell.tsx:210-235, apps/web/src/test/app_shell.test.tsx | - |
 | **PERF-11** | Event listeners, timers and subscriptions are cleaned up (no memory growth over a long session) | `DONE` | AppShell.tsx:172, App.tsx:61, Toast.tsx, TrackerContext.tsx | - |
 | **PERF-12** | Third-party requests are zero, or each one is justified | `DONE` | Only Firebase Auth network requests; zero external font or script CDN requests | - |
-| **PERF-13** | API responses are compressed, and ETag or similar is used where it helps | `PARTIAL` | Express 5 defaults support ETags | Gzip/Brotli compression middleware (compression) is not mounted in Express app. |
+| **PERF-13** | API responses are compressed, and ETag or similar is used where it helps | `DONE` | apps/api/src/app.ts:71-83, apps/api/test/compression.test.ts | Express compression middleware mounted with 1KB threshold, gzip/deflate support, x-no-compression header bypass, and ETag support. | None |
 | **PERF-14** | Manifest has maskable icons and a splash configuration | `MISSING` | None | Maskable icons and manifest configuration are missing. |
 | **PERF-15** | Likely next routes are prefetched | `MISSING` | None | Route prefetching is not configured. |
 

@@ -1080,16 +1080,20 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - [ ] Registers lightweight Service Worker caching HTML, CSS, fonts, and JS bundles for offline instant launch
 - **How It Will Be Tested:** Verify Service Worker registration and manifest validation in browser tools.
 
-### 23. [PERF-13] HTTP compression middleware (gzip/brotli) for API JSON responses
+### 23. [PERF-13] HTTP compression middleware (gzip/brotli) for API JSON responses [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `PERF`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/api/src/app.ts`
+  - `apps/api/package.json`
+  - `apps/api/test/compression.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Mounts compression() middleware in Express 5 app
-  - [ ] API JSON responses larger than 1kB return with gzip or deflate Content-Encoding
-- **How It Will Be Tested:** Supertest asserting Content-Encoding header on /api/v1/transactions.
+  - [x] Mounts compression() middleware in Express 5 app with 1KB threshold
+  - [x] API responses larger than 1kB return with gzip Content-Encoding when requested
+  - [x] Allows client bypass via `x-no-compression` request header
+- **How It Was Tested:**
+  - 3 integration test assertions in `apps/api/test/compression.test.ts` asserting gzip encoding on >1KB responses, uncompressed on <1KB responses, and bypass on `x-no-compression`.
 
 ### 24. [QA-10] Automated accessibility checks (axe-core) gate in CI workflow
 

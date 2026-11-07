@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import compression from 'compression';
 import { config } from './config/index.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { authMiddleware } from './middleware/auth.js';
@@ -68,7 +69,20 @@ export function createApp() {
     }),
   );
 
-  // 3. Request ID tracking (BE-6.3)
+  // 3. HTTP Compression (PERF-13: gzip/deflate for payloads > 1KB)
+  app.use(
+    compression({
+      threshold: 1024,
+      filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+    }),
+  );
+
+  // 4. Request ID tracking (BE-6.3)
   app.use(requestIdMiddleware);
 
   // 4. Body Parsers (SEC-3: 1MB general, up to 5MB for imports)
