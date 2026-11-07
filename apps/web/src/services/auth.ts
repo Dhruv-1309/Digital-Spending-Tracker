@@ -19,6 +19,7 @@ import { getFirebaseAuth } from './firebase';
 import { apiClient } from './apiClient';
 import { syncQueue } from './syncQueue';
 import { toUserFriendlyError } from '../lib/errorMessages';
+import { logger } from '../lib/logger';
 import type { UserProfile } from '../types';
 
 export function mapFirebaseUser(user: User): UserProfile {
@@ -131,8 +132,8 @@ export async function signUpWithEmail(
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     try {
       await sendEmailVerification(cred.user);
-    } catch {
-      // Non-blocking in case email dispatch is delayed or fails
+    } catch (err: unknown) {
+      logger.warn('Failed to dispatch verification email upon sign up', err, { action: 'signUpWithEmail.sendVerification' });
     }
   } catch (error: unknown) {
     const err = error as { code?: string; message?: string };
@@ -214,8 +215,8 @@ export async function signOutUser(): Promise<void> {
 
   try {
     await syncQueue.clearAll();
-  } catch {
-    // Non-blocking storage clear
+  } catch (err: unknown) {
+    logger.warn('Failed to clear sync queue on sign-out', err, { action: 'signOutUser.clearSyncQueue' });
   }
 
   try {
@@ -225,8 +226,8 @@ export async function signOutUser(): Promise<void> {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.clear();
     }
-  } catch {
-    // Non-blocking storage clear
+  } catch (err: unknown) {
+    logger.warn('Failed to clear web storage on sign-out', err, { action: 'signOutUser.clearStorage' });
   }
 
   await signOut(auth);
@@ -262,8 +263,8 @@ export async function deleteUserAccount(): Promise<void> {
 
   try {
     await syncQueue.clearAll();
-  } catch {
-    // Non-blocking storage clear
+  } catch (err: unknown) {
+    logger.warn('Failed to clear sync queue on account deletion', err, { action: 'deleteUserAccount.clearSyncQueue' });
   }
 
   try {
@@ -273,8 +274,8 @@ export async function deleteUserAccount(): Promise<void> {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.clear();
     }
-  } catch {
-    // Non-blocking storage clear
+  } catch (err: unknown) {
+    logger.warn('Failed to clear web storage on account deletion', err, { action: 'deleteUserAccount.clearStorage' });
   }
 
   try {

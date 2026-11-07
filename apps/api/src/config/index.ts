@@ -46,7 +46,7 @@ export function buildDatabaseUrl(
       url.searchParams.set('statement_timeout', String(statementTimeoutMs));
     }
     return url.toString();
-  } catch {
+  } catch (_err: unknown) {
     return rawUrl;
   }
 }

@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{359.5}{499} = \mathbf{72.0\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{361.0}{499} = \mathbf{72.3\%}$$
 
-- **Current Readiness Score:** **72.0%** (Baseline: 56.8%)
+- **Current Readiness Score:** **72.3%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **359.5 points**
+- **Earned Weight:** **361.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **106** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **29** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **107** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **28** |
 | **MISSING** | Not implemented | **35** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -40,7 +40,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 6D / 3P / 3M (3 other) | **52.9%** | 18.0 / 34 |
-| **QA** | Testing and Code Quality | 18 | 10D / 4P / 3M (1 other) | **73.9%** | 34.0 / 46 |
+| **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 4D / 6P / 9M (1 other) | **50.0%** | 21.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
@@ -246,7 +246,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **QA-6** | End-to-end tests cover the critical journeys: sign up, add transaction, autopay, import, export, delete account | `DONE` | `playwright.config.ts`, `e2e/auth.spec.ts`, `e2e/navigation.spec.ts`, `e2e/transactions.spec.ts`, `e2e/autopay.spec.ts`, `e2e/portability.spec.ts`, `e2e/profile.spec.ts` (19 passing E2E tests covering auth/signup/legal, desktop rail/navigation, add transaction with math evaluator & 300ms debounced search, autopay creation & cashflow banner, 5MB file upload limit rejection & exports, profile display & 2-step account deletion cancel). | - |
 | **QA-7** | Tests are deterministic: fake clock, no real network, no order dependence | `DONE` | All 417 tests pass with mocked network, deterministic date refs, and isolated workers | - |
 | **QA-8** | No console.log, debugger, TODO, FIXME or commented-out code in the source | `DONE` | Scanned codebase: 0 console.log, debugger, TODO, FIXME in source files | - |
-| **QA-9** | No empty catch blocks; errors are typed, handled and logged | `PARTIAL` | TrackerContext.tsx:59,197 and App.tsx:77 have silent catch blocks | Replace silent catch blocks with typed error handling and warning logs. |
+| **QA-9** | No empty catch blocks; errors are typed, handled and logged | `DONE` | `apps/web/src/lib/logger.ts`, `apps/web/src/test/logger.test.ts` (5 tests), unified `navigateTo` helper in `routes.ts`, zero empty catch blocks across entire codebase (`TrackerContext.tsx`, `App.tsx`, `AuthContext.tsx`, `apiClient.ts`, `auth.ts`, `syncQueue.ts`, `AddTransactionTab.tsx`, `TransactionSlideOver.tsx`, `ProfileModal.tsx`, `LegalLayout.tsx`, `AuthModal.tsx`, `apps/api/src/config/index.ts`, `apps/api/src/middleware/idempotency.ts`, `apps/api/src/services/firebaseAuth.ts`, `packages/shared/src/calculations/transactions.ts`). All errors are typed and logged with structured context. | - |
 | **QA-10** | Automated accessibility checks (axe) run in CI | `PARTIAL` | apps/web/src/test/a11y_axe.test.tsx runs axe in vitest | .github/workflows/ci.yml does not run axe tests in a separate dedicated check or enforce axe gates. |
 | **QA-11** | Coverage thresholds are enforced in CI | `MISSING` | .github/workflows/ci.yml does not run coverage or enforce thresholds | Configure coverage threshold flags in vitest and CI workflow. |
 | **QA-12** | Money and date maths have randomised or property-based tests | `MISSING` | None | fast-check property-based tests for currency conversion and date boundary calculations are missing. |

@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 export type AppRoute = 'terms' | 'privacy' | 'design' | 'audit' | 'not-found' | null;
 
 export function resolveAppRoute(pathname: string, hash: string): AppRoute {
@@ -17,4 +19,20 @@ export function resolveAppRoute(pathname: string, hash: string): AppRoute {
   }
 
   return 'not-found';
+}
+
+/**
+ * Programmatic client-side navigation helper with fallback and error logging (QA-9).
+ */
+export function navigateTo(path: string): void {
+  if (typeof window === 'undefined') return;
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  const hashKey = clean === '/' ? '' : clean.replace(/^\//, '');
+  window.location.hash = hashKey;
+  try {
+    window.history.pushState({}, '', clean);
+  } catch (err: unknown) {
+    logger.warn('Failed to update browser history in pushState', err, { path: clean });
+  }
+  window.dispatchEvent(new Event('popstate'));
 }

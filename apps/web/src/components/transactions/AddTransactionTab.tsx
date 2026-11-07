@@ -11,6 +11,7 @@ import { PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
 import { toUserFriendlyError } from '../../lib/errorMessages';
+import { logger } from '../../lib/logger';
 import { containsMathExpression, evaluateMathExpression, getLocalDateString } from '@moneytracker/shared';
 import type { TransactionType, PaymentMethod } from '../../types';
 
@@ -46,14 +47,16 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
   const [category, setCategory] = useState<string>(() => {
     try {
       return sessionStorage.getItem(LAST_CAT_EXPENSE) || '';
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to read last expense category from sessionStorage', err, { action: 'initCategory' });
       return '';
     }
   });
   const [paymentMethod, setPaymentMethod] = useState<string>(() => {
     try {
       return sessionStorage.getItem(LAST_METHOD_EXPENSE) || 'card';
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to read last payment method from sessionStorage', err, { action: 'initPaymentMethod' });
       return 'card';
     }
   });
@@ -87,7 +90,8 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
         sessionStorage.getItem(methodKey) || (newType === 'income' ? 'bank_transfer' : 'card');
       setCategory(rememberedCat);
       setPaymentMethod(rememberedMethod);
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to retrieve remembered category from sessionStorage', err, { action: 'handleTypeChange' });
       setCategory('');
     }
 
@@ -166,8 +170,8 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
         const methodKey = type === 'income' ? LAST_METHOD_INCOME : LAST_METHOD_EXPENSE;
         sessionStorage.setItem(catKey, category);
         sessionStorage.setItem(methodKey, paymentMethod);
-      } catch {
-        // sessionStorage unavailable
+      } catch (err: unknown) {
+        logger.warn('Failed to save category preference to sessionStorage', err, { action: 'handleSubmit.savePreference' });
       }
 
       await addTransaction({

@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './apiClient.js';
+import { logger } from '../lib/logger.js';
 
 export interface QueuedOperation {
   id: string; // UUIDv4
@@ -70,7 +71,8 @@ export const syncQueue = {
         };
         req.onerror = () => reject(req.error);
       });
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to read queue from IndexedDB; falling back to memory queue', err, { action: 'getQueue' });
       return [...memoryFallback.queue];
     }
   },
@@ -105,7 +107,8 @@ export const syncQueue = {
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
       });
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to enqueue into IndexedDB; falling back to memory queue', err, { action: 'enqueue' });
       memoryFallback.queue.push(fullOp);
     }
 
@@ -126,7 +129,8 @@ export const syncQueue = {
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
       });
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to remove operation from IndexedDB; falling back to memory queue', err, { action: 'removeOperation' });
       memoryFallback.queue = memoryFallback.queue.filter((o) => o.id !== id);
     }
   },
@@ -145,7 +149,8 @@ export const syncQueue = {
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
       });
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to clear queue in IndexedDB; falling back to memory queue', err, { action: 'clearQueue' });
       memoryFallback.queue = [];
     }
   },
@@ -166,8 +171,8 @@ export const syncQueue = {
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       });
-    } catch {
-      // Memory fallback already cleared
+    } catch (err: unknown) {
+      logger.warn('Failed to clear IndexedDB stores; falling back to memory clear', err, { action: 'clearAll' });
     }
   },
 
@@ -186,7 +191,8 @@ export const syncQueue = {
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
       });
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to set cache data in IndexedDB; falling back to memory cache', err, { action: 'setCachedData' });
       memoryFallback.cache.set(key, data);
     }
   },
@@ -204,7 +210,8 @@ export const syncQueue = {
         req.onsuccess = () => resolve(req.result ? (req.result.data as T) : null);
         req.onerror = () => resolve(null);
       });
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to read cache data from IndexedDB; falling back to memory cache', err, { action: 'getCachedData' });
       return (memoryFallback.cache.get(key) as T) || null;
     }
   },

@@ -27,8 +27,8 @@ export function initFirebaseAuth(): void {
         projectId: config.firebase.projectId,
       });
       firebaseInitialized = true;
-    } catch {
-      // Ignore if already initialized or mock
+    } catch (err: unknown) {
+      logger.warn({ err }, 'Firebase Admin dev fallback initialization skipped or already initialized');
     }
   }
 }

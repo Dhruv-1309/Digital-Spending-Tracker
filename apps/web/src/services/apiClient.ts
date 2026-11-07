@@ -1,5 +1,6 @@
 import { getFirebaseAuth } from './firebase.js';
 import { rupeesToPaise, paiseToRupees } from '@moneytracker/shared';
+import { logger } from '../lib/logger.js';
 import type {
   Transaction,
   CategoriesMap,
@@ -34,7 +35,8 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   try {
     const token = await currentUser.getIdToken();
     return { Authorization: `Bearer ${token}` };
-  } catch {
+  } catch (err: unknown) {
+    logger.warn('Failed to retrieve Firebase ID token for request authorization header', err, { action: 'getAuthHeader' });
     return {};
   }
 }
@@ -82,8 +84,8 @@ export async function apiRequest<T = any>(
     let errorJson: any = null;
     try {
       errorJson = await response.json();
-    } catch {
-      // Non-JSON response
+    } catch (err: unknown) {
+      logger.warn('Failed to parse non-JSON error response from API server', err, { action: 'apiRequest.parseErrorJson', status: response.status });
     }
 
     const code = errorJson?.error?.code || 'API_ERROR';

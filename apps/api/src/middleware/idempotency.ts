@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { idempotencyRepository } from '../repositories/idempotencyRepository.js';
+import { logger } from '../utils/logger.js';
 
 export function idempotencyMiddleware() {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -43,13 +44,16 @@ export function idempotencyMiddleware() {
             responseStatus: res.statusCode,
             responseBody: body,
           })
-          .catch(() => {});
+          .catch((err: unknown) => {
+            logger.warn({ err }, 'Failed to persist idempotency response record');
+          });
 
         return originalJson(body);
       };
 
       next();
-    } catch {
+    } catch (err: unknown) {
+      logger.warn({ err }, 'Idempotency lookup encountered unexpected error; proceeding with request');
       next();
     }
   };

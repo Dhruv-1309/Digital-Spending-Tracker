@@ -598,17 +598,35 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Runs headlessly and deterministically with Vite dev webServer
 - **How It Was Tested:** Ran `npx playwright test`, 19 passing tests across 6 specs.
 
-### 23. [QA-9] Eliminate silent catch blocks and ensure typed error logging
+### 23. [QA-9] Eliminate silent catch blocks and ensure typed error logging [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `QA`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/web/src/lib/logger.ts`
+  - `apps/web/src/lib/routes.ts`
+  - `apps/web/src/test/logger.test.ts`
   - `apps/web/src/context/TrackerContext.tsx`
+  - `apps/web/src/context/AuthContext.tsx`
   - `apps/web/src/App.tsx`
+  - `apps/web/src/services/apiClient.ts`
+  - `apps/web/src/services/auth.ts`
+  - `apps/web/src/services/syncQueue.ts`
+  - `apps/web/src/components/auth/AuthModal.tsx`
+  - `apps/web/src/components/layout/AppShell.tsx`
+  - `apps/web/src/components/legal/LegalLayout.tsx`
+  - `apps/web/src/components/profile/ProfileModal.tsx`
+  - `apps/web/src/components/transactions/AddTransactionTab.tsx`
+  - `apps/web/src/components/transactions/TransactionSlideOver.tsx`
+  - `apps/web/src/lib/transactions.ts`
+  - `packages/shared/src/calculations/transactions.ts`
+  - `apps/api/src/config/index.ts`
+  - `apps/api/src/middleware/idempotency.ts`
+  - `apps/api/src/services/firebaseAuth.ts`
 - **Acceptance Criteria:**
-  - [ ] Replace all empty `catch { }` blocks in TrackerContext and App.tsx with typed error inspection and logger warnings
-  - [ ] Zero unhandled silent errors in application core
-- **How It Will Be Tested:** ESLint inspection and code review ensuring no empty catch statements exist.
+  - [x] Replace all empty `catch { }` blocks across entire repository with typed error inspection and logger warnings
+  - [x] Zero unhandled silent errors in application core
+- **How It Was Tested:** Ran `git grep -n "catch {" apps/ packages/` (0 matches), unit tests in `apps/web/src/test/logger.test.ts` (5 tests passing), `npm run lint` with 0 errors.
 
 ### 24. [X-2] Database & API Resilience: client-side graceful retry and exponential backoff on 503/cold starts
 

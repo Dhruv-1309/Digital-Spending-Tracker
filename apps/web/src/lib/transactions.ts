@@ -4,6 +4,7 @@ import type {
   BudgetGoal,
   TransactionSortOption,
 } from '../types';
+import { logger } from './logger';
 
 export function parseCsvRecords(content: string): string[][] {
   // Strip UTF-8 BOM if present (CORE-12, QA-2)
@@ -287,7 +288,8 @@ export function importBackupFromJson(
   let parsed: any;
   try {
     parsed = JSON.parse(jsonContent);
-  } catch {
+  } catch (err: unknown) {
+    logger.warn('Failed to parse backup JSON in importBackupFromJson', err, { action: 'importBackupFromJson' });
     return {
       newTransactions: [],
       skippedCount: 0,

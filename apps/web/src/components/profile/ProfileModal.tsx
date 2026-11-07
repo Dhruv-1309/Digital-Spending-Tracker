@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useToast } from '../../hooks/useToast';
 import { toUserFriendlyError } from '../../lib/errorMessages';
+import { navigateTo } from '../../lib/routes';
 import { Button } from '../ui/Button';
 import { TextInput } from '../ui/TextInput';
 import { Card } from '../ui/Card';
@@ -569,15 +570,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               onClick={(e) => {
                 e.preventDefault();
                 onClose();
-                if (typeof window !== 'undefined') {
-                  window.location.hash = 'terms';
-                  try {
-                    window.history.pushState({}, '', '/terms');
-                  } catch {
-                    // Fallback
-                  }
-                  window.dispatchEvent(new Event('popstate'));
-                }
+                navigateTo('/terms');
               }}
               className="hover:text-ink hover:underline transition-colors"
             >
@@ -589,15 +582,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               onClick={(e) => {
                 e.preventDefault();
                 onClose();
-                if (typeof window !== 'undefined') {
-                  window.location.hash = 'privacy';
-                  try {
-                    window.history.pushState({}, '', '/privacy');
-                  } catch {
-                    // Fallback
-                  }
-                  window.dispatchEvent(new Event('popstate'));
-                }
+                navigateTo('/privacy');
               }}
               className="hover:text-ink hover:underline transition-colors"
             >

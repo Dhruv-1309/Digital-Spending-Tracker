@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { UserProfile } from '../types';
 import { AuthContext } from './authContextDef';
+import { logger } from '../lib/logger';
 import {
   onAuthStateChange,
   signInWithEmail as apiSignInWithEmail,
@@ -28,8 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(JSON.parse(e2eUser));
           setLoading(false);
           return;
-        } catch {
-          // ignore invalid json
+        } catch (err: unknown) {
+          logger.warn('Failed to parse e2e_mock_user from localStorage', err, { action: 'initE2EMockUser' });
         }
       }
     }

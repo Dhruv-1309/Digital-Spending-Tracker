@@ -4,6 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
 import { toUserFriendlyError } from '../../lib/errorMessages';
+import { logger } from '../../lib/logger';
+import { navigateTo } from '../../lib/routes';
 import { Button } from '../ui/Button';
 import { NavigationTabs } from './NavigationTabs';
 import { MAIN_NAV_ITEMS } from './navItems';
@@ -118,7 +120,8 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
         }
         return localStorage.getItem('moneytracker_sidebar_collapsed') === 'true';
       }
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('Failed to access localStorage for initial sidebar collapsed state', err, { action: 'initSidebarCollapsed' });
       return false;
     }
     return false;
@@ -132,8 +135,8 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
       const next = !prev;
       try {
         localStorage.setItem('moneytracker_sidebar_collapsed', String(next));
-      } catch {
-        // ignore storage errors
+      } catch (err: unknown) {
+        logger.warn('Failed to persist sidebar collapsed state to localStorage', err, { action: 'toggleSidebar' });
       }
       return next;
     });
@@ -230,17 +233,9 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
   const pageTitle = getPageTitle(currentTab);
 
   const handleNavigateLegal = useCallback(
-    (path: string, hash: string) => (e: React.MouseEvent) => {
+    (path: string) => (e: React.MouseEvent) => {
       e.preventDefault();
-      if (typeof window !== 'undefined') {
-        window.location.hash = hash;
-        try {
-          window.history.pushState({}, '', path);
-        } catch {
-          // Fallback
-        }
-        window.dispatchEvent(new Event('popstate'));
-      }
+      navigateTo(path);
     },
     [],
   );
@@ -487,7 +482,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
             <div className="flex items-center justify-center gap-2 pt-2 px-1 text-[11px] text-ink-3 border-t border-line/60">
               <a
                 href="/terms"
-                onClick={handleNavigateLegal('/terms', 'terms')}
+                onClick={handleNavigateLegal('/terms')}
                 className="hover:text-ink hover:underline transition-colors"
               >
                 Terms
@@ -495,7 +490,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               <span>•</span>
               <a
                 href="/privacy"
-                onClick={handleNavigateLegal('/privacy', 'privacy')}
+                onClick={handleNavigateLegal('/privacy')}
                 className="hover:text-ink hover:underline transition-colors"
               >
                 Privacy
@@ -676,7 +671,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                 <a
                   href="/terms"
                   onClick={(e) => {
-                    handleNavigateLegal('/terms', 'terms')(e);
+                    handleNavigateLegal('/terms')(e);
                     setIsMobileDrawerOpen(false);
                   }}
                   className="hover:text-ink hover:underline"
@@ -687,7 +682,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                 <a
                   href="/privacy"
                   onClick={(e) => {
-                    handleNavigateLegal('/privacy', 'privacy')(e);
+                    handleNavigateLegal('/privacy')(e);
                     setIsMobileDrawerOpen(false);
                   }}
                   className="hover:text-ink hover:underline"
@@ -766,7 +761,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
             <div className="flex items-center gap-4">
               <a
                 href="/terms"
-                onClick={handleNavigateLegal('/terms', 'terms')}
+                onClick={handleNavigateLegal('/terms')}
                 className="hover:text-ink transition-colors hover:underline font-medium"
               >
                 Terms and Conditions
@@ -774,7 +769,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               <span>•</span>
               <a
                 href="/privacy"
-                onClick={handleNavigateLegal('/privacy', 'privacy')}
+                onClick={handleNavigateLegal('/privacy')}
                 className="hover:text-ink transition-colors hover:underline font-medium"
               >
                 Privacy Policy

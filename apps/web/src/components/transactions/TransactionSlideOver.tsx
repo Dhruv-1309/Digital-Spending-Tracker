@@ -13,6 +13,7 @@ import { XIcon, PlusIcon } from '../icons';
 import { getAllCategories } from '../../lib/categories';
 import { validateTransactionForm } from '../../lib/validation';
 import { toUserFriendlyError } from '../../lib/errorMessages';
+import { logger } from '../../lib/logger';
 import { containsMathExpression, evaluateMathExpression, getLocalDateString } from '@moneytracker/shared';
 import { EASING } from '../../ui/motion';
 import type { Transaction, TransactionType, PaymentMethod } from '../../types';
@@ -115,7 +116,8 @@ export function TransactionSlideOver({
         const rememberedMethod = sessionStorage.getItem(LAST_METHOD_EXPENSE) || 'card';
         setCategory(rememberedCat);
         setPaymentMethod(rememberedMethod);
-      } catch {
+      } catch (err: unknown) {
+        logger.warn('Failed to read remembered category from sessionStorage in slide-over', err, { action: 'initSlideOver' });
         setCategory('');
         setPaymentMethod('card');
       }
@@ -196,7 +198,8 @@ export function TransactionSlideOver({
           sessionStorage.getItem(methodKey) || (newType === 'income' ? 'bank_transfer' : 'card');
         setCategory(rememberedCat);
         setPaymentMethod(rememberedMethod);
-      } catch {
+      } catch (err: unknown) {
+        logger.warn('Failed to read type category preference from sessionStorage in slide-over', err, { action: 'handleTypeChange' });
         setCategory('');
       }
     }
@@ -279,8 +282,8 @@ export function TransactionSlideOver({
         const methodKey = type === 'income' ? LAST_METHOD_INCOME : LAST_METHOD_EXPENSE;
         sessionStorage.setItem(catKey, category);
         sessionStorage.setItem(methodKey, paymentMethod);
-      } catch {
-        // sessionStorage unavailable
+      } catch (err: unknown) {
+        logger.warn('Failed to save category preference to sessionStorage in slide-over', err, { action: 'handleSubmit.savePreference' });
       }
 
       if (isEdit && initialData && updateTransaction) {

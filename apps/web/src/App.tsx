@@ -9,8 +9,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NotFoundPage } from './components/common/NotFoundPage';
 import { TermsPage } from './components/legal/TermsPage';
 import { PrivacyPage } from './components/legal/PrivacyPage';
-
-import { type AppRoute, resolveAppRoute } from './lib/routes';
+import { type AppRoute, resolveAppRoute, navigateTo } from './lib/routes';
 
 // Dev-only routes /design and /audit, completely pruned from production builds via import.meta.env.DEV
 const DevDesignPage = import.meta.env.DEV
@@ -49,15 +48,7 @@ export function App() {
   const route = useAppRoute();
 
   const handleBackToApp = () => {
-    if (typeof window !== 'undefined') {
-      window.location.hash = '';
-      try {
-        window.history.pushState({}, '', '/');
-      } catch {
-        // Fallback
-      }
-      window.dispatchEvent(new Event('popstate'));
-    }
+    navigateTo('/');
   };
 
   if (route === 'terms') {

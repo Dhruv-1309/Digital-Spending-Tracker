@@ -20,6 +20,7 @@ import { syncQueue, type QueuedOperation } from '../services/syncQueue.js';
 import { isOnline as checkOnline, subscribeNetworkStatus } from '../services/network.js';
 import { DEFAULT_CATEGORIES } from '../lib/categories.js';
 import { toUserFriendlyError } from '../lib/errorMessages.js';
+import { logger } from '../lib/logger.js';
 import { rupeesToPaise } from '@moneytracker/shared';
 
 function generateClientId(): string {
@@ -56,8 +57,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     try {
       const count = await syncQueue.getQueueLength();
       setPendingSyncCount(count);
-    } catch {
-      // Ignore in mock/offline
+    } catch (err: unknown) {
+      logger.warn('Failed to retrieve sync queue length from local store', err, { action: 'refreshQueueCount' });
     }
   }, []);
 
@@ -141,8 +142,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         setPendingSyncCount(remaining);
       });
       await refreshQueueCount();
-    } catch {
-      // Drain warning silently handled by backoff / offline retry
+    } catch (err: unknown) {
+      logger.warn('Sync queue drain interrupted by transient error; offline retry scheduled', err, { action: 'triggerDrain' });
     } finally {
       isDrainingRef.current = false;
     }
@@ -207,8 +208,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         setBudgetGoal(newGoal);
         syncQueue.setCachedData('budgetGoal', newGoal);
       }
-    } catch {
-      // Offline or network error
+    } catch (err: unknown) {
+      logger.warn('Failed to pull server changes; network offline or service unavailable', err, { action: 'pullChanges' });
     }
   }, [user]);
 
@@ -246,8 +247,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
       if (cachedBudget) setBudgetGoal(cachedBudget);
       if (cachedCursor) lastSyncCursorRef.current = cachedCursor;
       await refreshQueueCount();
-    } catch {
-      // Cache read fallback
+    } catch (err: unknown) {
+      logger.warn('Failed to read from local cache', err, { action: 'fetchData.cacheRead' });
     }
 
     // 2. Fetch fresh data from API if online

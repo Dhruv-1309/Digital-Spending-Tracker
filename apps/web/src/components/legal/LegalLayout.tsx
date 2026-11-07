@@ -1,6 +1,7 @@
 import React from 'react';
 import { WalletIcon, ChevronLeftIcon } from '../icons';
 import { Button } from '../ui/Button';
+import { navigateTo } from '../../lib/routes';
 
 export interface LegalLayoutProps {
   title: string;
@@ -31,17 +32,9 @@ export function LegalLayout({
     }
   };
 
-  const navigateTo = (path: string, hash: string) => (e: React.MouseEvent) => {
+  const handleNav = (path: string) => (e: React.MouseEvent) => {
     e.preventDefault();
-    if (typeof window !== 'undefined') {
-      window.location.hash = hash;
-      try {
-        window.history.pushState({}, '', path);
-      } catch {
-        // Fallback for environments without pushState
-      }
-      window.dispatchEvent(new Event('popstate'));
-    }
+    navigateTo(path);
   };
 
   return (
@@ -105,7 +98,7 @@ export function LegalLayout({
           <div className="flex items-center gap-4">
             <a
               href="/terms"
-              onClick={navigateTo('/terms', 'terms')}
+              onClick={handleNav('/terms')}
               className="hover:text-ink hover:underline transition-colors"
             >
               Terms and Conditions
@@ -113,7 +106,7 @@ export function LegalLayout({
             <span>•</span>
             <a
               href="/privacy"
-              onClick={navigateTo('/privacy', 'privacy')}
+              onClick={handleNav('/privacy')}
               className="hover:text-ink hover:underline transition-colors"
             >
               Privacy Policy

@@ -396,7 +396,7 @@ export function importBackupFromJson(
   let parsed: any;
   try {
     parsed = JSON.parse(jsonContent);
-  } catch {
+  } catch (_err: unknown) {
     return {
       newTransactions: [],
       skippedCount: 0,

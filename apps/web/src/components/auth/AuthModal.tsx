@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { toUserFriendlyError } from '../../lib/errorMessages';
 import { validatePassword } from '../../lib/validation';
+import { navigateTo } from '../../lib/routes';
 import { Button } from '../ui/Button';
 import { TextInput } from '../ui/TextInput';
 import { SegmentedControl } from '../ui/SegmentedControl';
@@ -532,15 +533,7 @@ export function AuthModal() {
                   href="/terms"
                   onClick={(e) => {
                     e.preventDefault();
-                    if (typeof window !== 'undefined') {
-                      window.location.hash = 'terms';
-                      try {
-                        window.history.pushState({}, '', '/terms');
-                      } catch {
-                        // Fallback
-                      }
-                      window.dispatchEvent(new Event('popstate'));
-                    }
+                    navigateTo('/terms');
                   }}
                   className="text-accent underline hover:text-accent-hover font-medium"
                 >
@@ -551,15 +544,7 @@ export function AuthModal() {
                   href="/privacy"
                   onClick={(e) => {
                     e.preventDefault();
-                    if (typeof window !== 'undefined') {
-                      window.location.hash = 'privacy';
-                      try {
-                        window.history.pushState({}, '', '/privacy');
-                      } catch {
-                        // Fallback
-                      }
-                      window.dispatchEvent(new Event('popstate'));
-                    }
+                    navigateTo('/privacy');
                   }}
                   className="text-accent underline hover:text-accent-hover font-medium"
                 >
@@ -641,15 +626,7 @@ export function AuthModal() {
                 href="/terms"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (typeof window !== 'undefined') {
-                    window.location.hash = 'terms';
-                    try {
-                      window.history.pushState({}, '', '/terms');
-                    } catch {
-                      // Fallback
-                    }
-                    window.dispatchEvent(new Event('popstate'));
-                  }
+                  navigateTo('/terms');
                 }}
                 className="hover:text-ink hover:underline transition-colors"
               >
@@ -660,15 +637,7 @@ export function AuthModal() {
                 href="/privacy"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (typeof window !== 'undefined') {
-                    window.location.hash = 'privacy';
-                    try {
-                      window.history.pushState({}, '', '/privacy');
-                    } catch {
-                      // Fallback
-                    }
-                    window.dispatchEvent(new Event('popstate'));
-                  }
+                  navigateTo('/privacy');
                 }}
                 className="hover:text-ink hover:underline transition-colors"
               >
@@ -691,15 +660,7 @@ export function AuthModal() {
             href="/terms"
             onClick={(e) => {
               e.preventDefault();
-              if (typeof window !== 'undefined') {
-                window.location.hash = 'terms';
-                try {
-                  window.history.pushState({}, '', '/terms');
-                } catch {
-                  // Fallback
-                }
-                window.dispatchEvent(new Event('popstate'));
-              }
+              navigateTo('/terms');
             }}
             className="text-slate-300 hover:text-white transition-colors hover:underline font-medium"
           >
@@ -710,15 +671,7 @@ export function AuthModal() {
             href="/privacy"
             onClick={(e) => {
               e.preventDefault();
-              if (typeof window !== 'undefined') {
-                window.location.hash = 'privacy';
-                try {
-                  window.history.pushState({}, '', '/privacy');
-                } catch {
-                  // Fallback
-                }
-                window.dispatchEvent(new Event('popstate'));
-              }
+              navigateTo('/privacy');
             }}
             className="text-slate-300 hover:text-white transition-colors hover:underline font-medium"
           >
