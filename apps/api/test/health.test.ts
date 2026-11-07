@@ -39,4 +39,22 @@ describe('Health Endpoints', () => {
     expect(res.headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=()');
     expect(res.headers['content-security-policy']).toContain("frame-ancestors 'none'");
   });
+
+  it('serves interactive OpenAPI documentation HTML on /api/docs (WEB-8)', async () => {
+    const res = await request(app).get('/api/docs');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.text).toContain('MoneyTracker API Documentation');
+    expect(res.text).toContain('@scalar/api-reference');
+    expect(res.headers['content-security-policy']).toContain('cdn.jsdelivr.net');
+  });
+
+  it('serves raw OpenAPI YAML specification on /api/openapi.yaml (WEB-8)', async () => {
+    const res = await request(app).get('/api/openapi.yaml');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/yaml');
+    expect(res.headers['cache-control']).toContain('max-age=3600');
+    expect(res.text).toContain('openapi: 3.1.0');
+    expect(res.text).toContain('title: MoneyTracker API');
+  });
 });

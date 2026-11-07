@@ -689,17 +689,19 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Documents copyright, permissions, and warranty disclaimers
 - **How It Was Tested:** Verified LICENSE file exists in repository root and conforms to MIT license format.
 
-### 29. [WEB-8] Serve interactive API documentation from OpenAPI specification (/api/docs)
+### 29. [WEB-8] Serve interactive API documentation from OpenAPI specification (/api/docs) [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/api/src/routes/docsRoutes.ts`
   - `apps/api/src/app.ts`
-  - `docs/openapi.yaml`
+  - `apps/api/test/health.test.ts`
 - **Acceptance Criteria:**
-  - [ ] GET /api/docs serves interactive OpenAPI documentation (using Scalar or Swagger UI HTML)
-  - [ ] Provides developers and integrators clear schema inspection
-- **How It Will Be Tested:** Supertest in apps/api/test/health.test.ts asserting 200 OK on /api/docs.
+  - [x] GET /api/docs and /docs serve interactive OpenAPI documentation powered by Scalar UI
+  - [x] GET /api/openapi.yaml serves raw OpenAPI 3.1 specification with caching and appropriate headers
+  - [x] Relaxed CSP header allows Scalar documentation bundle while retaining strict security on API endpoints
+- **How It Was Tested:** Supertest integration assertions in `apps/api/test/health.test.ts` (6 tests passing).
 
 ### 30. [AUTH-8] Firebase branded sender email and custom domain template setup `[NEEDS-USER]`
 

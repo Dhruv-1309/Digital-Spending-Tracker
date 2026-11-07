@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{367.0}{499} = \mathbf{73.5\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{368.5}{499} = \mathbf{73.8\%}$$
 
-- **Current Readiness Score:** **73.5%** (Baseline: 56.8%)
+- **Current Readiness Score:** **73.8%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **367.0 points**
+- **Earned Weight:** **368.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **109** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **28** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **110** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **27** |
 | **MISSING** | Not implemented | **33** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -42,7 +42,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **PERF** | Performance, Offline and PWA | 15 | 6D / 3P / 3M (3 other) | **52.9%** | 18.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
-| **WEB** | Web Presence, Legal and Documentation | 20 | 5D / 6P / 8M (1 other) | **57.0%** | 24.5 / 43 |
+| **WEB** | Web Presence, Legal and Documentation | 20 | 6D / 5P / 8M (1 other) | **60.5%** | 26.0 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
 | **X** | Additional Operational Excellence | 4 | 2D / 1P / 0M (1 other) | **75.0%** | 7.5 / 10 |
 
@@ -294,7 +294,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **WEB-5** | A contact address and an in-app way to send feedback | `PARTIAL` | PrivacyPage.tsx and TermsPage.tsx list privacy@moneytracker.app | No in-app feedback dialog/modal to submit user comments. |
 | **WEB-6** | A disclaimer that the app is not financial advice and that forecasts are estimates | `DONE` | apps/web/src/components/legal/TermsPage.tsx:85-115 (Section 4 disclaimer) | - |
 | **WEB-7** | A LICENSE file | `DONE` | LICENSE (MIT License) committed to repository root | None |
-| **WEB-8** | API documentation published from the OpenAPI file | `PARTIAL` | docs/openapi.yaml exists (10,170 bytes) | Not served as interactive HTML documentation (Swagger/Scalar) on API service. |
+| **WEB-8** | API documentation published from the OpenAPI file | `DONE` | apps/api/src/routes/docsRoutes.ts, docs/openapi.yaml, apps/api/test/health.test.ts | Interactive Scalar UI served at /api/docs and /docs; raw OpenAPI 3.1 specification served at /api/openapi.yaml with cache headers. | None |
 | **WEB-9** | Page titles, meta descriptions, canonical URLs, Open Graph and Twitter card images on public pages | `MISSING` | apps/web/index.html:1-16 | Missing meta description, canonical URL, og:* and twitter:* social preview tags. |
 | **WEB-10** | robots.txt and sitemap.xml for public pages, and noindex on the signed-in app screens | `MISSING` | No robots.txt or sitemap.xml in apps/web/public | robots.txt and sitemap.xml missing. |
 | **WEB-11** | Favicon set, apple-touch-icon and theme-color | `PARTIAL` | apps/web/public/favicon.svg exists | apple-touch-icon.png and meta theme-color missing in index.html. |

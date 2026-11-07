@@ -14,6 +14,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 };
 
 import { healthRouter } from './routes/healthRoutes.js';
+import { docsRouter } from './routes/docsRoutes.js';
 import { authRouter } from './routes/authRoutes.js';
 import { userRouter } from './routes/userRoutes.js';
 import { transactionRouter } from './routes/transactionRoutes.js';
@@ -78,8 +79,9 @@ export function createApp() {
   // 5. Global IP Rate Limiting (SEC-5: DDoS protection per IP)
   app.use(globalIpRateLimiter);
 
-  // 6. Public & Health Routes (Unauthenticated, BE-6.1)
+  // 6. Public, Health & Documentation Routes (Unauthenticated, BE-6.1, WEB-8)
   app.use('/', healthRouter);
+  app.use('/', docsRouter);
   app.use('/auth', authRouter);
   app.use('/api/v1/auth', authRouter);
 
