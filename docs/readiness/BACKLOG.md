@@ -1205,16 +1205,20 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - [ ] Documents releases from v1.0, v2.0, v3.0, and current readiness phase
 - **How It Will Be Tested:** Review CHANGELOG.md formatting.
 
-### 34. [WEB-9] SEO meta descriptions, canonical URLs, and Open Graph / Twitter social preview tags
+### 34. [WEB-9] SEO meta descriptions, canonical URLs, and Open Graph / Twitter social preview tags [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/index.html`
+  - `apps/web/public/og-image.png`
+  - `apps/web/src/test/seo_and_brand_assets.test.ts`
 - **Acceptance Criteria:**
-  - [ ] index.html includes meta description, canonical URL, og:title, og:image, og:type, twitter:card
-  - [ ] Provides rich preview when shared on WhatsApp, Telegram, Twitter, LinkedIn
-- **How It Will Be Tested:** Inspect meta tags in rendered index.html.
+  - [x] index.html includes meta description, canonical URL, og:title, og:image, og:type, twitter:card
+  - [x] Provides rich preview when shared on WhatsApp, Telegram, Twitter, LinkedIn
+- **How It Was Tested:**
+  - 4 assertions in `apps/web/src/test/seo_and_brand_assets.test.ts` verifying page title, description, canonical link, Open Graph, and Twitter summary_large_image card tags.
+  - Branded 1200x630 `og-image.png` generated and verified.
 
 ### 35. [WEB-10] Public robots.txt and sitemap.xml with noindex tags on private authenticated views
 
