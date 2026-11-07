@@ -1117,16 +1117,19 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 5 automated component tests in `apps/web/src/test/turnstile_bot_protection.test.tsx` verifying widget rendering, token acquisition, challenge blocking, token submission, and unmount cleanup.
   - 4 automated API tests in `apps/api/test/turnstile.test.ts` verifying missing token rejection (400 CAPTCHA_REQUIRED), invalid token rejection (400 CAPTCHA_FAILED), and valid verification (200 OK).
 
-### 15. [SEC-20] One-page threat model document (assets, attack vectors, mitigations)
+### 15. [SEC-20] One-page threat model document (assets, attack vectors, mitigations) [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `docs/security/THREAT_MODEL.md`
+  - `docs/readiness/AUDIT.md`
 - **Acceptance Criteria:**
-  - [ ] Documents assets (financial records, auth tokens, backup files)
-  - [ ] Identifies attack vectors (IDOR, credential stuffing, formula injection, offline sync tampering) and mitigations
-- **How It Will Be Tested:** Review threat model document for completeness.
+  - [x] Documents assets (financial records, auth tokens, backup files, database credentials) and trust boundaries
+  - [x] Identifies attack vectors across STRIDE methodology (IDOR, credential stuffing, formula injection, offline sync tampering, DoS, privilege escalation) with concrete code mitigations
+  - [x] Maps out all API and client entry points with authentication requirements and safeguards
+- **How It Was Tested:**
+  - Complete architectural review against PRD v3.0, verified alignment with Zod schemas, isolation tests, rate limiters, CSP, and Turnstile integration.
 
 ### 16. [UX-12] Reflect active tab, month filter, and pagination in URL search params
 

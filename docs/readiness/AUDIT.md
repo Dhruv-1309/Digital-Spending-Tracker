@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{393.5}{499} = \mathbf{78.9\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{395.5}{499} = \mathbf{79.3\%}$$
 
-- **Current Readiness Score:** **78.9%** (Baseline: 56.8%)
+- **Current Readiness Score:** **79.3%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **393.5 points**
+- **Earned Weight:** **395.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **129** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **130** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **13** |
-| **MISSING** | Not implemented | **28** |
+| **MISSING** | Not implemented | **27** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -37,7 +37,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **CORE** | Core Behavior and Data Correctness | 22 | 22D / 0P / 0M | **100.0%** | 66.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 20D / 0P / 1M  | **98.5%** | 65.0 / 66 |
-| **SEC** | Security and Privacy | 22 | 16D / 0P / 3M (3 other) | **78.3%** | 54.0 / 69 |
+| **SEC** | Security and Privacy | 22 | 17D / 0P / 2M (3 other) | **81.2%** | 56.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 8D / 1P / 3M (3 other) | **58.8%** | 20.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
@@ -181,7 +181,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **SEC-17** | Authentication does not rely on cookies, or cookies use Secure, HttpOnly and SameSite, and CSRF has been considered | `DONE` | Bearer tokens in Authorization header; no cookie-based auth session state | - |
 | **SEC-18** | Check obligations under India's Digital Personal Data Protection Act, 2023 and its rules (notice, consent, purpose, deletion) and record the result | `DONE` | apps/web/src/components/legal/PrivacyPage.tsx:137-160 | - |
 | **SEC-19** | Bot protection on sign-up (App Check, CAPTCHA or equivalent) | `DONE` | apps/web/src/components/auth/TurnstileWidget.tsx, apps/web/src/components/auth/AuthModal.tsx:582-596, apps/api/src/routes/authRoutes.ts:17-62, apps/web/src/test/turnstile_bot_protection.test.tsx, apps/api/test/turnstile.test.ts | Integrates privacy-preserving Cloudflare Turnstile widget on sign-up form with dynamic script loading and token acquisition; backend verifies token against Cloudflare siteverify endpoint before registration; verified across unit, component, and API integration test suites. |
-| **SEC-20** | A one-page threat model lists assets, entry points and mitigations | `MISSING` | None | Threat model document has not been drafted. |
+| **SEC-20** | A one-page threat model lists assets, entry points and mitigations | `DONE` | docs/security/THREAT_MODEL.md:1-125 | Comprehensive STRIDE threat model detailing assets, trust boundaries, entry points, and mitigations (IDOR isolation, Turnstile bot protection, CSV formula injection neutralization, rate limits, soft-delete, and authenticated encryption). |
 | **SEC-21** | A security.txt file with a contact address | `MISSING` | None in public/.well-known/security.txt | Missing standard RFC 9116 security.txt. |
 | **SEC-22** | A documented procedure for rotating secrets and keys | `MISSING` | docs/RUNBOOK.md lacks secret rotation section | Missing documented secret rotation runbook steps. |
 
