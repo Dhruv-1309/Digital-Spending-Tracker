@@ -133,6 +133,7 @@ export function setupInMemoryPrisma() {
         if (args.where.id && t.id !== args.where.id) return false;
         if (args.where.userId && t.userId !== args.where.userId) return false;
         if (args.where.deletedAt === null && t.deletedAt !== null) return false;
+        if (args.where.deletedAt?.not === null && t.deletedAt === null) return false;
         if (args.where.importHash && t.importHash !== args.where.importHash) return false;
         if (args.where.legacyId && t.legacyId !== args.where.legacyId) return false;
         return true;
@@ -144,8 +145,11 @@ export function setupInMemoryPrisma() {
     let items = inMemoryDb.transactions.filter((t) => {
       if (args.where?.userId && t.userId !== args.where.userId) return false;
       if (args.where?.deletedAt === null && t.deletedAt !== null) return false;
+      if (args.where?.deletedAt?.not === null && t.deletedAt === null) return false;
       if (args.where?.deletedAt?.gt && (!t.deletedAt || t.deletedAt <= args.where.deletedAt.gt)) return false;
+      if (args.where?.deletedAt?.gte && (!t.deletedAt || t.deletedAt < args.where.deletedAt.gte)) return false;
       if (args.where?.deletedAt?.lt && (!t.deletedAt || t.deletedAt >= args.where.deletedAt.lt)) return false;
+      if (args.where?.deletedAt?.lte && (!t.deletedAt || t.deletedAt > args.where.deletedAt.lte)) return false;
       if (args.where?.updatedAt?.gt && t.updatedAt <= args.where.updatedAt.gt) return false;
       if (args.where?.type && t.type !== args.where.type) return false;
       if (args.where?.category?.equals && t.category.toLowerCase() !== args.where.category.equals.toLowerCase()) return false;
@@ -168,7 +172,9 @@ export function setupInMemoryPrisma() {
       return true;
     });
 
-    if (args.orderBy?.txnDate === 'asc') {
+    if (args.orderBy?.deletedAt === 'desc') {
+      items.sort((a, b) => (b.deletedAt?.getTime() ?? 0) - (a.deletedAt?.getTime() ?? 0));
+    } else if (args.orderBy?.txnDate === 'asc') {
       items.sort((a, b) => a.txnDate.getTime() - b.txnDate.getTime());
     } else {
       items.sort((a, b) => b.txnDate.getTime() - a.txnDate.getTime());
@@ -209,17 +215,33 @@ export function setupInMemoryPrisma() {
     inMemoryDb.transactions.forEach((t) => {
       if (args.where.userId && t.userId !== args.where.userId) return;
       if (args.where.deletedAt === null && t.deletedAt !== null) return;
+      if (args.where.id?.in && !args.where.id.in.includes(t.id)) return;
       if (args.where.category && t.category !== args.where.category) return;
       if (args.data.importHash) t.importHash = args.data.importHash;
+      if (args.data.deletedAt !== undefined) t.deletedAt = args.data.deletedAt;
       count += 1;
     });
     return { count };
   });
 
+  vi.spyOn(prisma.transaction, 'delete').mockImplementation(async (args: any) => {
+    const idx = inMemoryDb.transactions.findIndex((t) => t.id === args.where.id);
+    if (idx === -1) throw new Error('Transaction not found');
+    const removed = inMemoryDb.transactions.splice(idx, 1)[0];
+    return removed;
+  });
+
   vi.spyOn(prisma.transaction, 'deleteMany').mockImplementation(async (args: any) => {
     const beforeCount = inMemoryDb.transactions.length;
     inMemoryDb.transactions = inMemoryDb.transactions.filter((t) => {
+      if (args.where?.userId && t.userId !== args.where.userId) return true;
       if (args.where?.deletedAt?.lt && t.deletedAt && t.deletedAt < args.where.deletedAt.lt) {
+        return false;
+      }
+      if (args.where?.deletedAt?.not === null && t.deletedAt !== null) {
+        return false;
+      }
+      if (args.where?.id?.in && args.where.id.in.includes(t.id)) {
         return false;
       }
       return true;

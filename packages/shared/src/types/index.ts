@@ -77,6 +77,23 @@ export interface Transaction {
   deletedAt?: string | null;
 }
 
+export interface ActivityLogItem {
+  id: string;
+  type: 'import' | 'delete' | 'edit' | 'create' | 'restore';
+  timestamp: number;
+  description: string;
+  details?: string;
+  metadata?: {
+    batchId?: string;
+    transactionIds?: string[];
+    source?: string;
+    count?: number;
+    amountPaise?: number;
+    category?: string;
+  };
+  canUndo?: boolean;
+}
+
 export interface BudgetGoal {
   userId: string;
   monthlyExpenseLimitPaise: number;

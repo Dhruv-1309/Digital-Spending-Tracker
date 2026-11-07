@@ -22,6 +22,14 @@ import { DEFAULT_CATEGORIES } from '../lib/categories.js';
 import { toUserFriendlyError } from '../lib/errorMessages.js';
 import { logger } from '../lib/logger.js';
 import { rupeesToPaise } from '@moneytracker/shared';
+import {
+  getOfflineTrash,
+  saveOfflineTrash,
+  getActivityHistory,
+  saveActivityHistory,
+  addActivityItem,
+} from '../lib/activityHistory.js';
+import type { ActivityLogItem } from '../types/index.js';
 
 function generateClientId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -36,6 +44,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
 
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [trashTransactions, setTrashTransactions] = useState<Transaction[]>(getOfflineTrash());
+  const [activityHistory, setActivityHistory] = useState<ActivityLogItem[]>(getActivityHistory());
   const [categories, setCategories] = useState<CategoriesMap>(DEFAULT_CATEGORIES);
   const [approvedAnomalies, setApprovedAnomalies] = useState<string[]>([]);
   const [autopays, setAutopays] = useState<AutopayPlan[]>([]);
@@ -246,6 +256,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
       if (cachedAutopays) setAutopays(cachedAutopays);
       if (cachedBudget) setBudgetGoal(cachedBudget);
       if (cachedCursor) lastSyncCursorRef.current = cachedCursor;
+      setActivityHistory(getActivityHistory());
+      setTrashTransactions(getOfflineTrash());
       await refreshQueueCount();
     } catch (err: unknown) {
       logger.warn('Failed to read from local cache', err, { action: 'fetchData.cacheRead' });
@@ -254,12 +266,13 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     // 2. Fetch fresh data from API if online
     if (checkOnline()) {
       try {
-        const [txsRes, catsRes, anomaliesRes, plansRes, goalRes] = await Promise.all([
+        const [txsRes, catsRes, anomaliesRes, plansRes, goalRes, trashRes] = await Promise.all([
           apiClient.getTransactions({ pageSize: 100 }),
           apiClient.getCategories(),
           apiClient.getAnomalies(),
           apiClient.getAutopays(),
           apiClient.getBudget(),
+          apiClient.getTrash().catch(() => ({ items: [], total: 0 })),
         ]);
 
         const mergedCats: CategoriesMap = {
@@ -270,6 +283,10 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         const approvedIds = (anomaliesRes || []).filter((a: any) => a.anomaly === 'approved').map((a: any) => a.id);
 
         setTransactions(txsRes.items || []);
+        if (trashRes?.items) {
+          setTrashTransactions(trashRes.items);
+          saveOfflineTrash(trashRes.items);
+        }
         setCategories(mergedCats);
         setApprovedAnomalies(approvedIds);
         setAutopays(plansRes || []);
@@ -297,6 +314,23 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
 
     setIsLoading(false);
   }, [user, triggerDrain, refreshQueueCount]);
+
+  const refreshTrash = useCallback(async () => {
+    if (!user) return;
+    if (checkOnline()) {
+      try {
+        const res = await apiClient.getTrash();
+        if (res?.items) {
+          setTrashTransactions(res.items);
+          saveOfflineTrash(res.items);
+        }
+      } catch (err: unknown) {
+        logger.warn('Failed to fetch trash from server; using cached trash', err);
+      }
+    } else {
+      setTrashTransactions(getOfflineTrash());
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchData();
@@ -449,14 +483,38 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     [user, transactions, refreshQueueCount, triggerDrain],
   );
 
-  // Transactions: Delete
+  // Transactions: Delete (Soft delete to Trash - DIFF-5)
   const deleteTransaction = useCallback(
     async (id: string): Promise<boolean> => {
       if (!user) return false;
 
+      const toDelete = transactions.find((t) => t.id === id);
       const updated = transactions.filter((t) => t.id !== id);
       setTransactions(updated);
       syncQueue.setCachedData('transactions', updated);
+
+      if (toDelete) {
+        const deletedItem: Transaction = {
+          ...toDelete,
+          deletedAt: new Date().toISOString(),
+        };
+        setTrashTransactions((prev) => {
+          const nextTrash = [deletedItem, ...prev.filter((t) => t.id !== id)];
+          saveOfflineTrash(nextTrash);
+          return nextTrash;
+        });
+
+        addActivityItem({
+          type: 'delete',
+          description: `Deleted ${toDelete.category} transaction (₹${toDelete.amount})`,
+          metadata: {
+            transactionIds: [id],
+            category: toDelete.category,
+            amountPaise: rupeesToPaise(toDelete.amount),
+          },
+        });
+        setActivityHistory(getActivityHistory());
+      }
 
       const opId = generateClientId();
       await syncQueue.enqueue({
@@ -477,14 +535,190 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     [user, transactions, refreshQueueCount, triggerDrain],
   );
 
-  // Transactions: Import
-  const importTransactions = useCallback(
-    async (newTxs: Transaction[]): Promise<boolean> => {
-      if (!user || newTxs.length === 0) return false;
+  // Transactions: Restore from Trash (DIFF-5)
+  const restoreTransaction = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!user) return false;
 
-      const updated = [...newTxs, ...transactions];
+      const toRestore = trashTransactions.find((t) => t.id === id);
+      if (!toRestore) return false;
+
+      const nextTrash = trashTransactions.filter((t) => t.id !== id);
+      setTrashTransactions(nextTrash);
+      saveOfflineTrash(nextTrash);
+
+      const restoredItem: Transaction = {
+        ...toRestore,
+        deletedAt: null,
+      };
+
+      const updated = [restoredItem, ...transactions];
       setTransactions(updated);
       syncQueue.setCachedData('transactions', updated);
+
+      addActivityItem({
+        type: 'restore',
+        description: `Restored ${toRestore.category} transaction (₹${toRestore.amount})`,
+        metadata: {
+          transactionIds: [id],
+          category: toRestore.category,
+          amountPaise: rupeesToPaise(toRestore.amount),
+        },
+      });
+      setActivityHistory(getActivityHistory());
+
+      const opId = generateClientId();
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: `/transactions/${id}/restore`,
+        method: 'POST',
+        entityType: 'transaction',
+        entityId: id,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return true;
+    },
+    [user, transactions, trashTransactions, refreshQueueCount, triggerDrain],
+  );
+
+  // Transactions: Purge all Trash (DIFF-5)
+  const purgeTrash = useCallback(
+    async (): Promise<boolean> => {
+      if (!user) return false;
+
+      setTrashTransactions([]);
+      saveOfflineTrash([]);
+
+      const opId = generateClientId();
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: '/transactions/trash/purge',
+        method: 'DELETE',
+        entityType: 'transaction',
+        entityId: opId,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return true;
+    },
+    [user, refreshQueueCount, triggerDrain],
+  );
+
+  // Transactions: Permanently Delete single item (DIFF-5)
+  const permanentlyDeleteTransaction = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!user) return false;
+
+      const nextTrash = trashTransactions.filter((t) => t.id !== id);
+      setTrashTransactions(nextTrash);
+      saveOfflineTrash(nextTrash);
+
+      const opId = generateClientId();
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: `/transactions/${id}/purge`,
+        method: 'DELETE',
+        entityType: 'transaction',
+        entityId: id,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return true;
+    },
+    [user, trashTransactions, refreshQueueCount, triggerDrain],
+  );
+
+  // Transactions: Undo Batch Import (DIFF-5)
+  const undoImportBatch = useCallback(
+    async (batchId: string, transactionIds: string[]): Promise<boolean> => {
+      if (!user || transactionIds.length === 0) return false;
+
+      const idsSet = new Set(transactionIds);
+      const toMoveToTrash = transactions.filter((t) => idsSet.has(t.id));
+      const remainingTransactions = transactions.filter((t) => !idsSet.has(t.id));
+
+      setTransactions(remainingTransactions);
+      syncQueue.setCachedData('transactions', remainingTransactions);
+
+      const deletedTimestamp = new Date().toISOString();
+      const newTrashItems: Transaction[] = toMoveToTrash.map((t) => ({
+        ...t,
+        deletedAt: deletedTimestamp,
+      }));
+
+      setTrashTransactions((prev) => {
+        const nextTrash = [...newTrashItems, ...prev.filter((t) => !idsSet.has(t.id))];
+        saveOfflineTrash(nextTrash);
+        return nextTrash;
+      });
+
+      // Update activity history item canUndo to false
+      const history = getActivityHistory();
+      const updatedHistory = history.map((item) =>
+        item.metadata?.batchId === batchId ||
+        (item.metadata?.transactionIds && item.metadata.transactionIds.some((id) => idsSet.has(id)))
+          ? { ...item, canUndo: false }
+          : item,
+      );
+      saveActivityHistory(updatedHistory);
+      setActivityHistory(updatedHistory);
+
+      const opId = generateClientId();
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: '/transactions/batch-undo',
+        method: 'POST',
+        body: { transactionIds },
+        entityType: 'transaction',
+        entityId: opId,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return true;
+    },
+    [user, transactions, refreshQueueCount, triggerDrain],
+  );
+
+  // Transactions: Import
+  const importTransactions = useCallback(
+    async (newTxs: Transaction[], batchId?: string): Promise<boolean> => {
+      if (!user || newTxs.length === 0) return false;
+
+      const activeBatchId = batchId || `batch_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const taggedTxs = newTxs.map((t) => ({ ...t, batchId: activeBatchId }));
+
+      const updated = [...taggedTxs, ...transactions];
+      setTransactions(updated);
+      syncQueue.setCachedData('transactions', updated);
+
+      addActivityItem({
+        type: 'import',
+        description: `Imported ${newTxs.length} transaction${newTxs.length === 1 ? '' : 's'}`,
+        canUndo: true,
+        metadata: {
+          batchId: activeBatchId,
+          transactionIds: taggedTxs.map((t) => t.id),
+          count: taggedTxs.length,
+        },
+      });
+      setActivityHistory(getActivityHistory());
 
       const opId = generateClientId();
       await syncQueue.enqueue({
@@ -492,7 +726,7 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         endpoint: '/transactions/import',
         method: 'POST',
         body: {
-          rows: newTxs.map((t) => ({
+          rows: taggedTxs.map((t) => ({
             date: t.date,
             type: t.type,
             category: t.category,
@@ -797,6 +1031,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         currentTab,
         setCurrentTab,
         transactions,
+        trashTransactions,
+        activityHistory,
         categories,
         approvedAnomalies,
         autopays,
@@ -805,10 +1041,15 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         loadError,
         refreshData: fetchData,
+        refreshTrash,
         pendingSyncCount,
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        restoreTransaction,
+        purgeTrash,
+        permanentlyDeleteTransaction,
+        undoImportBatch,
         importTransactions,
         addCustomCategory,
         approveAnomaly,

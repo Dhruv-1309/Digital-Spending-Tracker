@@ -10,3 +10,4 @@ export * from './mathEvaluator.js';
 export * from './merchantRules.js';
 export * from './recurringDetector.js';
 export * from './projections.js';
+export * from './trash.js';

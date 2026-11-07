@@ -20,9 +20,28 @@ export interface Transaction {
   currency?: string;
   timestamp?: number;
   createdAt?: string;
+  deletedAt?: string | null;
+  batchId?: string;
   source?: 'manual' | 'autopay' | 'csv_import';
   autopayId?: string;
   isAnomaly?: boolean;
+}
+
+export interface ActivityLogItem {
+  id: string;
+  type: 'import' | 'delete' | 'edit' | 'create' | 'restore';
+  timestamp: number;
+  description: string;
+  details?: string;
+  metadata?: {
+    batchId?: string;
+    transactionIds?: string[];
+    source?: string;
+    count?: number;
+    amountPaise?: number;
+    category?: string;
+  };
+  canUndo?: boolean;
 }
 
 export interface CategoriesMap {

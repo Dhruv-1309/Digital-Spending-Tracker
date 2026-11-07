@@ -902,18 +902,39 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 6 unit tests in `packages/shared/test/projections.test.ts` testing pacing, category variances, and breakdown structure.
   - 3 component tests in `apps/web/src/test/explainable_insights.test.tsx` verifying card rendering, badge alerts, and calculation breakdown modal dialog interaction.
 
-### 5. [DIFF-5] Trash bin with 30-day restore and activity history with batch import undo
+### 5. [DIFF-5] Trash bin with 30-day restore and activity history with batch import undo [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** `CORE-9`
-- **Files Likely Touched:**
-  - `apps/web/src/components/transactions/TrashModal.tsx`
+- **Files Touched:**
+  - `packages/shared/src/calculations/trash.ts`
+  - `packages/shared/src/calculations/index.ts`
+  - `packages/shared/src/schemas/transactions.ts`
+  - `packages/shared/src/types/index.ts`
+  - `packages/shared/test/trash.test.ts`
   - `apps/api/src/repositories/transactionRepository.ts`
+  - `apps/api/src/services/transactionService.ts`
+  - `apps/api/src/routes/transactionRoutes.ts`
+  - `apps/api/test/testDb.ts`
+  - `apps/api/test/trash_and_batch_undo.test.ts`
+  - `apps/web/src/lib/activityHistory.ts`
+  - `apps/web/src/types/index.ts`
+  - `apps/web/src/services/apiClient.ts`
+  - `apps/web/src/context/trackerContextDef.ts`
+  - `apps/web/src/context/TrackerContext.tsx`
+  - `apps/web/src/components/transactions/TrashModal.tsx`
+  - `apps/web/src/components/transactions/ActivityHistoryModal.tsx`
+  - `apps/web/src/components/transactions/TransactionsTab.tsx`
+  - `apps/web/src/test/trash_and_activity_history.test.tsx`
+  - `apps/web/src/test/transactions_redesign.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Deleted transactions remain in Trash for 30 days before permanent purging
-  - [ ] User can view Trash and restore items with single click
-  - [ ] Activity history log records recent edits and imports, allowing full CSV import batch to be undone in one step
-- **How It Will Be Tested:** Test soft deleting item, querying Trash, and restoring to active state.
+  - [x] Deleted transactions remain in Trash for 30 days before permanent purging
+  - [x] User can view Trash and restore items with single click
+  - [x] Activity history log records recent edits and imports, allowing full CSV import batch to be undone in one step
+- **How It Was Tested:**
+  - 6 unit tests in `packages/shared/test/trash.test.ts` testing 30-day retention countdown and expiration.
+  - 4 API integration tests in `apps/api/test/trash_and_batch_undo.test.ts` testing soft deletion, trash listing, restoration to active, permanent purge, and batch undo.
+  - 9 frontend component tests in `apps/web/src/test/trash_and_activity_history.test.tsx` testing TrashModal, ActivityHistoryModal, and TransactionsTab integration.
 
 ### 6. [DIFF-6] Passphrase-encrypted backup and restore using browser Web Crypto API
 

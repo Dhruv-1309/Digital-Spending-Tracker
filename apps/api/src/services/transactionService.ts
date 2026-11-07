@@ -31,6 +31,26 @@ export class TransactionService {
     return transactionRepository.softDeleteTransaction(userId, id);
   }
 
+  async listTrash(userId: string) {
+    return transactionRepository.listTrash(userId);
+  }
+
+  async restoreTransaction(userId: string, id: string) {
+    return transactionRepository.restoreTransaction(userId, id);
+  }
+
+  async purgeTrash(userId: string) {
+    return transactionRepository.purgeTrash(userId);
+  }
+
+  async purgeTransaction(userId: string, id: string) {
+    return transactionRepository.purgeTransaction(userId, id);
+  }
+
+  async batchUndo(userId: string, transactionIds: string[]) {
+    return transactionRepository.batchUndo(userId, transactionIds);
+  }
+
   async importBatch(userId: string, rows: any[]) {
     return transactionRepository.importBatch(userId, rows);
   }

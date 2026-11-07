@@ -223,6 +223,7 @@ export function mapDbTransactionToUi(raw: any): Transaction {
     description: raw.description || '',
     date: dateStr,
     createdAt: raw.createdAt ? new Date(raw.createdAt).toISOString() : new Date().toISOString(),
+    deletedAt: raw.deletedAt ? new Date(raw.deletedAt).toISOString() : undefined,
     autopayId: raw.autopayId || undefined,
   };
 }
@@ -354,6 +355,40 @@ export const apiClient = {
     return apiRequest('/transactions/import', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+
+  async getTrash(): Promise<{ items: Transaction[]; total: number }> {
+    const res = await apiRequest('/transactions/trash');
+    return {
+      items: (res.items || []).map(mapDbTransactionToUi),
+      total: res.total || 0,
+    };
+  },
+
+  async restoreTransaction(id: string): Promise<Transaction> {
+    const res = await apiRequest(`/transactions/${id}/restore`, {
+      method: 'POST',
+    });
+    return mapDbTransactionToUi(res.transaction);
+  },
+
+  async purgeTrash(): Promise<void> {
+    await apiRequest('/transactions/trash/purge', {
+      method: 'DELETE',
+    });
+  },
+
+  async purgeTransaction(id: string): Promise<void> {
+    await apiRequest(`/transactions/${id}/purge`, {
+      method: 'DELETE',
+    });
+  },
+
+  async batchUndo(transactionIds: string[]): Promise<{ undoneCount: number }> {
+    return apiRequest('/transactions/batch-undo', {
+      method: 'POST',
+      body: JSON.stringify({ transactionIds }),
     });
   },
 

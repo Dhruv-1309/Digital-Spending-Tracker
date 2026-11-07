@@ -14,6 +14,9 @@ import { Skeleton } from '../ui/Skeleton';
 import { Card } from '../ui/Card';
 import { TransactionSlideOver } from './TransactionSlideOver';
 import { BankImportModal } from './BankImportModal';
+import { TrashModal } from './TrashModal';
+import { ActivityHistoryModal } from './ActivityHistoryModal';
+import { clearActivityHistory } from '../../lib/activityHistory';
 import {
   filterTransactions,
   paginateTransactions,
@@ -49,6 +52,7 @@ import {
   CarIcon,
   FilmIcon,
   TagIcon,
+  ClockIcon,
 } from '../icons';
 import { EASING } from '../../ui/motion';
 import type { Transaction, TransactionSortOption } from '../../types';
@@ -89,11 +93,17 @@ export interface TransactionsTabProps {
 export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps = {}) {
   const {
     transactions,
+    trashTransactions = [],
+    activityHistory = [],
     autopays,
     budgetGoal,
     categories,
     addTransaction,
     deleteTransaction,
+    restoreTransaction,
+    purgeTrash,
+    permanentlyDeleteTransaction,
+    undoImportBatch,
     importTransactions,
     updateBudgetGoal,
     isLoading,
@@ -122,6 +132,8 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [slideOverTrigger, setSlideOverTrigger] = useState<HTMLElement | null>(null);
   const [isBankImportOpen, setIsBankImportOpen] = useState(false);
+  const [isTrashOpen, setIsTrashOpen] = useState(false);
+  const [isActivityHistoryOpen, setIsActivityHistoryOpen] = useState(false);
 
   // Close more menu on click outside or Escape
   useEffect(() => {
@@ -374,10 +386,17 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
       }
 
       if (result.newTransactions.length > 0) {
-        await importTransactions(result.newTransactions);
+        const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        await importTransactions(result.newTransactions, batchId);
+        const importedIds = result.newTransactions.map((t) => t.id);
         showToast(
           `Imported ${result.newTransactions.length} transactions (${result.skippedCount} duplicates skipped).`,
           'success',
+          8000,
+          {
+            label: 'Undo',
+            onClick: () => undoImportBatch?.(batchId, importedIds),
+          },
         );
       } else {
         showToast(
@@ -484,17 +503,24 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
         source: 'csv_import',
       }));
 
-      const success = await importTransactions(fullTxs);
+      const batchId = `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const success = await importTransactions(fullTxs, batchId);
       if (success) {
+        const importedIds = fullTxs.map((t) => t.id);
         showToast(
           `Successfully imported ${fullTxs.length} transaction${fullTxs.length === 1 ? '' : 's'} from bank statement.`,
           'success',
+          8000,
+          {
+            label: 'Undo',
+            onClick: () => undoImportBatch?.(batchId, importedIds),
+          },
         );
       } else {
         showToast('Failed to import transactions. Please try again.', 'error');
       }
     },
-    [importTransactions, showToast],
+    [importTransactions, showToast, undoImportBatch],
   );
 
   // Check active filter chips
@@ -520,8 +546,26 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
           </span>
         </div>
 
-        {/* Actions Group: More Menu + New Button */}
+        {/* Actions Group: Trash Button + More Menu + New Button */}
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* Trash Bin Button (DIFF-5) */}
+          <Button
+            id="txTrashBtn"
+            type="button"
+            variant="secondary"
+            size="md"
+            icon={<TrashIcon size={16} />}
+            onClick={() => setIsTrashOpen(true)}
+            aria-label={trashTransactions.length > 0 ? `Trash (${trashTransactions.length})` : 'Trash'}
+          >
+            <span>Trash</span>
+            {trashTransactions.length > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                {trashTransactions.length}
+              </span>
+            )}
+          </Button>
+
           {/* More Menu (Portability: Import & Export) */}
           <div className="relative" ref={moreMenuRef}>
             <Button
@@ -602,6 +646,20 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                   >
                     <UploadIcon size={16} className="text-ink-2" />
                     <span>Import JSON Backup</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    id="activityHistoryBtn"
+                    onClick={() => {
+                      setIsActivityHistoryOpen(true);
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <ClockIcon size={16} className="text-ink-2" />
+                    <span>Activity History</span>
                   </button>
 
                   <div className="my-1 border-t border-line" />
@@ -1180,6 +1238,29 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
         onImportTransactions={handleBankImportTransactions}
         existingTransactions={transactions}
         availableCategories={categories}
+      />
+
+      {/* Trash Bin Modal (DIFF-5) */}
+      <TrashModal
+        isOpen={isTrashOpen}
+        onClose={() => setIsTrashOpen(false)}
+        trashItems={trashTransactions}
+        onRestore={async (id) => (restoreTransaction ? restoreTransaction(id) : false)}
+        onPurgeTrash={async () => (purgeTrash ? purgeTrash() : false)}
+        onPermanentlyDelete={async (id) =>
+          permanentlyDeleteTransaction ? permanentlyDeleteTransaction(id) : false
+        }
+      />
+
+      {/* Activity History Modal (DIFF-5) */}
+      <ActivityHistoryModal
+        isOpen={isActivityHistoryOpen}
+        onClose={() => setIsActivityHistoryOpen(false)}
+        activities={activityHistory}
+        onUndoBatch={async (batchId, ids) => (undoImportBatch ? undoImportBatch(batchId, ids) : false)}
+        onClearHistory={() => {
+          clearActivityHistory();
+        }}
       />
     </div>
   );

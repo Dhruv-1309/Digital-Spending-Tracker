@@ -7,6 +7,7 @@ import {
   UpdateTransactionSchema,
   TransactionQuerySchema,
   ImportBatchSchema,
+  BatchUndoSchema,
 } from '@moneytracker/shared';
 import { importExportRateLimiter } from '../middleware/rateLimiter.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -86,6 +87,62 @@ transactionRouter.get(
     }
   },
 );
+
+// GET /api/v1/transactions/trash (DIFF-5)
+transactionRouter.get('/trash', async (req, res, next) => {
+  try {
+    const items = await transactionService.listTrash(req.user!.id);
+    res.status(200).json({ items, total: items.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/v1/transactions/trash/purge (DIFF-5)
+transactionRouter.delete('/trash/purge', async (req, res, next) => {
+  try {
+    const result = await transactionService.purgeTrash(req.user!.id);
+    res.status(200).json({ message: 'Trash purged successfully', count: result.count });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/transactions/batch-undo (DIFF-5)
+transactionRouter.post(
+  '/batch-undo',
+  validate({ body: BatchUndoSchema }),
+  async (req, res, next) => {
+    try {
+      const result = await transactionService.batchUndo(req.user!.id, req.body.transactionIds);
+      res.status(200).json({ undoneCount: result.count });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /api/v1/transactions/:id/restore (DIFF-5)
+transactionRouter.post('/:id/restore', async (req, res, next) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const restored = await transactionService.restoreTransaction(req.user!.id, id);
+    res.status(200).json({ transaction: restored });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/v1/transactions/:id/purge (DIFF-5)
+transactionRouter.delete('/:id/purge', async (req, res, next) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    await transactionService.purgeTransaction(req.user!.id, id);
+    res.status(200).json({ message: 'Transaction permanently deleted' });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // PATCH /api/v1/transactions/:id
 transactionRouter.patch(

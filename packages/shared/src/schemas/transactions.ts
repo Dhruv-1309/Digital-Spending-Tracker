@@ -68,8 +68,13 @@ export const ImportBatchSchema = z.object({
   rows: z.array(ImportRowSchema).min(1).max(1000, 'Batch size cannot exceed 1,000 rows'),
 });
 
+export const BatchUndoSchema = z.object({
+  transactionIds: z.array(z.string().uuid()).min(1).max(1000),
+});
+
 export type CreateTransactionInput = z.infer<typeof CreateTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof UpdateTransactionSchema>;
 export type TransactionQueryInput = z.infer<typeof TransactionQuerySchema>;
 export type ImportRowInput = z.infer<typeof ImportRowSchema>;
 export type ImportBatchInput = z.infer<typeof ImportBatchSchema>;
+export type BatchUndoInput = z.infer<typeof BatchUndoSchema>;

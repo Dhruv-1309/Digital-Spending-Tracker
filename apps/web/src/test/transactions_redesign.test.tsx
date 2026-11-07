@@ -552,6 +552,8 @@ describe('Phase 5: Transactions Redesign Screen', () => {
         expect(toastValue.showToast).toHaveBeenCalledWith(
           expect.stringMatching(/Imported 1 transactions.*1 duplicates skipped/),
           'success',
+          expect.any(Number),
+          expect.objectContaining({ label: 'Undo' }),
         );
       });
     });

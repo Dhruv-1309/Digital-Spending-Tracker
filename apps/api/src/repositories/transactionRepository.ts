@@ -122,6 +122,68 @@ export class TransactionRepository {
     });
   }
 
+  async listTrash(userId: string): Promise<Transaction[]> {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return prisma.transaction.findMany({
+      where: {
+        userId,
+        deletedAt: {
+          not: null,
+          gte: thirtyDaysAgo,
+        },
+      },
+      orderBy: { deletedAt: 'desc' },
+    });
+  }
+
+  async restoreTransaction(userId: string, id: string): Promise<Transaction> {
+    const existing = await prisma.transaction.findFirst({
+      where: { id, userId, deletedAt: { not: null } },
+    });
+    if (!existing) {
+      throw new AppError(404, 'TRANSACTION_NOT_FOUND', 'Transaction not found in Trash');
+    }
+
+    return prisma.transaction.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
+  }
+
+  async purgeTrash(userId: string): Promise<{ count: number }> {
+    return prisma.transaction.deleteMany({
+      where: {
+        userId,
+        deletedAt: { not: null },
+      },
+    });
+  }
+
+  async purgeTransaction(userId: string, id: string): Promise<void> {
+    const existing = await prisma.transaction.findFirst({
+      where: { id, userId, deletedAt: { not: null } },
+    });
+    if (!existing) {
+      throw new AppError(404, 'TRANSACTION_NOT_FOUND', 'Transaction not found in Trash');
+    }
+
+    await prisma.transaction.delete({
+      where: { id },
+    });
+  }
+
+  async batchUndo(userId: string, transactionIds: string[]): Promise<{ count: number }> {
+    const result = await prisma.transaction.updateMany({
+      where: {
+        userId,
+        id: { in: transactionIds },
+        deletedAt: null,
+      },
+      data: { deletedAt: new Date() },
+    });
+    return { count: result.count };
+  }
+
   async listTransactions(
     userId: string,
     filter: ListTransactionsFilter,

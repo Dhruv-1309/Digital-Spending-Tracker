@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{384.5}{499} = \mathbf{77.1\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{385.5}{499} = \mathbf{77.3\%}$$
 
-- **Current Readiness Score:** **77.1%** (Baseline: 56.8%)
+- **Current Readiness Score:** **77.3%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **384.5 points**
+- **Earned Weight:** **385.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **122** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **18** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **123** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **17** |
 | **MISSING** | Not implemented | **30** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -43,7 +43,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 11D / 2P / 6M (1 other) | **79.1%** | 34.0 / 43 |
-| **DIFF** | Differentiating Features | 9 | 4D / 2P / 3M  | **66.7%** | 10.0 / 15 |
+| **DIFF** | Differentiating Features | 9 | 5D / 1P / 3M  | **73.3%** | 11.0 / 15 |
 | **X** | Additional Operational Excellence | 4 | 2D / 1P / 0M (1 other) | **75.0%** | 7.5 / 10 |
 
 ---
@@ -316,7 +316,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **DIFF-2** | Bank statement import has column mapping with saved templates, a preview with duplicates and uncategorised rows, and merchant rules that learn from corrections | `DONE` | packages/shared/src/calculations/merchantRules.ts, packages/shared/test/merchantRules.test.ts, apps/web/src/lib/merchantRules.ts, apps/web/src/components/transactions/BankImportModal.tsx, apps/web/src/test/bank_import_modal.test.tsx, apps/web/src/components/transactions/TransactionsTab.tsx | Browser-side bank statement CSV import supporting HDFC, ICICI, SBI, and generic/custom formats; intelligent auto-detection; customizable column mapping saved to local templates; duplicate detection (date/amount/type/description) with visual indicators; merchant categorization engine with instant rule learning from user corrections; 100% offline. | None |
 | **DIFF-3** | Recurring charge detection suggests autopay plans and flags price changes and missed renewals | `DONE` | packages/shared/src/calculations/recurringDetector.ts, packages/shared/test/recurringDetector.test.ts, apps/web/src/lib/recurringDetector.ts, apps/web/src/components/autopay/RecurringSuggestionsCard.tsx, apps/web/src/components/autopay/AutopayTab.tsx, apps/web/src/test/recurring_suggestions_card.test.tsx | Client-side recurrence clustering engine analyzing transaction history; monthly interval verification; modal day of month calculation; one-click "Convert to Autopay" action; automated price increase detection on existing plans with quick update; missed renewal alerts when expected monthly charge has not arrived in >30 days; dismissible with localStorage persistence and undo toast. | None |
 | **DIFF-4** | Insights and month-end projection are shown with a Show calculation link for each statement | `DONE` | packages/shared/src/calculations/projections.ts, packages/shared/test/projections.test.ts, apps/web/src/components/analytics/CalculationBreakdownModal.tsx, apps/web/src/components/analytics/ExplainableInsightsCard.tsx, apps/web/src/test/explainable_insights.test.tsx, apps/web/src/components/analytics/AnalyticsTab.tsx | Exact decimal-safe month-end spend projection at current daily pace vs monthly budget limit; category 3-month rolling average variance detection (above/below/similar); plain-language explanation with interactive 'Show calculation' modal displaying formula equations, inputs, and step-by-step arithmetic. | None |
-| **DIFF-5** | Trash with 30-day restore and an activity history with undo of a whole import batch | `PARTIAL` | Backend schema has deletedAt column on transactions (apps/api/prisma/schema.prisma:93) | No Trash UI, no restore action, no activity audit log, and no import batch undo. |
+| **DIFF-5** | Trash with 30-day restore and an activity history with undo of a whole import batch | `DONE` | apps/api/src/repositories/transactionRepository.ts, apps/api/src/routes/transactionRoutes.ts, apps/api/test/trash_and_batch_undo.test.ts, packages/shared/src/calculations/trash.ts, packages/shared/test/trash.test.ts, apps/web/src/components/transactions/TrashModal.tsx, apps/web/src/components/transactions/ActivityHistoryModal.tsx, apps/web/src/lib/activityHistory.ts, apps/web/src/test/trash_and_activity_history.test.tsx | Soft-deletion with 30-day retention window; Trash Bin modal with days-left countdown, single-click restoration, permanent purge, and empty trash actions; activity audit log of recent edits, deletions, and imports; 1-click batch undo for CSV and bank statement imports. | None |
 | **DIFF-6** | Passphrase-encrypted backup and restore using Web Crypto | `PARTIAL` | Plain JSON backup export exists (packages/shared/src/calculations/transactions.ts:215-238) | Web Crypto PBKDF2/AES-GCM passphrase encryption and decrypt-restore are not implemented. |
 | **DIFF-7** | Per-category budgets with threshold warnings | `MISSING` | None | Category-level budget limits not implemented (only global monthly budget). |
 | **DIFF-8** | Savings goals with progress and required monthly saving | `MISSING` | None | Savings goals entity and UI not implemented. |
