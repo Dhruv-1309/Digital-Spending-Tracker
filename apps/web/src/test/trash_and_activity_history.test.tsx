@@ -145,9 +145,12 @@ describe('Trash Bin with 30-Day Retention & Restore (DIFF-5)', () => {
     fireEvent.click(emptyBtn);
 
     expect(showConfirm).toHaveBeenCalledWith(
-      'Empty Trash Bin?',
-      expect.stringContaining('permanently delete all 1 items'),
-      expect.any(Object),
+      expect.stringContaining('permanently delete all 1 items in the trash'),
+      expect.objectContaining({
+        title: 'Empty Trash Bin?',
+        confirmText: 'Empty Trash',
+        variant: 'danger',
+      }),
     );
 
     await waitFor(() => {
@@ -178,9 +181,12 @@ describe('Trash Bin with 30-Day Retention & Restore (DIFF-5)', () => {
     fireEvent.click(deleteBtn);
 
     expect(showConfirm).toHaveBeenCalledWith(
-      'Delete Permanently?',
       expect.stringContaining('permanently delete this Groceries transaction'),
-      expect.any(Object),
+      expect.objectContaining({
+        title: 'Delete Permanently?',
+        confirmText: 'Delete Permanently',
+        variant: 'danger',
+      }),
     );
 
     await waitFor(() => {
@@ -276,9 +282,12 @@ describe('Activity History with Whole Batch Import Undo (DIFF-5)', () => {
     fireEvent.click(undoBtn);
 
     expect(showConfirm).toHaveBeenCalledWith(
-      'Undo Import Batch?',
       expect.stringContaining('3 transactions will be moved to the Trash bin'),
-      expect.any(Object),
+      expect.objectContaining({
+        title: 'Undo Import Batch?',
+        confirmText: 'Undo Import',
+        variant: 'danger',
+      }),
     );
 
     await waitFor(() => {

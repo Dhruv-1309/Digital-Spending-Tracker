@@ -16,6 +16,7 @@ import { TransactionSlideOver } from './TransactionSlideOver';
 import { BankImportModal } from './BankImportModal';
 import { TrashModal } from './TrashModal';
 import { ActivityHistoryModal } from './ActivityHistoryModal';
+import { EncryptedBackupModal } from './EncryptedBackupModal';
 import { clearActivityHistory } from '../../lib/activityHistory';
 import {
   filterTransactions,
@@ -53,6 +54,7 @@ import {
   FilmIcon,
   TagIcon,
   ClockIcon,
+  LockIcon,
 } from '../icons';
 import { EASING } from '../../ui/motion';
 import type { Transaction, TransactionSortOption } from '../../types';
@@ -134,6 +136,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
   const [isBankImportOpen, setIsBankImportOpen] = useState(false);
   const [isTrashOpen, setIsTrashOpen] = useState(false);
   const [isActivityHistoryOpen, setIsActivityHistoryOpen] = useState(false);
+  const [isEncryptedBackupOpen, setIsEncryptedBackupOpen] = useState(false);
 
   // Close more menu on click outside or Escape
   useEffect(() => {
@@ -646,6 +649,20 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                   >
                     <UploadIcon size={16} className="text-ink-2" />
                     <span>Import JSON Backup</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    id="encryptedBackupBtn"
+                    onClick={() => {
+                      setIsEncryptedBackupOpen(true);
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <LockIcon size={16} className="text-teal-600 dark:text-teal-400" />
+                    <span>Encrypted Backup & Restore</span>
                   </button>
 
                   <button
@@ -1261,6 +1278,16 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
         onClearHistory={() => {
           clearActivityHistory();
         }}
+      />
+
+      {/* Passphrase-Encrypted Backup and Restore Modal (DIFF-6) */}
+      <EncryptedBackupModal
+        isOpen={isEncryptedBackupOpen}
+        onClose={() => setIsEncryptedBackupOpen(false)}
+        transactions={transactions}
+        autopays={autopays}
+        budgetGoal={budgetGoal}
+        onRestoreTransactions={importTransactions}
       />
     </div>
   );

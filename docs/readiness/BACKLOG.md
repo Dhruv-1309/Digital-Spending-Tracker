@@ -936,18 +936,26 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 4 API integration tests in `apps/api/test/trash_and_batch_undo.test.ts` testing soft deletion, trash listing, restoration to active, permanent purge, and batch undo.
   - 9 frontend component tests in `apps/web/src/test/trash_and_activity_history.test.tsx` testing TrashModal, ActivityHistoryModal, and TransactionsTab integration.
 
-### 6. [DIFF-6] Passphrase-encrypted backup and restore using browser Web Crypto API
+### 6. [DIFF-6] Passphrase-encrypted backup and restore using browser Web Crypto API [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** `CORE-13`
-- **Files Likely Touched:**
+- **Files Touched:**
   - `packages/shared/src/crypto/encryptedBackup.ts`
+  - `packages/shared/src/crypto/index.ts`
+  - `packages/shared/src/index.ts`
+  - `packages/shared/test/encryptedBackup.test.ts`
   - `apps/web/src/components/transactions/EncryptedBackupModal.tsx`
+  - `apps/web/src/components/transactions/TransactionsTab.tsx`
+  - `apps/web/src/test/encrypted_backup_modal.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Exports full backup JSON encrypted with AES-GCM (PBKDF2 key derivation with 100,000 iterations and salt)
-  - [ ] Restores encrypted backup by prompting for passphrase directly in browser
-  - [ ] User holds encryption key; zero server knowledge fits privacy-first principle
-- **How It Will Be Tested:** Unit test verifying round-trip encryption, decryption, and wrong-password rejection.
+  - [x] Exports full backup JSON encrypted with AES-GCM (PBKDF2 key derivation with 100,000 iterations and 16-byte random salt, 12-byte random IV)
+  - [x] Restores encrypted backup by prompting for passphrase directly in browser, with Web Crypto auth tag validation
+  - [x] User holds encryption key; zero server knowledge fits privacy-first principle
+  - [x] Merges valid transactions and skips duplicates; provides clear feedback on password mismatch or bit flips
+- **How It Was Tested:**
+  - 10 unit tests in `packages/shared/test/encryptedBackup.test.ts` validating key derivation, encryption envelope format, tamper detection, wrong passphrase rejection, and round-trip payload integrity.
+  - 7 component tests in `apps/web/src/test/encrypted_backup_modal.test.tsx` verifying tab switching, passphrase matching indicator, encrypted export download, restore with duplicate skipping, and wrong password error toast.
 
 ### 7. [CORE-17] Deterministic sorting with stable ID tie-breakers in database queries and UI [DONE]
 
