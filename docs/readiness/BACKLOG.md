@@ -412,7 +412,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Exporting then importing gives identical transaction counts, dates, and amounts
 - **How It Will Be Tested:** Unit test exporting sample dataset to JSON and restoring it, verifying 100% record equality.
 
-### 9. [CORE-14] 10,000 transaction performance benchmark and responsiveness test
+### 9. [CORE-14] 10,000 transaction performance benchmark and responsiveness test `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `CORE-2`
