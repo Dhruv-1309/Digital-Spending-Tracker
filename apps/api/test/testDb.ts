@@ -127,6 +127,32 @@ export function setupInMemoryPrisma() {
     return txn;
   });
 
+  vi.spyOn(prisma.transaction, 'createMany').mockImplementation(async (args: any) => {
+    const list = Array.isArray(args.data) ? args.data : [args.data];
+    const records = list.map((d: any) => ({
+      id: d.id || randomUUID(),
+      userId: d.userId,
+      type: d.type,
+      amountPaise: typeof d.amountPaise === 'bigint' ? d.amountPaise : BigInt(d.amountPaise),
+      currency: d.currency || 'INR',
+      category: d.category,
+      paymentMethod: d.paymentMethod,
+      description: d.description ?? null,
+      txnDate: d.txnDate instanceof Date ? d.txnDate : new Date(d.txnDate),
+      anomaly: d.anomaly || 'none',
+      anomalyZ: d.anomalyZ ?? null,
+      autopayId: d.autopayId ?? null,
+      autopayPeriod: d.autopayPeriod ?? null,
+      importHash: d.importHash ?? null,
+      legacyId: d.legacyId ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    }));
+    inMemoryDb.transactions.push(...records);
+    return { count: records.length };
+  });
+
   vi.spyOn(prisma.transaction, 'findFirst').mockImplementation(async (args: any) => {
     return (
       inMemoryDb.transactions.find((t) => {
@@ -236,17 +262,17 @@ export function setupInMemoryPrisma() {
   vi.spyOn(prisma.transaction, 'deleteMany').mockImplementation(async (args: any) => {
     const beforeCount = inMemoryDb.transactions.length;
     inMemoryDb.transactions = inMemoryDb.transactions.filter((t) => {
-      if (args.where?.userId && t.userId !== args.where.userId) return true;
-      if (args.where?.deletedAt?.lt && t.deletedAt && t.deletedAt < args.where.deletedAt.lt) {
-        return false;
+      if (args?.where?.userId && t.userId !== args.where.userId) return true;
+      if (args?.where?.deletedAt?.lt) {
+        return !(t.deletedAt && t.deletedAt < args.where.deletedAt.lt);
       }
-      if (args.where?.deletedAt?.not === null && t.deletedAt !== null) {
-        return false;
+      if (args?.where?.deletedAt?.not === null) {
+        return t.deletedAt === null;
       }
-      if (args.where?.id?.in && args.where.id.in.includes(t.id)) {
-        return false;
+      if (args?.where?.id?.in) {
+        return !args.where.id.in.includes(t.id);
       }
-      return true;
+      return false;
     });
     return { count: beforeCount - inMemoryDb.transactions.length };
   });
@@ -309,11 +335,32 @@ export function setupInMemoryPrisma() {
     return category;
   });
 
+  vi.spyOn(prisma.category, 'createMany').mockImplementation(async (args: any) => {
+    const list = Array.isArray(args.data) ? args.data : [args.data];
+    const records = list.map((d: any) => ({
+      id: d.id || randomUUID(),
+      userId: d.userId,
+      type: d.type,
+      name: d.name,
+    }));
+    inMemoryDb.categories.push(...records);
+    return { count: records.length };
+  });
+
   vi.spyOn(prisma.category, 'delete').mockImplementation(async (args: any) => {
     const idx = inMemoryDb.categories.findIndex((c) => c.id === args.where.id);
     if (idx === -1) throw new Error('Category not found');
     const [deleted] = inMemoryDb.categories.splice(idx, 1);
     return deleted;
+  });
+
+  vi.spyOn(prisma.category, 'deleteMany').mockImplementation(async (args: any) => {
+    const beforeCount = inMemoryDb.categories.length;
+    inMemoryDb.categories = inMemoryDb.categories.filter((c) => {
+      if (args?.where?.userId && c.userId !== args.where.userId) return true;
+      return false;
+    });
+    return { count: beforeCount - inMemoryDb.categories.length };
   });
 
   vi.spyOn(prisma.category, 'upsert').mockImplementation(async (args: any) => {
@@ -440,6 +487,9 @@ export function setupInMemoryPrisma() {
   vi.spyOn(prisma.autopayPlan, 'deleteMany').mockImplementation(async (args: any) => {
     const beforeCount = inMemoryDb.autopayPlans.length;
     inMemoryDb.autopayPlans = inMemoryDb.autopayPlans.filter((p) => {
+      if (args.where?.userId && p.userId === args.where.userId) {
+        return false;
+      }
       if (args.where?.deletedAt?.lt && p.deletedAt && p.deletedAt < args.where.deletedAt.lt) {
         return false;
       }

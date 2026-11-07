@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{389.5}{499} = \mathbf{78.1\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{391.5}{499} = \mathbf{78.5\%}$$
 
-- **Current Readiness Score:** **78.1%** (Baseline: 56.8%)
+- **Current Readiness Score:** **78.5%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **389.5 points**
+- **Earned Weight:** **391.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **127** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **128** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **13** |
-| **MISSING** | Not implemented | **30** |
+| **MISSING** | Not implemented | **29** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -36,7 +36,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CORE** | Core Behavior and Data Correctness | 22 | 22D / 0P / 0M | **100.0%** | 66.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
-| **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
+| **BE** | Backend, API and Database | 21 | 20D / 0P / 1M  | **98.5%** | 65.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 8D / 1P / 3M (3 other) | **58.8%** | 20.0 / 34 |
@@ -155,7 +155,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **BE-17** | Audit fields (created, updated) use the server clock in UTC, never the client's | `DONE` | apps/api/prisma/schema.prisma:40,71,91 (@default(now()) and @updatedAt with Timestamptz) | - |
 | **BE-18** | Soft-delete and retention rules are defined, with a purge job | `DONE` | apps/api/prisma/schema.prisma:73,93, apps/api/src/jobs/scheduler.ts:35-54 (tombstone-purge deletes >90 days) | - |
 | **BE-19** | Graceful shutdown finishes in-flight requests before exiting | `DONE` | apps/api/src/server.ts:25-45 (SIGTERM/SIGINT server.close, boss.stop, prisma.$disconnect) | - |
-| **BE-20** | A seed script creates realistic sample data for development and demos | `MISSING` | No prisma/seed.ts exists | Prisma seed script is missing from apps/api. |
+| **BE-20** | A seed script creates realistic sample data for development and demos | `DONE` | apps/api/prisma/seed.ts:1-350, apps/api/package.json:14, apps/api/test/seed.test.ts:1-60 | Seeds demo user with 3 full months of realistic personal finance transactions (paise amounts), autopay plans, budget goals, and custom categories; verified via automated test suite and CLI execution. |
 | **BE-21** | A policy for backward-compatible API changes is written down | `MISSING` | None | No backward-compatible API change policy document exists. |
 
 ### SEC: Security and Privacy

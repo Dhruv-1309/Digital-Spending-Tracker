@@ -1075,17 +1075,22 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 4 automated unit and integration tests in `apps/api/test/shutdown.test.ts` verifying orderly connection draining, background worker shutdown, Prisma pool disconnection, signal deduplication, error resilience, and hard timeout fallback.
 
-### 13. [BE-20] Prisma seed script with realistic sample personal finance data for dev & demo
+### 13. [BE-20] Prisma seed script with realistic sample personal finance data for dev & demo [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `BE`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/api/prisma/seed.ts`
   - `apps/api/package.json`
+  - `apps/api/test/testDb.ts`
+  - `apps/api/test/seed.test.ts`
+  - `docs/readiness/AUDIT.md`
 - **Acceptance Criteria:**
-  - [ ] npm run prisma:seed populates database with realistic 3-month personal finance records, autopays, and budget goals
-  - [ ] Provides immediate rich state for testing, staging, and demo environments
-- **How It Will Be Tested:** Run `npx prisma db seed` and verify database row counts.
+  - [x] `npm run prisma:seed` / `npx prisma db seed` populates database with realistic 3-month personal finance records, autopays, and budget goals
+  - [x] Provides immediate rich state for testing, staging, and demo environments with exact integer paise amounts
+  - [x] Fully idempotent across repeated executions without data duplication
+- **How It Was Tested:**
+  - Automated unit and integration tests in `apps/api/test/seed.test.ts` verifying demo user creation, 14 categories (expense + income), 5 autopay plans, budget goal (₹65,000 / month @ 80%), 46+ transactions across 3 months with linked autopays and anomaly detection, and idempotency.
 
 ### 14. [SEC-19] Cloudflare Turnstile bot protection on sign-up form
 
