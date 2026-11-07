@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTracker } from '../../hooks/useTracker';
 import { ToastContainer } from '../common/ToastContainer';
@@ -7,11 +7,34 @@ import { AuthModal } from '../auth/AuthModal';
 import { AppShell } from './AppShell';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { DashboardTab } from '../dashboard/DashboardTab';
-import { AddTransactionTab } from '../transactions/AddTransactionTab';
-import { TransactionsTab } from '../transactions/TransactionsTab';
-import { AutopayTab } from '../autopay/AutopayTab';
-import { AnalyticsTab } from '../analytics/AnalyticsTab';
 import { ProfileModal } from '../profile/ProfileModal';
+
+// Route-level lazy loading for secondary tabs (PERF-2)
+const AddTransactionTab = lazy(() =>
+  import('../transactions/AddTransactionTab').then((m) => ({ default: m.AddTransactionTab }))
+);
+const TransactionsTab = lazy(() =>
+  import('../transactions/TransactionsTab').then((m) => ({ default: m.TransactionsTab }))
+);
+const AutopayTab = lazy(() =>
+  import('../autopay/AutopayTab').then((m) => ({ default: m.AutopayTab }))
+);
+const AnalyticsTab = lazy(() =>
+  import('../analytics/AnalyticsTab').then((m) => ({ default: m.AnalyticsTab }))
+);
+
+function TabLoadingFallback() {
+  return (
+    <div
+      className="w-full py-16 flex flex-col items-center justify-center gap-3 animate-pulse"
+      role="status"
+      aria-label="Loading view"
+    >
+      <div className="w-8 h-8 rounded-full border-2 border-line-strong border-t-accent animate-spin" />
+      <span className="text-xs text-ink-3">Loading view...</span>
+    </div>
+  );
+}
 
 /**
  * AppLayout (Phase 3 App Shell)
@@ -37,10 +60,12 @@ export function AppLayout() {
             <div id="appContainer" className="w-full">
               <ErrorBoundary>
                 {currentTab === 'dashboard' && <DashboardTab />}
-                {currentTab === 'add-transaction' && <AddTransactionTab />}
-                {currentTab === 'transactions' && <TransactionsTab />}
-                {currentTab === 'autopay' && <AutopayTab />}
-                {currentTab === 'analytics' && <AnalyticsTab />}
+                <Suspense fallback={<TabLoadingFallback />}>
+                  {currentTab === 'add-transaction' && <AddTransactionTab />}
+                  {currentTab === 'transactions' && <TransactionsTab />}
+                  {currentTab === 'autopay' && <AutopayTab />}
+                  {currentTab === 'analytics' && <AnalyticsTab />}
+                </Suspense>
               </ErrorBoundary>
             </div>
           </AppShell>

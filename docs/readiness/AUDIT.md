@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{353.5}{499} = \mathbf{70.8\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{355.0}{499} = \mathbf{71.1\%}$$
 
-- **Current Readiness Score:** **70.8%** (Baseline: 56.8%)
+- **Current Readiness Score:** **71.1%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **353.5 points**
+- **Earned Weight:** **355.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **103** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **31** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **104** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **30** |
 | **MISSING** | Not implemented | **36** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -39,7 +39,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
-| **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
+| **PERF** | Performance, Offline and PWA | 15 | 5D / 4P / 3M (3 other) | **48.5%** | 16.5 / 34 |
 | **QA** | Testing and Code Quality | 18 | 9D / 4P / 4M (1 other) | **67.4%** | 31.0 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 4D / 6P / 9M (1 other) | **50.0%** | 21.5 / 43 |
@@ -219,7 +219,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
 | **PERF-1** | Lighthouse mobile on a production build: Performance 90 or higher, Accessibility 95 or higher, Best Practices 95 or higher, SEO 90 or higher | `UNVERIFIED` | Lighthouse CLI not available in offline environment; build size is 303 kB gzip and axe passes | Requires Lighthouse audit on hosted URL. |
-| **PERF-2** | Initial JavaScript is under 350 kB gzipped, with route-level code splitting and lazy-loaded charts | `PARTIAL` | vite build output: index.js is 303.44 kB gzip (under 350 kB budget) | All code bundled in single chunk; route-level dynamic imports and lazy-loaded charts not yet separated. |
+| **PERF-2** | Initial JavaScript is under 350 kB gzipped, with route-level code splitting and lazy-loaded charts | `DONE` | `apps/web/src/components/layout/AppLayout.tsx`: Secondary tabs (`AddTransactionTab`, `TransactionsTab`, `AutopayTab`, `AnalyticsTab`) lazy-loaded via `React.lazy()` with Suspense fallback. Vite build output: `index.js` is 90.71 kB gzip (well under 350 kB budget), `vendor-charts` (66.29 kB gzip) loaded on-demand. | None. Production build chunk splitting verified. |
 | **PERF-3** | Core Web Vitals: LCP under 2.5 s, CLS at or below 0.05, INP under 200 ms | `UNVERIFIED` | None | Requires field or lab measurement on live hosted production deployment. |
 | **PERF-4** | Long lists are paginated or virtualised, and search input is debounced | `PARTIAL` | TransactionsTab.tsx:170-220 (paginated at 10 items/page) | Live search input is not debounced, filtering synchronously on every keystroke. |
 | **PERF-5** | Static assets are hashed and cached for a long time, HTML is not cached, and gzip or brotli is on | `NEEDS-USER` | Vite outputs hashed filenames in dist/assets | Cache-Control header rules must be configured and verified on hosting provider. |

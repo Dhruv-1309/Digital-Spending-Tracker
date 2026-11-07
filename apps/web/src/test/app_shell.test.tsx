@@ -525,10 +525,10 @@ describe('Phase 3: AppShell & Navigation', () => {
     ];
 
     screens.forEach(({ tab, expectedHeading }) => {
-      it(`renders tab "${tab}" inside the shell`, () => {
+      it(`renders tab "${tab}" inside the shell`, async () => {
         renderWithProviders(<AppLayout />, mockUser, { currentTab: tab });
-        expect(screen.getAllByText(expectedHeading).length).toBeGreaterThan(0);
-      });
+        expect((await screen.findAllByText(expectedHeading, undefined, { timeout: 10000 })).length).toBeGreaterThan(0);
+      }, 15000);
     });
   });
 

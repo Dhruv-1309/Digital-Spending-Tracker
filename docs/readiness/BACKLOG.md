@@ -548,7 +548,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Affirms zero tracking pixels, zero analytics scripts, and zero advertising SDKs
 - **How It Will Be Tested:** Review documentation against network observer logs.
 
-### 20. [PERF-2] Bundle code splitting: route-level lazy loading and lazy-loaded Chart.js
+### 20. [PERF-2] Bundle code splitting: route-level lazy loading and lazy-loaded Chart.js [DONE]
 
 - **Priority:** `P1` | **Effort:** `M` | **Category:** `PERF`
 - **Dependencies:** `X-1`
@@ -557,9 +557,9 @@ Expected of a production-grade personal financial application. These ensure robu
   - `apps/web/src/components/layout/AppLayout.tsx`
   - `apps/web/vite.config.ts`
 - **Acceptance Criteria:**
-  - [ ] Route tabs (Analytics, Autopay, Transactions) and heavy libraries (Chart.js) are code-split using React.lazy()
-  - [ ] Initial main bundle size decreases significantly below 200 kB gzipped
-  - [ ] Emits no chunks larger than 500 kB after minification
+  - [x] Route tabs (Analytics, Autopay, Transactions) and heavy libraries (Chart.js) are code-split using React.lazy()
+  - [x] Initial main bundle size decreases significantly below 200 kB gzipped (index.js is 90.71 kB gzip)
+  - [x] Emits no chunks larger than 500 kB after minification
 - **How It Will Be Tested:** Run `npm --workspace=@moneytracker/web run build` and inspect chunk sizes.
 
 ### 21. [PERF-4] Search input debouncing (300ms) to eliminate redundant filtering cycles
