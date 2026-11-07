@@ -1,4 +1,5 @@
 import { useTracker } from '../../hooks/useTracker';
+import { prefetchTab } from '../../lib/prefetch';
 import { MAIN_NAV_ITEMS } from './navItems';
 
 export interface NavigationTabsProps {
@@ -31,6 +32,8 @@ export function NavigationTabs({ className = '' }: NavigationTabsProps) {
             data-tab={item.id}
             aria-current={isActive ? 'page' : undefined}
             onClick={() => setCurrentTab(item.id)}
+            onMouseEnter={() => prefetchTab(item.id)}
+            onFocus={() => prefetchTab(item.id)}
             className={`nav-tab flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] py-1 text-xs font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               isActive
                 ? 'active text-accent font-semibold'

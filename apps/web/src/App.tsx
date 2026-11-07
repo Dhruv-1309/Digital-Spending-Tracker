@@ -9,6 +9,8 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NotFoundPage } from './components/common/NotFoundPage';
 import { TermsPage } from './components/legal/TermsPage';
 import { PrivacyPage } from './components/legal/PrivacyPage';
+import { AboutPage } from './components/legal/AboutPage';
+import { AccessibilityPage } from './components/legal/AccessibilityPage';
 import { HelpPage } from './components/help/HelpPage';
 import { LandingPage } from './components/landing/LandingPage';
 import { type AppRoute, resolveAppRoute, navigateTo } from './lib/routes';
@@ -62,6 +64,12 @@ export function App() {
       case 'privacy':
         document.title = 'Privacy Policy — MoneyTracker';
         break;
+      case 'about':
+        document.title = 'About — MoneyTracker';
+        break;
+      case 'accessibility':
+        document.title = 'Accessibility Statement — MoneyTracker';
+        break;
       case 'help':
         document.title = 'Help & Support — MoneyTracker';
         break;
@@ -112,6 +120,22 @@ export function App() {
     return (
       <LazyMotion features={domAnimation} strict>
         <PrivacyPage onBack={handleBackToApp} />
+      </LazyMotion>
+    );
+  }
+
+  if (route === 'about') {
+    return (
+      <LazyMotion features={domAnimation} strict>
+        <AboutPage onBack={handleBackToApp} />
+      </LazyMotion>
+    );
+  }
+
+  if (route === 'accessibility') {
+    return (
+      <LazyMotion features={domAnimation} strict>
+        <AccessibilityPage onBack={handleBackToApp} />
       </LazyMotion>
     );
   }

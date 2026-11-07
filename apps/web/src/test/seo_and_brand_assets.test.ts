@@ -44,3 +44,14 @@ describe('Touch Icons, Theme Color, and PWA Headers (WEB-11)', () => {
     expect(indexHtml).toContain('<meta name="apple-mobile-web-app-title" content="MoneyTracker" />');
   });
 });
+
+describe('Structured Data Schema.org JSON-LD (WEB-19)', () => {
+  it('embeds valid SoftwareApplication JSON-LD snippet', () => {
+    expect(indexHtml).toContain('<script type="application/ld+json">');
+    expect(indexHtml).toContain('"@type": "SoftwareApplication"');
+    expect(indexHtml).toContain('"applicationCategory": "FinanceApplication"');
+    expect(indexHtml).toContain('"name": "MoneyTracker"');
+    expect(indexHtml).toContain('"price": "0"');
+    expect(indexHtml).toContain('"priceCurrency": "INR"');
+  });
+});

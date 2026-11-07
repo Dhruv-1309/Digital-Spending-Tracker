@@ -9,7 +9,9 @@ import { navigateTo } from '../../lib/routes';
 import { Button } from '../ui/Button';
 import { NavigationTabs } from './NavigationTabs';
 import { FeedbackModal } from '../common/FeedbackModal';
+import { ShortcutsModal } from './ShortcutsModal';
 import { MAIN_NAV_ITEMS } from './navItems';
+import { prefetchTab } from '../../lib/prefetch';
 import {
   WalletIcon,
   PlusIcon,
@@ -22,6 +24,7 @@ import {
   SettingsIcon,
   AlertCircleIcon,
   SparklesIcon,
+  HelpCircleIcon,
 } from '../icons';
 
 export interface AppShellProps {
@@ -71,6 +74,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
   const [isResending, setIsResending] = useState(false);
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   const handleResendVerification = async () => {
     try {
@@ -172,6 +176,48 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isMobileDrawerOpen) {
         setIsMobileDrawerOpen(false);
+        return;
+      }
+
+      // Shortcuts modal: '?' or Shift+'/' (UX-22)
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (
+          activeEl &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.tagName === 'SELECT' ||
+            activeEl.isContentEditable)
+        ) {
+          return;
+        }
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+        return;
+      }
+
+      // Quick tab switching: 1 (Dashboard), 2 (Transactions), 3 (Autopay), 4 (Analytics)
+      if (['1', '2', '3', '4'].includes(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (
+          activeEl &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.tagName === 'SELECT' ||
+            activeEl.isContentEditable)
+        ) {
+          return;
+        }
+        if (document.querySelector('dialog[open], [role="dialog"]')) return;
+
+        e.preventDefault();
+        const tabMap: Record<string, NavTab> = {
+          '1': 'dashboard',
+          '2': 'transactions',
+          '3': 'autopay',
+          '4': 'analytics',
+        };
+        setCurrentTab(tabMap[e.key]);
         return;
       }
 
@@ -360,6 +406,8 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                       data-tab={item.id}
                       aria-current={isActive ? 'page' : undefined}
                       onClick={() => setCurrentTab(item.id)}
+                      onMouseEnter={() => prefetchTab(item.id)}
+                      onFocus={() => prefetchTab(item.id)}
                       aria-label={item.label}
                       className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                         isActive
@@ -400,6 +448,8 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                     data-tab={item.id}
                     aria-current={isActive ? 'page' : undefined}
                     onClick={() => setCurrentTab(item.id)}
+                    onMouseEnter={() => prefetchTab(item.id)}
+                    onFocus={() => prefetchTab(item.id)}
                     className={`group relative flex h-10 w-full items-center gap-3.5 rounded-full px-3.5 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       isActive
                         ? 'bg-accent-tint text-accent font-semibold'
@@ -445,6 +495,21 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               </button>
               <span className="absolute left-full ml-3 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                 Profile ({displayName})
+              </span>
+            </div>
+
+            <div className="relative group flex justify-center">
+              <button
+                id="shortcutsBtn"
+                type="button"
+                onClick={() => setIsShortcutsOpen(true)}
+                aria-label="Keyboard shortcuts"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <HelpCircleIcon size={18} />
+              </button>
+              <span className="absolute left-full ml-3 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-2 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                Shortcuts (?)
               </span>
             </div>
 
@@ -530,6 +595,15 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                 className="hover:text-ink hover:underline transition-colors"
               >
                 Feedback
+              </button>
+              <span>•</span>
+              <button
+                id="shortcutsBtn"
+                type="button"
+                onClick={() => setIsShortcutsOpen(true)}
+                className="hover:text-ink hover:underline transition-colors"
+              >
+                Shortcuts
               </button>
             </div>
           </div>
@@ -753,6 +827,18 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                 >
                   Feedback
                 </button>
+                <span>•</span>
+                <button
+                  id="mobileShortcutsBtn"
+                  type="button"
+                  onClick={() => {
+                    setIsShortcutsOpen(true);
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className="hover:text-ink hover:underline"
+                >
+                  Shortcuts
+                </button>
               </div>
             </div>
           </div>
@@ -895,6 +981,12 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
       <FeedbackModal
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}
+      />
+
+      {/* Keyboard Shortcuts Dialog (UX-22) */}
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
     </div>
   );

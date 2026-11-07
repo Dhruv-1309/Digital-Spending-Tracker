@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 Allow: /landing
+Allow: /about
+Allow: /accessibility
 Allow: /terms
 Allow: /privacy
 Allow: /api/docs

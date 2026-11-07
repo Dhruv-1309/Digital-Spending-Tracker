@@ -95,13 +95,21 @@ export function LegalLayout({
       <footer className="w-full border-t border-line py-6 bg-surface mt-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-3">
           <span>© {new Date().getFullYear()} MoneyTracker. Built for personal use.</span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="/about"
+              onClick={handleNav('/about')}
+              className="hover:text-ink hover:underline transition-colors"
+            >
+              About
+            </a>
+            <span>•</span>
             <a
               href="/terms"
               onClick={handleNav('/terms')}
               className="hover:text-ink hover:underline transition-colors"
             >
-              Terms and Conditions
+              Terms
             </a>
             <span>•</span>
             <a
@@ -109,7 +117,15 @@ export function LegalLayout({
               onClick={handleNav('/privacy')}
               className="hover:text-ink hover:underline transition-colors"
             >
-              Privacy Policy
+              Privacy
+            </a>
+            <span>•</span>
+            <a
+              href="/accessibility"
+              onClick={handleNav('/accessibility')}
+              className="hover:text-ink hover:underline transition-colors"
+            >
+              Accessibility
             </a>
           </div>
         </div>

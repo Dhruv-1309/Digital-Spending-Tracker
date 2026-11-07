@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TermsPage } from '../components/legal/TermsPage';
 import { PrivacyPage } from '../components/legal/PrivacyPage';
+import { AboutPage } from '../components/legal/AboutPage';
+import { AccessibilityPage } from '../components/legal/AccessibilityPage';
 import { LandingPage } from '../components/landing/LandingPage';
 import { AuthModal } from '../components/auth/AuthModal';
 import { AuthContext } from '../context/authContextDef';
@@ -52,6 +54,27 @@ describe('Legal & Signup Protection Specifications', () => {
       expect(screen.getByText(/Privacy First — No Trackers, No Data Selling/i)).toBeInTheDocument();
       expect(screen.getByText(/Information We Collect/i)).toBeInTheDocument();
       expect(screen.getByText(/Data Retention & Permanent Deletion/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('AboutPage (/about, WEB-16)', () => {
+    it('renders project mission, privacy architecture, open tech stack, and licensing', () => {
+      render(<AboutPage />);
+      expect(screen.getByRole('heading', { level: 1, name: /About MoneyTracker/i })).toBeInTheDocument();
+      expect(screen.getByText(/Zero Credential Access/i)).toBeInTheDocument();
+      expect(screen.getByText(/Integer-Paise Precision/i)).toBeInTheDocument();
+      expect(screen.getByText(/Open Technology Stack/i)).toBeInTheDocument();
+      expect(screen.getByText(/MIT License/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('AccessibilityPage (/accessibility, WEB-20)', () => {
+    it('renders formal WCAG 2.1 Level AA accessibility commitment and feedback contacts', () => {
+      render(<AccessibilityPage />);
+      expect(screen.getByRole('heading', { level: 1, name: /Accessibility Statement/i })).toBeInTheDocument();
+      expect(screen.getByText(/Web Content Accessibility Guidelines \(WCAG\) 2.1 Level AA/i)).toBeInTheDocument();
+      expect(screen.getByText(/Full Keyboard Navigability/i)).toBeInTheDocument();
+      expect(screen.getByText(/accessibility@moneytracker.app/i)).toBeInTheDocument();
     });
   });
 
@@ -158,6 +181,20 @@ describe('Legal & Signup Protection Specifications', () => {
       window.location.hash = '#privacy';
       render(<App />);
       expect(screen.getByRole('heading', { level: 1, name: /Privacy Policy/i })).toBeInTheDocument();
+      window.location.hash = '';
+    });
+
+    it('renders AboutPage when location hash is #about', () => {
+      window.location.hash = '#about';
+      render(<App />);
+      expect(screen.getByRole('heading', { level: 1, name: /About MoneyTracker/i })).toBeInTheDocument();
+      window.location.hash = '';
+    });
+
+    it('renders AccessibilityPage when location hash is #accessibility', () => {
+      window.location.hash = '#accessibility';
+      render(<App />);
+      expect(screen.getByRole('heading', { level: 1, name: /Accessibility Statement/i })).toBeInTheDocument();
       window.location.hash = '';
     });
   });

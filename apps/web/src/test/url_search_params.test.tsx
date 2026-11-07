@@ -12,10 +12,12 @@ import type { Transaction } from '../types';
 
 describe('URL Search Params, Deep-Linking & History Navigation (UX-12)', () => {
   beforeEach(() => {
+    localStorage.clear();
     window.history.replaceState({}, '', '/');
   });
 
   afterEach(() => {
+    localStorage.clear();
     window.history.replaceState({}, '', '/');
     vi.restoreAllMocks();
   });

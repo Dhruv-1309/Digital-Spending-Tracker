@@ -1,0 +1,87 @@
+/**
+ * Print Stylesheet for MoneyTracker Reports & Summaries (UX-24)
+ * Optimizes printed output and PDF generation by stripping navigation chrome,
+ * sidebar rails, action buttons, and modal dialogs while styling high-contrast
+ * financial tables and summaries.
+ */
+
+@media print {
+  /* Hide non-printable navigation, sidebars, interactive controls, and modals */
+  nav,
+  aside,
+  header,
+  footer,
+  button,
+  .no-print,
+  [role="dialog"],
+  [role="navigation"],
+  .row-action-btn,
+  .sticky,
+  input,
+  select,
+  [data-testid="desktop-rail"],
+  [data-testid="bottom-nav"],
+  [data-testid="demo-banner"],
+  [aria-live="polite"] {
+    display: none !important;
+  }
+
+  /* High-contrast ink on white canvas */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+    line-height: 1.4;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 12pt !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Clean tabular formatting */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  th {
+    border-bottom: 2px solid #334155 !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    padding: 6pt 4pt !important;
+  }
+
+  td {
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 6pt 4pt !important;
+    color: #1e293b !important;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Cards and summaries */
+  .rounded-card {
+    border-radius: 0 !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}

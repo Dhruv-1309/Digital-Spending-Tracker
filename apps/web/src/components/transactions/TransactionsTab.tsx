@@ -131,27 +131,61 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
   const [typeFilter, setTypeFilter] = useState(() => {
     if (typeof window === 'undefined') return 'all';
     const params = new URLSearchParams(window.location.search);
-    return params.get('type') || 'all';
+    const urlType = params.get('type');
+    if (urlType) return urlType;
+    try {
+      const saved = localStorage.getItem('mt_tx_filters');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.typeFilter) return parsed.typeFilter;
+      }
+    } catch {
+      // ignore storage error
+    }
+    return 'all';
   });
   const [monthFilter, setMonthFilter] = useState(() => {
     if (typeof window === 'undefined') return 'all';
     const params = new URLSearchParams(window.location.search);
-    return params.get('month') || 'all';
+    const urlMonth = params.get('month');
+    if (urlMonth) return urlMonth;
+    try {
+      const saved = localStorage.getItem('mt_tx_filters');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.monthFilter) return parsed.monthFilter;
+      }
+    } catch {
+      // ignore storage error
+    }
+    return 'all';
   });
   const [sortBy, setSortBy] = useState<TransactionSortOption>(() => {
     if (typeof window === 'undefined') return 'date-desc';
     const params = new URLSearchParams(window.location.search);
     const s = params.get('sort');
-    if (
-      s === 'date-asc' ||
-      s === 'date-desc' ||
-      s === 'amount-asc' ||
-      s === 'amount-desc' ||
-      s === 'category-asc' ||
-      s === 'month-desc' ||
-      s === 'month-asc'
-    ) {
-      return s;
+    const validSorts: TransactionSortOption[] = [
+      'date-asc',
+      'date-desc',
+      'amount-asc',
+      'amount-desc',
+      'category-asc',
+      'month-desc',
+      'month-asc',
+    ];
+    if (s && validSorts.includes(s as TransactionSortOption)) {
+      return s as TransactionSortOption;
+    }
+    try {
+      const saved = localStorage.getItem('mt_tx_filters');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.sortBy && validSorts.includes(parsed.sortBy)) {
+          return parsed.sortBy;
+        }
+      }
+    } catch {
+      // ignore storage error
     }
     return 'date-desc';
   });
@@ -162,6 +196,19 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
     return Number.isFinite(p) && p > 0 ? p : 1;
   });
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+
+  // Persist filter preferences across sessions (UX-21)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(
+        'mt_tx_filters',
+        JSON.stringify({ typeFilter, monthFilter, sortBy }),
+      );
+    } catch {
+      // ignore storage error
+    }
+  }, [typeFilter, monthFilter, sortBy]);
 
   // URL search params sync (UX-12)
   const updateUrlParams = useCallback(

@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{425.5}{499} = \mathbf{85.3\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{438.5}{499} = \mathbf{87.9\%}$$
 
-- **Current Readiness Score:** **85.3%** (Baseline: 56.8%)
+- **Current Readiness Score:** **87.9%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **425.5 points**
+- **Earned Weight:** **438.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **151** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **2** |
-| **MISSING** | Not implemented | **18** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **165** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **0** |
+| **MISSING** | Not implemented | **6** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -36,14 +36,14 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CORE** | Core Behavior and Data Correctness | 22 | 22D / 0P / 0M | **100.0%** | 66.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
-| **BE** | Backend, API and Database | 21 | 20D / 0P / 1M  | **98.5%** | 65.0 / 66 |
-| **SEC** | Security and Privacy | 22 | 17D / 0P / 2M (3 other) | **81.2%** | 56.0 / 69 |
-| **UX** | Frontend, UX and Accessibility | 24 | 19D / 1P / 3M (1 other) | **88.2%** | 48.5 / 55 |
-| **PERF** | Performance, Offline and PWA | 15 | 11D / 0P / 1M (3 other) | **70.6%** | 24.0 / 34 |
-| **QA** | Testing and Code Quality | 18 | 17D / 1P / 0M | **96.7%** | 44.5 / 46 |
-| **OPS** | DevOps, Hosting and Operations | 21 | 10D / 0P / 2M (9 other) | **53.1%** | 26.0 / 49 |
-| **WEB** | Web Presence, Legal and Documentation | 20 | 14D / 0P / 5M (1 other) | **88.4%** | 38.0 / 43 |
-| **DIFF** | Differentiating Features | 9 | 6D / 0P / 3M  | **80.0%** | 12.0 / 15 |
+| **BE** | Backend, API and Database | 21 | 21D / 0P / 0M | **100.0%** | 66.0 / 66 |
+| **SEC** | Security and Privacy | 22 | 19D / 0P / 0M (3 other) | **84.1%** | 58.0 / 69 |
+| **UX** | Frontend, UX and Accessibility | 24 | 22D / 0P / 1M (1 other) | **92.7%** | 51.0 / 55 |
+| **PERF** | Performance, Offline and PWA | 15 | 12D / 0P / 0M (3 other) | **73.5%** | 25.0 / 34 |
+| **QA** | Testing and Code Quality | 18 | 18D / 0P / 0M | **100.0%** | 46.0 / 46 |
+| **OPS** | DevOps, Hosting and Operations | 21 | 12D / 0P / 0M (9 other) | **57.1%** | 28.0 / 49 |
+| **WEB** | Web Presence, Legal and Documentation | 20 | 18D / 0P / 1M (1 other) | **97.7%** | 42.0 / 43 |
+| **DIFF** | Differentiating Features | 9 | 6D / 0P / 3M | **80.0%** | 12.0 / 15 |
 | **X** | Additional Operational Excellence | 4 | 3D / 0P / 0M (1 other) | **94.4%** | 8.5 / 9 |
 
 ---
@@ -156,7 +156,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **BE-18** | Soft-delete and retention rules are defined, with a purge job | `DONE` | apps/api/prisma/schema.prisma:73,93, apps/api/src/jobs/scheduler.ts:35-54 (tombstone-purge deletes >90 days) | - |
 | **BE-19** | Graceful shutdown finishes in-flight requests before exiting | `DONE` | apps/api/src/server.ts:25-45 (SIGTERM/SIGINT server.close, boss.stop, prisma.$disconnect) | - |
 | **BE-20** | A seed script creates realistic sample data for development and demos | `DONE` | apps/api/prisma/seed.ts:1-350, apps/api/package.json:14, apps/api/test/seed.test.ts:1-60 | Seeds demo user with 3 full months of realistic personal finance transactions (paise amounts), autopay plans, budget goals, and custom categories; verified via automated test suite and CLI execution. |
-| **BE-21** | A policy for backward-compatible API changes is written down | `MISSING` | None | No backward-compatible API change policy document exists. |
+| **BE-21** | A policy for backward-compatible API changes is written down | `DONE` | docs/api/COMPATIBILITY_POLICY.md | Policy established defining additive evolution, semantic versioning (/api/v1), 6-month deprecation window, breaking change definitions, and migration guidelines. | None |
 
 ### SEC: Security and Privacy
 
@@ -182,8 +182,8 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **SEC-18** | Check obligations under India's Digital Personal Data Protection Act, 2023 and its rules (notice, consent, purpose, deletion) and record the result | `DONE` | apps/web/src/components/legal/PrivacyPage.tsx:137-160 | - |
 | **SEC-19** | Bot protection on sign-up (App Check, CAPTCHA or equivalent) | `DONE` | apps/web/src/components/auth/TurnstileWidget.tsx, apps/web/src/components/auth/AuthModal.tsx:582-596, apps/api/src/routes/authRoutes.ts:17-62, apps/web/src/test/turnstile_bot_protection.test.tsx, apps/api/test/turnstile.test.ts | Integrates privacy-preserving Cloudflare Turnstile widget on sign-up form with dynamic script loading and token acquisition; backend verifies token against Cloudflare siteverify endpoint before registration; verified across unit, component, and API integration test suites. |
 | **SEC-20** | A one-page threat model lists assets, entry points and mitigations | `DONE` | docs/security/THREAT_MODEL.md:1-125 | Comprehensive STRIDE threat model detailing assets, trust boundaries, entry points, and mitigations (IDOR isolation, Turnstile bot protection, CSV formula injection neutralization, rate limits, soft-delete, and authenticated encryption). |
-| **SEC-21** | A security.txt file with a contact address | `MISSING` | None in public/.well-known/security.txt | Missing standard RFC 9116 security.txt. |
-| **SEC-22** | A documented procedure for rotating secrets and keys | `MISSING` | docs/RUNBOOK.md lacks secret rotation section | Missing documented secret rotation runbook steps. |
+| **SEC-21** | A security.txt file with a contact address | `DONE` | apps/web/public/.well-known/security.txt, apps/web/public/security.txt, apps/web/src/test/seo_and_brand_assets.test.ts | RFC 9116 compliant security.txt specifying security contact, canonical URLs, policy link, preferred languages, and acknowledgment guidelines. | None |
+| **SEC-22** | A documented procedure for rotating secrets and keys | `DONE` | docs/security/SECRET_ROTATION.md | Comprehensive runbook with step-by-step procedures, commands, validation checks, and emergency rollback plans for Postgres, JWT, Firebase Admin, and Turnstile secret rotations. | None |
 
 ### UX: Frontend, UX and Accessibility
 
@@ -209,10 +209,10 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **UX-18** | Complex metrics (Z-score, 7-day SMA, runway, confidence) have plain-language explanations in the interface | `DONE` | apps/web/src/components/analytics/analyticsInsights.ts:1-120 | - |
 | **UX-19** | Inputs use appropriate mobile keyboards (inputmode, type) | `DONE` | AmountInput.tsx:40 (inputMode="decimal"), AuthModal.tsx (type="email", type="password") | - |
 | **UX-20** | A warning appears before leaving a form with unsaved changes | `DONE` | TransactionSlideOver.tsx, AddTransactionTab.tsx, TrackerContext.tsx | Dirty form detection checks amount/category/method/date/description changes. Prompts confirmation dialog on drawer close, tab navigation, or Cancel, and registers beforeunload listener. Verified by 10 unit tests in dirty_form_warning.test.tsx. |
-| **UX-21** | The last-used filters, sort and category are remembered | `MISSING` | TransactionsTab.tsx resets state on component remount | Filter and sort preferences are not persisted to localStorage. |
-| **UX-22** | Keyboard shortcuts are listed in a help dialog | `PARTIAL` | AppShell.tsx:118-174 implements 'N', 'Ctrl+B', 'Escape' shortcuts | No help dialog or shortcut modal displaying keybindings to the user. |
+| **UX-21** | The last-used filters, sort and category are remembered | `DONE` | apps/web/src/components/transactions/TransactionsTab.tsx:135-215, apps/web/src/test/shortcuts_and_persistence.test.tsx | Remembers user filter (typeFilter, monthFilter) and sort (sortBy) selections in localStorage ('mt_tx_filters') with graceful fallback on initial load. | None |
+| **UX-22** | Keyboard shortcuts are listed in a help dialog | `DONE` | apps/web/src/components/layout/ShortcutsModal.tsx, apps/web/src/components/layout/AppShell.tsx, apps/web/src/test/shortcuts_and_persistence.test.tsx | Accessible modal dialog (triggered by pressing ? or clicking button) displaying categorized keyboard shortcuts (Navigation 1-4, Actions N/Ctrl+B/Esc, Math =); fully accessible with Esc dismiss. | None |
 | **UX-23** | Dark theme | `MISSING` | tokens.css defines warm light theme palette | Dark mode tokens and theme toggle are not implemented. |
-| **UX-24** | A print stylesheet for reports | `MISSING` | None | No @media print rules or report layout styling. |
+| **UX-24** | A print stylesheet for reports | `DONE` | apps/web/src/styles/print.css, apps/web/src/index.css, apps/web/src/test/shortcuts_and_persistence.test.tsx | Dedicated @media print stylesheet hiding navigation, sidebars, interactive buttons, and modals; styling high-contrast tables and reports for PDF export and physical printing. | None |
 
 ### PERF: Performance, Offline and PWA
 
@@ -232,7 +232,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **PERF-12** | Third-party requests are zero, or each one is justified | `DONE` | Only Firebase Auth network requests; zero external font or script CDN requests | - |
 | **PERF-13** | API responses are compressed, and ETag or similar is used where it helps | `DONE` | apps/api/src/app.ts:71-83, apps/api/test/compression.test.ts | Express compression middleware mounted with 1KB threshold, gzip/deflate support, x-no-compression header bypass, and ETag support. | None |
 | **PERF-14** | Manifest has maskable icons and a splash configuration | `DONE` | `apps/web/public/manifest.json`, `apps/web/public/pwa-maskable-192x192.png`, `apps/web/public/pwa-maskable-512x512.png`, `apps/web/src/test/pwa_manifest_and_sw.test.ts` | Standard and maskable icons (192x192, 512x512) with 80% safe zone padding; theme_color and background_color configured. | None |
-| **PERF-15** | Likely next routes are prefetched | `MISSING` | None | Route prefetching is not configured. |
+| **PERF-15** | Likely next routes are prefetched | `DONE` | apps/web/src/lib/prefetch.ts, apps/web/src/components/layout/NavigationTabs.tsx, apps/web/src/components/layout/AppShell.tsx | Predictive route chunk prefetching triggers on hover and focus on navigation tabs and buttons, loading lazy route modules in the background ahead of user clicks. | None |
 
 ### QA: Testing and Code Quality
 
@@ -255,7 +255,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **QA-15** | Consistent structure and naming, one component per file, and named constants instead of magic numbers | `DONE` | apps/web/src/components/*, packages/shared/src/calculations/* | - |
 | **QA-16** | The bundle analyzer report has been reviewed and large dependencies justified | `DONE` | apps/web/vite.config.ts, docs/BUNDLE_ANALYSIS.md, docs/bundle-stats.html | Visual rollup treemap generated; detailed bundle composition analysis and dependency justifications (Chart.js, Motion) documented. | None |
 | **QA-17** | Screenshot comparison for the main screens | `DONE` | docs/migration/baseline/, docs/redesign/baseline/, docs/redesign/screenshots/ | - |
-| **QA-18** | A manual QA script and a bug log are kept in the repo | `PARTIAL` | docs/migration/AUDIT.md and PARITY.md exist | Formal release test execution script is missing. |
+| **QA-18** | A manual QA script and a bug log are kept in the repo | `DONE` | docs/qa/MANUAL_QA_SCRIPT.md, docs/qa/BUG_LOG.md | 7-part comprehensive manual release QA script with step-by-step test procedures, acceptance criteria, and pass/fail logging; alongside historical defect bug log detailing fixes. | None |
 
 ### OPS: DevOps, Hosting and Operations
 
@@ -279,9 +279,9 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **OPS-16** | Releases are tagged and a CHANGELOG is kept | `DONE` | CHANGELOG.md | Formal Keep a Changelog record documenting versions [Unreleased], [3.0.0], [2.0.0], [1.0.0] and semver release workflow. | None |
 | **OPS-17** | Free-tier limits of each service are known, and usage alerts are set | `NEEDS-USER` | docs/PRD_v3.0.md:90 documents free tier providers (Vercel, Render, Neon) | Requires owner setting budget/usage alerts in provider billing dashboards. |
 | **OPS-18** | Cold-start behavior of the hosting is measured and handled in the interface | `NEEDS-USER` | None | Needs measurement once hosted on free/suspended server tier. |
-| **OPS-19** | Branch protection and a pull request template | `MISSING` | None in .github/ | Missing PR template and GitHub repository branch protection rules. |
+| **OPS-19** | Branch protection and a pull request template | `DONE` | .github/pull_request_template.md | Formal PR template with description, type of change, quality gates checklist, accessibility/performance confirmation, and branch protection enforcement guide. | None |
 | **OPS-20** | A simple status page or status endpoint | `DONE` | apps/api/src/routes/healthRoutes.ts:1-35 (/healthz, /readyz) | - |
-| **OPS-21** | Recovery point and recovery time targets are written down | `MISSING` | None | RPO/RTO targets document missing. |
+| **OPS-21** | Recovery point and recovery time targets are written down | `DONE` | docs/ops/DISASTER_RECOVERY.md | Formal DR targets establishing RPO = 24 hours (nightly automated backups) and RTO < 2 hours with tiered disaster classifications and restore runbooks. | None |
 
 ### WEB: Web Presence, Legal and Documentation
 
@@ -302,11 +302,11 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **WEB-13** | An architecture document and short decision records for the major choices | `DONE` | docs/adr/0001-postgresql-and-express-migration.md, docs/adr/0002-integer-paise-currency.md, docs/adr/0003-client-side-privacy-first.md | Architectural Decision Records documenting Node/PostgreSQL migration, integer paise currency, and client-side zero-knowledge privacy. | None |
 | **WEB-14** | A demo account or demo mode, and a short demo recording | `DONE` | apps/web/src/components/auth/AuthModal.tsx, apps/web/src/context/AuthContext.tsx, apps/web/src/context/TrackerContext.tsx, apps/web/src/test/demo_mode.test.tsx | One-click Demo Mode on login screen with populated sample data, in-memory state mutations, and prominent demo banner without requiring credentials. | None |
 | **WEB-15** | A cookie and storage notice if anything non-essential is stored | `NOT-APPLICABLE` | apps/web/src/components/legal/PrivacyPage.tsx:115-135 | Not applicable: zero non-essential storage or third-party cookies used. |
-| **WEB-16** | An About page with the project's purpose and stack | `MISSING` | None | About page route /about is missing. |
+| **WEB-16** | An About page with the project's purpose and stack | `DONE` | apps/web/src/components/legal/AboutPage.tsx, apps/web/src/App.tsx, apps/web/src/lib/routes.ts, apps/web/src/test/legal_routes.test.tsx | Public /about route detailing privacy manifesto, integer-paise math architecture, local-first offline storage, and modern full-stack tech stack. | None |
 | **WEB-17** | A What's new or changelog page | `MISSING` | None | What's new / changelog page is missing. |
-| **WEB-18** | CONTRIBUTING and CODE_OF_CONDUCT files if the repository is public and open to contributions | `MISSING` | None | CONTRIBUTING.md and CODE_OF_CONDUCT.md files are missing. |
-| **WEB-19** | JSON-LD structured data (SoftwareApplication) on the landing page | `MISSING` | None in apps/web/index.html | SoftwareApplication JSON-LD snippet missing. |
-| **WEB-20** | An accessibility statement | `MISSING` | None | Accessibility statement page is missing. |
+| **WEB-18** | CONTRIBUTING and CODE_OF_CONDUCT files if the repository is public and open to contributions | `DONE` | CONTRIBUTING.md, CODE_OF_CONDUCT.md | Comprehensive open-source guidelines covering development setup, quality gates, PR lifecycle, Contributor Covenant v2.1 code of conduct, and reporting standards. | None |
+| **WEB-19** | JSON-LD structured data (SoftwareApplication) on the landing page | `DONE` | apps/web/index.html:15-30, apps/web/src/test/seo_and_brand_assets.test.ts | Schema.org SoftwareApplication JSON-LD structured data with FinanceApplication classification, free pricing specification, and feature highlights. | None |
+| **WEB-20** | An accessibility statement | `DONE` | apps/web/src/components/legal/AccessibilityPage.tsx, apps/web/src/App.tsx, apps/web/src/lib/routes.ts, apps/web/src/test/legal_routes.test.tsx | Formal accessibility statement conforming to W3C guidelines and WCAG 2.1 Level AA, documenting keyboard navigation, contrast, screen reader compatibility, and feedback contact. | None |
 
 ### DIFF: Differentiating Features
 

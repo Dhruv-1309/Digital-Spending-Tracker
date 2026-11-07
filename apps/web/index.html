@@ -40,6 +40,32 @@
     <!-- Preload Critical Body & Display Fonts (PERF-7) -->
     <link rel="preload" href="/src/assets/fonts/instrument-sans-400.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/src/assets/fonts/bricolage-grotesque-600.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Structured Data JSON-LD (WEB-19) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "MoneyTracker",
+      "operatingSystem": "All",
+      "applicationCategory": "FinanceApplication",
+      "description": "Owned, privacy-first personal finance application with integer-paise accuracy, zero third-party tracking, and offline-first IndexedDB synchronization.",
+      "url": "https://moneytracker.app/",
+      "image": "https://moneytracker.app/og-image.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "INR"
+      },
+      "featureList": [
+        "Integer-paise accuracy",
+        "Offline-first sync queue",
+        "Client-side AES-GCM passphrase backup",
+        "Statistical anomaly detection",
+        "Bank statement CSV importer with rule learning"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

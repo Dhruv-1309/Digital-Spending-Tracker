@@ -1,7 +1,7 @@
 import type { NavTab } from '../types';
 import { logger } from './logger';
 
-export type AppRoute = 'landing' | 'terms' | 'privacy' | 'help' | 'design' | 'audit' | 'not-found' | null;
+export type AppRoute = 'landing' | 'terms' | 'privacy' | 'about' | 'accessibility' | 'help' | 'design' | 'audit' | 'not-found' | null;
 
 export const VALID_NAV_TABS: readonly NavTab[] = [
   'dashboard',
@@ -56,7 +56,9 @@ export function resolveAppRoute(pathname: string, hash: string): AppRoute {
   const cleanPath = pathname.replace(/\/+$/, '') || '/';
   const cleanHash = hash.replace(/^#\/?/, '').split('?')[0];
 
-  if (cleanPath === '/landing' || cleanHash === 'landing' || cleanPath === '/about' || cleanHash === 'about') return 'landing';
+  if (cleanPath === '/landing' || cleanHash === 'landing') return 'landing';
+  if (cleanPath === '/about' || cleanHash === 'about') return 'about';
+  if (cleanPath === '/accessibility' || cleanHash === 'accessibility') return 'accessibility';
   if (cleanPath === '/terms' || cleanHash === 'terms') return 'terms';
   if (cleanPath === '/privacy' || cleanHash === 'privacy') return 'privacy';
   if (cleanPath === '/help' || cleanHash === 'help' || cleanPath === '/faq' || cleanHash === 'faq') return 'help';

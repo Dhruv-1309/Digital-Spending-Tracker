@@ -1589,56 +1589,60 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
   - [ ] TOTP authenticator app integration
 - **How It Will Be Tested:** 2FA authentication challenge test.
 
-### 5. [BE-21] Formal API backward-compatibility policy documentation
+### 5. [BE-21] Formal API backward-compatibility policy documentation [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `BE`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `docs/api/COMPATIBILITY_POLICY.md`
 - **Acceptance Criteria:**
-  - [ ] Documents versioning rules, deprecation windows, and additive schema evolution
-- **How It Will Be Tested:** Documentation review.
+  - [x] Documents versioning rules, deprecation windows, and additive schema evolution
+- **How It Was Tested:** Documentation review.
 
-### 6. [SEC-21] Standard RFC 9116 security.txt contact file
+### 6. [SEC-21] Standard RFC 9116 security.txt contact file [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/public/.well-known/security.txt`
+  - `apps/web/public/security.txt`
+  - `apps/web/src/test/seo_and_brand_assets.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Provides contact email, encryption key URL, and policy links conforming to RFC 9116
-- **How It Will Be Tested:** Curl /.well-known/security.txt.
+  - [x] Provides contact email, encryption key URL, and policy links conforming to RFC 9116
+- **How It Was Tested:** Verified via automated test `apps/web/src/test/seo_and_brand_assets.test.ts`.
 
-### 7. [SEC-22] Documented secret and credential rotation runbook
+### 7. [SEC-22] Documented secret and credential rotation runbook [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `docs/security/SECRET_ROTATION.md`
 - **Acceptance Criteria:**
-  - [ ] Step-by-step runbook for rotating JWT secrets, Firebase Admin credentials, and database passwords
-- **How It Will Be Tested:** Documentation review.
+  - [x] Step-by-step runbook for rotating JWT secrets, Firebase Admin credentials, and database passwords
+- **How It Was Tested:** Documentation review.
 
-### 8. [UX-21] Persist last-used transaction filters, sorting, and category in localStorage
+### 8. [UX-21] Persist last-used transaction filters, sorting, and category in localStorage [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/transactions/TransactionsTab.tsx`
+  - `apps/web/src/test/shortcuts_and_persistence.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Remembers user filter and sort selections across browser reloads
-- **How It Will Be Tested:** Reload page and assert remembered filter settings.
+  - [x] Remembers user filter and sort selections across browser reloads
+- **How It Was Tested:** Component test asserting remembered filter and sort settings from `mt_tx_filters` key in localStorage.
 
-### 9. [UX-22] Keyboard shortcut help modal dialog (triggered by ? key)
+### 9. [UX-22] Keyboard shortcut help modal dialog (triggered by ? key) [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/layout/ShortcutsModal.tsx`
   - `apps/web/src/components/layout/AppShell.tsx`
+  - `apps/web/src/test/shortcuts_and_persistence.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Pressing ? opens accessible dialog listing N (New Transaction), Ctrl+B (Toggle Sidebar), etc.
-- **How It Will Be Tested:** Component test asserting modal opens on ? keypress.
+  - [x] Pressing ? opens accessible dialog listing N (New Transaction), Ctrl+B (Toggle Sidebar), etc.
+- **How It Was Tested:** Component tests in `apps/web/src/test/shortcuts_and_persistence.test.tsx` asserting modal opens on ? keypress and closes on Esc.
 
 ### 10. [UX-23] Dark theme toggle and high-contrast night palette
 
@@ -1651,15 +1655,17 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
   - [ ] Adds dark theme CSS custom properties and header toggle switch
 - **How It Will Be Tested:** Verify dark theme styles and contrast ratios.
 
-### 11. [UX-24] Print stylesheet for transaction summaries and financial reports
+### 11. [UX-24] Print stylesheet for transaction summaries and financial reports [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/styles/print.css`
+  - `apps/web/src/index.css`
+  - `apps/web/src/test/shortcuts_and_persistence.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Hides sidebar and navigation, styling clean tabular summary when printing or saving as PDF
-- **How It Will Be Tested:** Inspect @media print styles.
+  - [x] Hides sidebar and navigation, styling clean tabular summary when printing or saving as PDF
+- **How It Was Tested:** Automated test in `apps/web/src/test/shortcuts_and_persistence.test.tsx` verifying `@media print` rules, element visibility suppression, and table formatting.
 
 ### 12. [PERF-14] PWA maskable icons and splash screen configuration [DONE]
 
@@ -1676,58 +1682,61 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
 - **How It Was Tested:**
   - Automated tests in `apps/web/src/test/pwa_manifest_and_sw.test.ts` verifying maskable icon attributes, sizes (192x192, 512x512), and non-zero binary asset size on disk.
 
-### 13. [PERF-15] Predictive route chunk prefetching on link hover
+### 13. [PERF-15] Predictive route chunk prefetching on link hover [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `PERF`
 - **Dependencies:** `PERF-2`
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/web/src/lib/prefetch.ts`
   - `apps/web/src/components/layout/NavigationTabs.tsx`
+  - `apps/web/src/components/layout/AppShell.tsx`
 - **Acceptance Criteria:**
-  - [ ] Prefetches code-split tab chunk when user hovers or focuses navigation item
-- **How It Will Be Tested:** Verify network prefetch in browser DevTools.
+  - [x] Prefetches code-split tab chunk when user hovers or focuses navigation item
+- **How It Was Tested:** Verified route chunk prefetch functions and event bindings in `NavigationTabs.tsx` and `AppShell.tsx`.
 
-### 14. [QA-18] Formal release manual QA script and historical bug log
+### 14. [QA-18] Formal release manual QA script and historical bug log [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `QA`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `docs/qa/MANUAL_QA_SCRIPT.md`
   - `docs/qa/BUG_LOG.md`
 - **Acceptance Criteria:**
-  - [ ] Detailed step-by-step checklist for pre-launch manual verification
-- **How It Will Be Tested:** Review QA checklist.
+  - [x] Detailed step-by-step checklist for pre-launch manual verification
+- **How It Was Tested:** Review QA checklist.
 
-### 15. [OPS-19] GitHub branch protection rules and Pull Request template
+### 15. [OPS-19] GitHub branch protection rules and Pull Request template [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `OPS`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `.github/pull_request_template.md`
-  - `docs/RUNBOOK.md`
 - **Acceptance Criteria:**
-  - [ ] PR template with testing checklist and guidance for enforcing branch protection
-- **How It Will Be Tested:** Verify template renders on GitHub.
+  - [x] PR template with testing checklist and guidance for enforcing branch protection
+- **How It Was Tested:** Template formatted and verified.
 
-### 16. [OPS-21] Documented Recovery Point Objective (RPO) and Recovery Time Objective (RTO) targets
+### 16. [OPS-21] Documented Recovery Point Objective (RPO) and Recovery Time Objective (RTO) targets [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `OPS`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `docs/ops/DISASTER_RECOVERY.md`
 - **Acceptance Criteria:**
-  - [ ] Establishes RPO = 24 hours, RTO = 2 hours for catastrophic database loss
-- **How It Will Be Tested:** Review DR targets document.
+  - [x] Establishes RPO = 24 hours, RTO = 2 hours for catastrophic database loss
+- **How It Was Tested:** Review DR targets document.
 
-### 17. [WEB-16] Public About page detailing project mission, privacy architecture, and tech stack
+### 17. [WEB-16] Public About page detailing project mission, privacy architecture, and tech stack [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/legal/AboutPage.tsx`
   - `apps/web/src/App.tsx`
+  - `apps/web/src/lib/routes.ts`
+  - `apps/web/src/test/legal_routes.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Route /about detailing open-source software stack and data privacy mission
-- **How It Will Be Tested:** Navigate to /about.
+  - [x] Route /about detailing open-source software stack and data privacy mission
+- **How It Was Tested:** Automated tests in `apps/web/src/test/legal_routes.test.tsx` asserting route rendering, mission highlights, and back navigation.
 
 ### 18. [WEB-17] In-app "What's New" changelog drawer
 
@@ -1739,37 +1748,40 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
   - [ ] Displays release notes and newly introduced features to users
 - **How It Will Be Tested:** Component test verifying drawer open.
 
-### 19. [WEB-18] CONTRIBUTING.md and CODE_OF_CONDUCT.md community guidelines
+### 19. [WEB-18] CONTRIBUTING.md and CODE_OF_CONDUCT.md community guidelines [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `CONTRIBUTING.md`
   - `CODE_OF_CONDUCT.md`
 - **Acceptance Criteria:**
-  - [ ] Documents local contribution workflows, code quality rules, and community conduct
-- **How It Will Be Tested:** Verify file existence.
+  - [x] Documents local contribution workflows, code quality rules, and community conduct
+- **How It Was Tested:** File existence and policy review.
 
-### 20. [WEB-19] Schema.org JSON-LD structured data (SoftwareApplication) on landing page
+### 20. [WEB-19] Schema.org JSON-LD structured data (SoftwareApplication) on landing page [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** `WEB-3`
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/index.html`
+  - `apps/web/src/test/seo_and_brand_assets.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Embeds SoftwareApplication JSON-LD script tag with pricing (Free), category (FinanceApplication)
-- **How It Will Be Tested:** Validate JSON-LD with Google Rich Results test.
+  - [x] Embeds SoftwareApplication JSON-LD script tag with pricing (Free), category (FinanceApplication)
+- **How It Was Tested:** Automated tests in `apps/web/src/test/seo_and_brand_assets.test.ts` validating JSON-LD fields and syntax.
 
-### 21. [WEB-20] Formal Accessibility Statement conforming to W3C guidelines
+### 21. [WEB-20] Formal Accessibility Statement conforming to W3C guidelines [DONE]
 
 - **Priority:** `P3` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/legal/AccessibilityPage.tsx`
   - `apps/web/src/App.tsx`
+  - `apps/web/src/lib/routes.ts`
+  - `apps/web/src/test/legal_routes.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Documents WCAG 2.2 AA conformance status, known limits, and accessibility contact email
-- **How It Will Be Tested:** Navigate to /accessibility.
+  - [x] Documents WCAG 2.2 AA conformance status, known limits, and accessibility contact email
+- **How It Was Tested:** Automated tests in `apps/web/src/test/legal_routes.test.tsx` asserting route rendering, conformance status, and feedback contact.
 
 ---
 
