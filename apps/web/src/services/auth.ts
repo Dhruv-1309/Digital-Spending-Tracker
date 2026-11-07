@@ -195,7 +195,9 @@ export async function sendPasswordReset(email: string): Promise<void> {
   } catch (error: unknown) {
     const err = error as { code?: string; message?: string };
     if (err.code === 'auth/user-not-found') {
-      throw new Error('No account found with this email.');
+      // OWASP ASVS CWE-204: Neutralize account enumeration.
+      // Resolve cleanly so the UI displays the generic confirmation message.
+      return;
     } else if (err.code === 'auth/invalid-email') {
       throw new Error('Please enter a valid email address.');
     } else {

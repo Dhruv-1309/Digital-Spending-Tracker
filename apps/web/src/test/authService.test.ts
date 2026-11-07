@@ -44,6 +44,7 @@ import {
   deleteUser,
   signOut,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import {
   signInWithEmail,
@@ -52,6 +53,7 @@ import {
   signOutUser,
   resendVerificationEmail,
   reloadCurrentUser,
+  sendPasswordReset,
 } from '../services/auth';
 
 describe('authService.signInWithEmail [AUTH-1]', () => {
@@ -210,5 +212,38 @@ describe('authService email verification [AUTH-4]', () => {
 
     expect(reloadMock).toHaveBeenCalledTimes(1);
     expect(updated?.emailVerified).toBe(true);
+  });
+});
+
+describe('authService.sendPasswordReset [AUTH-6]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('calls sendPasswordResetEmail with the auth instance and email', async () => {
+    vi.mocked(sendPasswordResetEmail).mockResolvedValueOnce(undefined);
+
+    await sendPasswordReset('user@example.com');
+
+    expect(sendPasswordResetEmail).toHaveBeenCalledWith(expect.anything(), 'user@example.com');
+  });
+
+  it('resolves silently when Firebase returns auth/user-not-found to prevent user enumeration', async () => {
+    vi.mocked(sendPasswordResetEmail).mockRejectedValueOnce({ code: 'auth/user-not-found' });
+
+    // Must NOT throw, resolving smoothly so UI provides generic confirmation
+    await expect(sendPasswordReset('nonexistent@example.com')).resolves.toBeUndefined();
+  });
+
+  it('throws friendly validation error when email is malformed', async () => {
+    vi.mocked(sendPasswordResetEmail).mockRejectedValueOnce({ code: 'auth/invalid-email' });
+
+    await expect(sendPasswordReset('bad-email')).rejects.toThrow(/valid email address/i);
+  });
+
+  it('translates network or service errors into user-friendly message', async () => {
+    vi.mocked(sendPasswordResetEmail).mockRejectedValueOnce({ code: 'auth/too-many-requests' });
+
+    await expect(sendPasswordReset('user@example.com')).rejects.toThrow(/too many failed attempts/i);
   });
 });

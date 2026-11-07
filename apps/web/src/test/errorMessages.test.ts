@@ -9,15 +9,15 @@ describe('toUserFriendlyError', () => {
     expect(toUserFriendlyError('')).toBe('Something went wrong. Please try again.');
   });
 
-  it('maps Firebase auth error codes to empathetic text without jargons', () => {
+  it('maps Firebase auth error codes to empathetic text without jargons and avoids user enumeration', () => {
     expect(toUserFriendlyError({ code: 'auth/invalid-credential' })).toBe(
       'Incorrect email or password. Please double-check and try again.',
     );
     expect(toUserFriendlyError({ code: 'auth/user-not-found' })).toBe(
-      'No account was found with this email. Please check your spelling or sign up.',
+      'Incorrect email or password. Please double-check and try again.',
     );
     expect(toUserFriendlyError({ code: 'auth/wrong-password' })).toBe(
-      'Incorrect password. Please try again or reset your password.',
+      'Incorrect email or password. Please double-check and try again.',
     );
     expect(toUserFriendlyError({ code: 'auth/email-already-in-use' })).toBe(
       'An account with this email already exists. Please sign in instead.',

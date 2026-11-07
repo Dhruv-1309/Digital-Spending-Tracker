@@ -451,7 +451,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Displays inline feedback if a common password is entered
 - **How It Will Be Tested:** Unit test in validation.test.ts verifying rejection of common password strings.
 
-### 12. [AUTH-6] Generic error messages that do not disclose user registration status
+### 12. [AUTH-6] Generic error messages that do not disclose user registration status `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `AUTH`
 - **Dependencies:** `AUTH-1`

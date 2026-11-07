@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{341.5}{499} = \mathbf{68.4\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{343.0}{499} = \mathbf{68.7\%}$$
 
-- **Current Readiness Score:** **68.4%** (Baseline: 56.8%)
+- **Current Readiness Score:** **68.7%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **341.5 points**
+- **Earned Weight:** **343.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **95** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **39** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **96** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **38** |
 | **MISSING** | Not implemented | **36** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -35,7 +35,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CORE** | Core Behavior and Data Correctness | 22 | 19D / 2P / 0M (1 other) | **95.5%** | 63.0 / 66 |
-| **AUTH** | Authentication and Accounts | 14 | 9D / 3P / 1M (1 other) | **80.0%** | 32.0 / 40 |
+| **AUTH** | Authentication and Accounts | 14 | 10D / 2P / 1M (1 other) | **83.8%** | 33.5 / 40 |
 | **BE** | Backend, API and Database | 21 | 17D / 2P / 2M  | **90.9%** | 60 / 66 |
 | **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
@@ -122,7 +122,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **AUTH-3** | Signing out, or switching users on a shared device, leaves no previous user's data in memory, local storage, IndexedDB or the offline queue | `DONE` | apps/web/src/services/auth.ts:185-207, apps/web/src/services/syncQueue.ts:153-172, apps/web/src/context/TrackerContext.tsx:166-177, apps/web/src/test/authService.test.ts:136-155 | None. signOutUser purges syncQueue.clearAll() (wiping both IndexedDB queue and cache stores), clears web storage, and resets all React context memory state and sync cursors. |
 | **AUTH-4** | Email verification after sign-up, with a resend option | `DONE` | apps/web/src/services/auth.ts (signUpWithEmail triggers sendEmailVerification, resendVerificationEmail, reloadCurrentUser); apps/web/src/components/layout/AppShell.tsx (#emailVerificationBanner, #resendVerificationBtn, #checkVerificationBtn); apps/web/src/test/authService.test.ts; apps/web/src/test/app_shell.test.tsx | None. Post-signup triggers verification email automatically; AppShell renders non-blocking amber alert banner with Resend email and I've verified actions when emailVerified is false. |
 | **AUTH-5** | Password rules with strength feedback; common passwords rejected | `DONE` | packages/shared/src/calculations/validation.ts (validatePassword, COMMON_PASSWORDS); apps/web/src/components/auth/AuthModal.tsx (#passwordStrengthLabel, #passwordBlacklistWarning); packages/shared/test/validation.test.ts; apps/web/src/test/validation.test.ts; apps/web/src/test/auth_profile_redesign.test.tsx | None. Enforces minimum 8 chars with number or special character, rejects common passwords from blacklist with explicit inline alert, and provides 4-bar strength indicator. |
-| **AUTH-6** | Error messages do not reveal whether an email is registered | `PARTIAL` | apps/web/src/services/auth.ts:193-195 | sendPasswordReset throws 'No account found with this email.' revealing registration status. |
+| **AUTH-6** | Error messages do not reveal whether an email is registered | `DONE` | apps/web/src/services/auth.ts (sendPasswordReset resolves gracefully without throwing on auth/user-not-found); apps/web/src/lib/errorMessages.ts (FIREBASE_AUTH_CODE_MAP maps auth/user-not-found and auth/wrong-password to generic incorrect credentials message); apps/web/src/test/authService.test.ts; apps/web/src/test/errorMessages.test.ts | None. OWASP ASVS CWE-204 anti-enumeration: sign-in and password-reset return generic messages preventing attackers from determining whether an email address is registered. |
 | **AUTH-7** | Repeated failed sign-ins are rate limited or locked out (confirm what the auth provider already does) | `DONE` | Firebase Auth enforces auth/too-many-requests (auth.ts:90), backend apps/api/src/middleware/rateLimiter.ts:25-35 | - |
 | **AUTH-8** | Password reset works end to end, links expire, and the email is clearly branded and understandable | `NEEDS-USER` | apps/web/src/services/auth.ts:187-201, AuthModal.tsx:554-570 | Requires custom domain and sender email branding in Firebase Console. |
 | **AUTH-9** | Session handling: token refresh, expiry, sign out from the profile, and a clear message when the session has expired | `DONE` | apps/web/src/services/apiClient.ts:92-93 (session expired message on 401), ProfileModal.tsx:372 (signout) | - |

@@ -18,8 +18,8 @@ export interface ErrorLike {
 
 const FIREBASE_AUTH_CODE_MAP: Record<string, string> = {
   'auth/invalid-credential': 'Incorrect email or password. Please double-check and try again.',
-  'auth/user-not-found': 'No account was found with this email. Please check your spelling or sign up.',
-  'auth/wrong-password': 'Incorrect password. Please try again or reset your password.',
+  'auth/user-not-found': 'Incorrect email or password. Please double-check and try again.',
+  'auth/wrong-password': 'Incorrect email or password. Please double-check and try again.',
   'auth/email-already-in-use': 'An account with this email already exists. Please sign in instead.',
   'auth/weak-password': 'Password is too weak. Please use at least 6 characters.',
   'auth/invalid-email': 'Please enter a valid email address.',
