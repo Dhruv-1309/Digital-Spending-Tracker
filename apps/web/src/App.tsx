@@ -49,6 +49,37 @@ function useAppRoute(): AppRoute {
 export function App() {
   const route = useAppRoute();
 
+  // Dynamic document.title for public, legal, and auxiliary routes (UX-13)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    switch (route) {
+      case 'landing':
+        document.title = 'MoneyTracker — Smart Cashflow & Spending Tracker';
+        break;
+      case 'terms':
+        document.title = 'Terms and Conditions — MoneyTracker';
+        break;
+      case 'privacy':
+        document.title = 'Privacy Policy — MoneyTracker';
+        break;
+      case 'help':
+        document.title = 'Help & Support — MoneyTracker';
+        break;
+      case 'not-found':
+        document.title = 'Page Not Found — MoneyTracker';
+        break;
+      case 'design':
+        document.title = 'Design System — MoneyTracker Dev';
+        break;
+      case 'audit':
+        document.title = 'State Audit — MoneyTracker Dev';
+        break;
+      default:
+        // Main application views set their document.title via AppShell / AppLayout
+        break;
+    }
+  }, [route]);
+
   const handleBackToApp = () => {
     navigateTo('/');
   };

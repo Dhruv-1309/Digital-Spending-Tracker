@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { NavTab } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useTracker } from '../../hooks/useTracker';
@@ -233,6 +233,22 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
   }, [user]);
 
   const pageTitle = getPageTitle(currentTab);
+  const pageHeadingRef = useRef<HTMLHeadingElement>(null);
+  const isFirstMountRef = useRef(true);
+
+  useEffect(() => {
+    // Dynamic document.title (UX-13)
+    document.title = `${pageTitle} — MoneyTracker`;
+
+    // Accessible route-change focus management (UX-13):
+    // Focus the primary page heading on tab navigation so screen readers announce it
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+
+    pageHeadingRef.current?.focus();
+  }, [currentTab, pageTitle]);
 
   const handleNavigateLegal = useCallback(
     (path: string) => (e: React.MouseEvent) => {
@@ -541,8 +557,13 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
             <MenuIcon size={20} />
           </button>
 
-          {/* Page Title */}
-          <h1 className="font-display text-xl sm:text-2xl font-semibold text-ink tracking-tight truncate">
+          {/* Page Title & Accessible Primary Heading (UX-13) */}
+          <h1
+            id="pageHeading"
+            ref={pageHeadingRef}
+            tabIndex={-1}
+            className="font-display text-xl sm:text-2xl font-semibold text-ink tracking-tight truncate focus:outline-none"
+          >
             {pageTitle}
           </h1>
         </div>

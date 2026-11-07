@@ -1147,16 +1147,20 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - Added 9 automated unit and component tests in `apps/web/src/test/url_search_params.test.tsx` testing URL param hydration (?month, ?page, ?type, ?q), `pushState` on filter and pagination changes, and `popstate` restoration. Full test suite passing (664 tests).
 
-### 17. [UX-13] Dynamic document.title updates and route-change accessible focus management
+### 17. [UX-13] Dynamic document.title updates and route-change accessible focus management [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/web/src/components/layout/AppShell.tsx`
   - `apps/web/src/components/layout/AppLayout.tsx`
+  - `apps/web/src/App.tsx`
+  - `apps/web/src/test/route_focus_and_title.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Switching tabs updates document.title (e.g. "Transactions — MoneyTracker", "Analytics — MoneyTracker")
-  - [ ] Shifts screen reader focus to the top level <h1> heading upon navigation
-- **How It Will Be Tested:** Component test verifying document.title updates on tab change.
+  - [x] Switching tabs updates document.title (e.g. "Transactions — MoneyTracker", "Analytics — MoneyTracker")
+  - [x] Shifts screen reader focus to the top level <h1> heading upon navigation
+- **How It Was Tested:**
+  - 12 automated tests in `apps/web/src/test/route_focus_and_title.test.tsx` verifying document.title synchronization across all 5 app tabs and legal routes, plus accessible programmatic focus shifting to `#pageHeading` with `tabIndex={-1}`. Full test suite passing (676 tests).
 
 ### 18. [UX-16] Guided first-run onboarding stepper with sample data walkthrough
 

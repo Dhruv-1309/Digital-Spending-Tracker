@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{396.5}{499} = \mathbf{79.5\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{397.5}{499} = \mathbf{79.7\%}$$
 
-- **Current Readiness Score:** **79.5%** (Baseline: 56.8%)
+- **Current Readiness Score:** **79.7%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **396.5 points**
+- **Earned Weight:** **397.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **131** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **12** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **132** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **11** |
 | **MISSING** | Not implemented | **27** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -38,7 +38,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 20D / 0P / 1M  | **98.5%** | 65.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 17D / 0P / 2M (3 other) | **81.2%** | 56.0 / 69 |
-| **UX** | Frontend, UX and Accessibility | 24 | 16D / 3P / 4M (1 other) | **80.9%** | 44.5 / 55 |
+| **UX** | Frontend, UX and Accessibility | 24 | 17D / 2P / 4M (1 other) | **82.7%** | 45.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 8D / 1P / 3M (3 other) | **58.8%** | 20.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
@@ -201,7 +201,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **UX-10** | Checked in Chrome, Safari on iOS, Firefox and Edge | `NEEDS-USER` | Redesign baseline rendered in automated headless environments | Manual verification on a physical iOS Safari and Android device required by owner. |
 | **UX-11** | Design tokens and one icon set are used consistently, with no hard-coded colours (from the redesign spec) | `DONE` | apps/web/src/tokens.css, tailwind.config.js, apps/web/src/components/icons/index.tsx | - |
 | **UX-12** | Browser back, forward and deep links work, and filters, month and page are reflected in the URL | `DONE` | apps/web/src/context/TrackerContext.tsx:46-95, apps/web/src/components/transactions/TransactionsTab.tsx:124-270, apps/web/src/components/analytics/AnalyticsTab.tsx:112-180, apps/web/src/test/url_search_params.test.tsx | - |
-| **UX-13** | Each route has a distinct page title and heading structure, and focus moves sensibly on route change | `PARTIAL` | TermsPage and PrivacyPage set headings | Tab transitions do not update document.title and do not manage accessible focus to top heading. |
+| **UX-13** | Each route has a distinct page title and heading structure, and focus moves sensibly on route change | `DONE` | apps/web/src/components/layout/AppShell.tsx:235-255,560-565, apps/web/src/App.tsx:50-80, apps/web/src/test/route_focus_and_title.test.tsx | - |
 | **UX-14** | Reduced-motion preference is respected | `DONE` | apps/web/src/ui/motion.ts:60-75, apps/web/src/tokens.css:80-90 | - |
 | **UX-15** | Toasts are dismissible, limited in number and announced to screen readers | `DONE` | apps/web/src/components/ui/Toast.tsx, apps/web/src/test/a11y_axe.test.tsx | - |
 | **UX-16** | A first-run onboarding path: set a budget, add a first transaction, create a first autopay plan; optionally a demo mode with sample data | `PARTIAL` | EmptyState action buttons on each tab | No guided sequential onboarding wizard or preloaded demo walkthrough. |

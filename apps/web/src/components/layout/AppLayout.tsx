@@ -48,6 +48,13 @@ export function AppLayout() {
   const { currentTab } = useTracker();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  // Dynamic document.title when unauthenticated (UX-13)
+  useEffect(() => {
+    if (!user && typeof document !== 'undefined') {
+      document.title = 'Sign In — MoneyTracker';
+    }
+  }, [user]);
+
   // Protected route deep-linking: preserve intended route on sign-out and reflect redirect param (AUTH-12)
   useEffect(() => {
     if (!user && typeof window !== 'undefined') {
