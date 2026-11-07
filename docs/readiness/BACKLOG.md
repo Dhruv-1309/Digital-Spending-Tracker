@@ -974,17 +974,31 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 5 unit test assertions in `packages/shared/test/sorting_tiebreaker.test.ts` verifying identical deterministic order for items sharing same date and amount.
 
-### 8. [CORE-19] Category rename and delete with transaction reassignment
+### 8. [CORE-19] Category rename and delete with transaction reassignment [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `CORE`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `packages/shared/src/schemas/categories.ts`
   - `apps/api/src/repositories/categoryRepository.ts`
+  - `apps/api/src/routes/categoryRoutes.ts`
+  - `apps/api/test/testDb.ts`
+  - `apps/api/test/categories.test.ts`
+  - `apps/web/src/services/apiClient.ts`
+  - `apps/web/src/context/trackerContextDef.ts`
+  - `apps/web/src/context/TrackerContext.tsx`
   - `apps/web/src/components/profile/CategorySettingsModal.tsx`
+  - `apps/web/src/components/profile/ProfileModal.tsx`
+  - `apps/web/src/components/transactions/TransactionsTab.tsx`
+  - `apps/web/src/test/category_settings_modal.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] User can rename custom categories across existing transactions
-  - [ ] Deleting a category prompts to reassign associated transactions to another category
-- **How It Will Be Tested:** API test renaming category and verifying all transaction records update.
+  - [x] User can rename custom categories across existing transactions and autopay plans
+  - [x] Deleting a category prompts to reassign associated transactions to another category
+  - [x] Case-insensitive duplicate detection prevents conflicting category names
+  - [x] Category delete blocked with 409 Conflict if category is in use and no replacement specified
+- **How It Was Tested:**
+  - 8 backend tests in `apps/api/test/categories.test.ts` verifying duplicate rejection, cascade rename across transactions and autopays, deletion rejection when in use, and deletion with reassignment.
+  - 8 UI tests in `apps/web/src/test/category_settings_modal.test.tsx` verifying inline rename, duplicate validation, and reassignment flow.
 
 ### 9. [CORE-21] Document future-dated transactions policy in user guides and Help page
 

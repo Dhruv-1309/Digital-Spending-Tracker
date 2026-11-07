@@ -788,6 +788,161 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     [user, categories, refreshQueueCount, triggerDrain],
   );
 
+  // Custom Category: Rename across transactions & autopays (CORE-19)
+  const renameCustomCategory = useCallback(
+    async (type: TransactionType, oldName: string, newName: string): Promise<boolean> => {
+      if (!user) return false;
+      const trimmedOld = oldName.trim();
+      const trimmedNew = newName.trim();
+      if (!trimmedOld || !trimmedNew || trimmedOld.toLowerCase() === trimmedNew.toLowerCase()) {
+        return false;
+      }
+
+      const currentList = categories[type] || [];
+      // Prevent duplicates
+      if (
+        currentList.some(
+          (c) =>
+            c.toLowerCase() === trimmedNew.toLowerCase() &&
+            c.toLowerCase() !== trimmedOld.toLowerCase(),
+        )
+      ) {
+        showToast(`Category "${trimmedNew}" already exists.`, 'error');
+        return false;
+      }
+
+      // Update categories map
+      const updatedList = currentList.map((c) => (c === trimmedOld ? trimmedNew : c));
+      const updatedCategories: CategoriesMap = {
+        ...categories,
+        [type]: updatedList,
+      };
+      setCategories(updatedCategories);
+      syncQueue.setCachedData('categories', updatedCategories);
+
+      // Cascade update transactions
+      const updatedTxs = transactions.map((t) =>
+        t.type === type && t.category === trimmedOld ? { ...t, category: trimmedNew } : t,
+      );
+      setTransactions(updatedTxs);
+      syncQueue.setCachedData('transactions', updatedTxs);
+
+      // Cascade update autopays
+      const updatedAutopays = autopays.map((p) =>
+        p.type === type && p.category === trimmedOld ? { ...p, category: trimmedNew } : p,
+      );
+      setAutopays(updatedAutopays);
+      syncQueue.setCachedData('autopays', updatedAutopays);
+
+      // Enqueue sync operation
+      const opId = generateClientId();
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: '/categories/rename',
+        method: 'POST',
+        body: { type, oldName: trimmedOld, newName: trimmedNew },
+        entityType: 'category',
+        entityId: opId,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return true;
+    },
+    [user, categories, transactions, autopays, refreshQueueCount, triggerDrain, showToast],
+  );
+
+  // Custom Category: Delete with optional Reassignment (CORE-19)
+  const deleteCustomCategory = useCallback(
+    async (
+      type: TransactionType,
+      name: string,
+      reassignTo?: string,
+    ): Promise<{ success: boolean; reassignedCount: number; error?: string }> => {
+      if (!user) return { success: false, reassignedCount: 0, error: 'Not authenticated' };
+      const trimmedName = name.trim();
+      const currentList = categories[type] || [];
+
+      // Check how many active transactions use this category
+      const affectedTxs = transactions.filter(
+        (t) =>
+          t.type === type &&
+          t.category.toLowerCase() === trimmedName.toLowerCase() &&
+          !t.deletedAt,
+      );
+      const inUseCount = affectedTxs.length;
+
+      if (inUseCount > 0 && !reassignTo) {
+        return {
+          success: false,
+          reassignedCount: 0,
+          error: `Category is currently used in ${inUseCount} transactions. Reassignment required.`,
+        };
+      }
+
+      if (reassignTo && reassignTo.trim().toLowerCase() === trimmedName.toLowerCase()) {
+        return {
+          success: false,
+          reassignedCount: 0,
+          error: 'Cannot reassign transactions to the category being deleted.',
+        };
+      }
+
+      const targetCategory = reassignTo ? reassignTo.trim() : undefined;
+
+      // Update categories map: remove deleted category
+      const updatedList = currentList.filter(
+        (c) => c.toLowerCase() !== trimmedName.toLowerCase(),
+      );
+      const updatedCategories: CategoriesMap = {
+        ...categories,
+        [type]: updatedList,
+      };
+      setCategories(updatedCategories);
+      syncQueue.setCachedData('categories', updatedCategories);
+
+      // If reassigning, update affected transactions and autopays
+      if (targetCategory && inUseCount > 0) {
+        const updatedTxs = transactions.map((t) =>
+          t.type === type && t.category.toLowerCase() === trimmedName.toLowerCase()
+            ? { ...t, category: targetCategory }
+            : t,
+        );
+        setTransactions(updatedTxs);
+        syncQueue.setCachedData('transactions', updatedTxs);
+
+        const updatedAutopays = autopays.map((p) =>
+          p.type === type && p.category.toLowerCase() === trimmedName.toLowerCase()
+            ? { ...p, category: targetCategory }
+            : p,
+        );
+        setAutopays(updatedAutopays);
+        syncQueue.setCachedData('autopays', updatedAutopays);
+      }
+
+      const opId = generateClientId();
+      await syncQueue.enqueue({
+        id: opId,
+        endpoint: '/categories/delete-by-name',
+        method: 'POST',
+        body: { type, name: trimmedName, reassignTo: targetCategory },
+        entityType: 'category',
+        entityId: opId,
+        createdAt: Date.now(),
+      });
+
+      await refreshQueueCount();
+      if (checkOnline()) {
+        triggerDrain();
+      }
+      return { success: true, reassignedCount: inUseCount };
+    },
+    [user, categories, transactions, autopays, refreshQueueCount, triggerDrain],
+  );
+
   // Anomalies: Approve
   const approveAnomaly = useCallback(
     async (transactionId: string): Promise<boolean> => {
@@ -1052,6 +1207,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
         undoImportBatch,
         importTransactions,
         addCustomCategory,
+        renameCustomCategory,
+        deleteCustomCategory,
         approveAnomaly,
         dismissAnomaly,
         addAutopay,

@@ -22,7 +22,9 @@ import {
   AlertTriangleIcon,
   CheckCircleIcon,
   GoogleIcon,
+  TagIcon,
 } from '../icons';
+import { CategorySettingsModal } from './CategorySettingsModal';
 
 export interface ProfileModalProps {
   isOpen: boolean;
@@ -57,6 +59,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [passError, setPassError] = useState<string | null>(null);
   const [passSuccess, setPassSuccess] = useState<string | null>(null);
   const [passLoading, setPassLoading] = useState(false);
+  const [isCategorySettingsOpen, setIsCategorySettingsOpen] = useState(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Re-authentication state for sensitive operations (AUTH-10)
@@ -535,6 +538,27 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             </form>
           </Card>
 
+          {/* Card: Manage Categories (CORE-19) */}
+          <Card className="p-4 sm:p-5 border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong space-y-3.5" id="categorySettingsSection">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
+              <div className="flex items-center gap-2 text-ink font-semibold text-sm">
+                <TagIcon size={16} className="text-accent" />
+                <span>Categories</span>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={() => setIsCategorySettingsOpen(true)}
+              >
+                Manage Categories
+              </Button>
+            </div>
+            <p className="text-xs sm:text-sm text-ink-2 leading-relaxed">
+              Customize income and expense categories, rename them across your existing transactions, or delete unused categories with reassignment.
+            </p>
+          </Card>
+
           {/* Card 4: Separate Danger Zone Card for Account Deletion */}
           <Card className="p-4 sm:p-5 border-danger/30 bg-danger-tint/15 rounded-card shadow-1 transition-all duration-base hover:border-danger/50 space-y-3.5" id="dangerZoneSection">
             <div className="flex items-center gap-2 text-danger font-semibold text-sm pb-2 border-b border-danger/20">
@@ -702,6 +726,14 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Category Settings Modal (CORE-19) */}
+      {isCategorySettingsOpen && (
+        <CategorySettingsModal
+          isOpen={isCategorySettingsOpen}
+          onClose={() => setIsCategorySettingsOpen(false)}
+        />
       )}
     </div>
   );

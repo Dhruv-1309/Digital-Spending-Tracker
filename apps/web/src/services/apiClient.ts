@@ -393,8 +393,15 @@ export const apiClient = {
   },
 
   // 3. Categories
-  async getCategories(): Promise<CategoriesMap> {
+  async getCategories(): Promise<CategoriesMap & { items?: Array<{ id: string; name: string; type: string }> }> {
     const res = await apiRequest('/categories');
+    if (Array.isArray(res)) {
+      return {
+        income: res.filter((c: any) => c.type === 'income').map((c: any) => c.name),
+        expense: res.filter((c: any) => c.type === 'expense').map((c: any) => c.name),
+        items: res,
+      };
+    }
     return res.categories || { income: [], expense: [] };
   },
 
@@ -406,8 +413,17 @@ export const apiClient = {
     });
   },
 
-  async deleteCategory(id: string, options?: RequestOptions) {
+  async renameCategory(id: string, name: string, options?: RequestOptions) {
     return apiRequest(`/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+      ...options,
+    });
+  },
+
+  async deleteCategory(id: string, reassignTo?: string, options?: RequestOptions) {
+    const query = reassignTo ? `?reassignTo=${encodeURIComponent(reassignTo)}` : '';
+    return apiRequest(`/categories/${id}${query}`, {
       method: 'DELETE',
       ...options,
     });

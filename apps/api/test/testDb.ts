@@ -215,10 +215,12 @@ export function setupInMemoryPrisma() {
     inMemoryDb.transactions.forEach((t) => {
       if (args.where.userId && t.userId !== args.where.userId) return;
       if (args.where.deletedAt === null && t.deletedAt !== null) return;
+      if (args.where.type && t.type !== args.where.type) return;
       if (args.where.id?.in && !args.where.id.in.includes(t.id)) return;
-      if (args.where.category && t.category !== args.where.category) return;
+      if (args.where.category && t.category.toLowerCase() !== args.where.category.toLowerCase()) return;
       if (args.data.importHash) t.importHash = args.data.importHash;
       if (args.data.deletedAt !== undefined) t.deletedAt = args.data.deletedAt;
+      if (args.data.category !== undefined) t.category = args.data.category;
       count += 1;
     });
     return { count };
@@ -268,10 +270,32 @@ export function setupInMemoryPrisma() {
 
   vi.spyOn(prisma.category, 'findFirst').mockImplementation(async (args: any) => {
     return (
-      inMemoryDb.categories.find(
-        (c) => c.id === args.where.id && c.userId === args.where.userId,
-      ) || null
+      inMemoryDb.categories.find((c) => {
+        if (args.where?.id && typeof args.where.id === 'string' && c.id !== args.where.id) return false;
+        if (args.where?.id?.not && c.id === args.where.id.not) return false;
+        if (args.where?.userId && c.userId !== args.where.userId) return false;
+        if (args.where?.type && c.type !== args.where.type) return false;
+        if (args.where?.name?.equals && c.name.toLowerCase() !== args.where.name.equals.toLowerCase()) return false;
+        if (args.where?.name && typeof args.where.name === 'string' && c.name.toLowerCase() !== args.where.name.toLowerCase()) return false;
+        if (args.where?.OR) {
+          const match = args.where.OR.some((cond: any) => {
+            if (cond.id && c.id === cond.id) return true;
+            if (cond.name?.equals && c.name.toLowerCase() === cond.name.equals.toLowerCase()) return true;
+            if (cond.name && typeof cond.name === 'string' && c.name.toLowerCase() === cond.name.toLowerCase()) return true;
+            return false;
+          });
+          if (!match) return false;
+        }
+        return true;
+      }) || null
     );
+  });
+
+  vi.spyOn(prisma.category, 'update').mockImplementation(async (args: any) => {
+    const idx = inMemoryDb.categories.findIndex((c) => c.id === args.where.id);
+    if (idx === -1) throw new Error('Category not found');
+    inMemoryDb.categories[idx] = { ...inMemoryDb.categories[idx], ...args.data };
+    return inMemoryDb.categories[idx];
   });
 
   vi.spyOn(prisma.category, 'create').mockImplementation(async (args: any) => {
@@ -398,6 +422,19 @@ export function setupInMemoryPrisma() {
     if (args.data.deletedAt !== undefined) plan.deletedAt = args.data.deletedAt;
     plan.updatedAt = new Date();
     return plan;
+  });
+
+  vi.spyOn(prisma.autopayPlan, 'updateMany').mockImplementation(async (args: any) => {
+    let count = 0;
+    inMemoryDb.autopayPlans.forEach((p) => {
+      if (args.where?.userId && p.userId !== args.where.userId) return;
+      if (args.where?.deletedAt === null && p.deletedAt !== null) return;
+      if (args.where?.type && p.type !== args.where.type) return;
+      if (args.where?.category && p.category.toLowerCase() !== args.where.category.toLowerCase()) return;
+      if (args.data.category !== undefined) p.category = args.data.category;
+      count += 1;
+    });
+    return { count };
   });
 
   vi.spyOn(prisma.autopayPlan, 'deleteMany').mockImplementation(async (args: any) => {

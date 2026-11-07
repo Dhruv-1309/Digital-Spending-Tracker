@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{386.5}{499} = \mathbf{77.5\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{387.5}{499} = \mathbf{77.7\%}$$
 
-- **Current Readiness Score:** **77.5%** (Baseline: 56.8%)
+- **Current Readiness Score:** **77.7%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **386.5 points**
+- **Earned Weight:** **387.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **124** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **16** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **125** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **15** |
 | **MISSING** | Not implemented | **30** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 20D / 1P / 0M (1 other) | **97.0%** | 64.0 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 21D / 1P / 0M | **98.5%** | 65.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 11D / 1P / 1M (1 other) | **87.5%** | 35.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
@@ -108,7 +108,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **CORE-16** | Indian number grouping and the rupee sign are used consistently on screens, charts and exports | `DONE` | apps/web/src/components/ui/formatIndianGrouping.ts, apps/web/src/ui/chartTheme.ts:15-30, packages/shared/src/calculations/formatters.ts | - |
 | **CORE-17** | Sorting is stable and has a tie-breaker (same date, same amount) | `DONE` | packages/shared/src/calculations/transactions.ts:500-580, apps/web/src/lib/transactions.ts:400-455, apps/api/src/repositories/transactionRepository.ts:172-188, packages/shared/test/sorting_tiebreaker.test.ts | Multi-tier deterministic sorting across date-desc/asc, amount-desc/asc, category-asc, and month-desc/asc with primary-key ID tie-breakers in SQL and client. | None |
 | **CORE-18** | Search is case-insensitive and safe with special and regex characters | `DONE` | packages/shared/src/calculations/transactions.ts:354-360 (toLowerCase().includes), apps/api/src/repositories/transactionRepository.ts:149 | - |
-| **CORE-19** | Categories can be renamed and deleted with reassignment; duplicates and case variants are prevented | `PARTIAL` | apps/api/src/repositories/categoryRepository.ts:13-38, prisma unique index on [userId, type, name] | No category rename endpoint or UI; deleting in-use category throws error instead of prompting reassignment. |
+| **CORE-19** | Categories can be renamed and deleted with reassignment; duplicates and case variants are prevented | `DONE` | apps/api/src/repositories/categoryRepository.ts:15-115, apps/api/src/routes/categoryRoutes.ts:15-100, apps/web/src/components/profile/CategorySettingsModal.tsx, apps/api/test/categories.test.ts:35-150, apps/web/src/test/category_settings_modal.test.tsx:20-140 | None. Case-insensitive duplicate prevention, category renaming with atomic cascade to transactions and autopay plans, deletion rejection with 409 if category in use, and reassignment flow implemented and verified end-to-end. |
 | **CORE-20** | Very long descriptions and category names truncate without breaking layout | `DONE` | apps/web/src/components/transactions/TransactionsTab.tsx:816,877 (truncate max-w-xs md:max-w-md), DashboardTab.tsx:321 | - |
 | **CORE-21** | Future-dated transactions behave in a defined way (counted in month totals or not) and that is documented | `PARTIAL` | packages/shared/src/calculations/budget.ts:20-33 (includes transactions up to active month end) | Behavior is not explained or documented in README, user guides, or Help pages. |
 | **CORE-22** | Negative and zero balances display correctly in cards, charts and runway | `DONE` | apps/web/src/components/dashboard/DashboardTab.tsx:64-75, AnalyticsTab.tsx:1093, formatIndianGrouping.ts:22-32 | - |

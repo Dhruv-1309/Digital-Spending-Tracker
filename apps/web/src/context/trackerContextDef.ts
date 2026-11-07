@@ -38,6 +38,16 @@ export interface TrackerContextValue {
   recordActivity?: (item: Omit<ActivityLogItem, 'id' | 'timestamp'>) => void;
   importTransactions: (newTxs: Transaction[], batchId?: string) => Promise<boolean>;
   addCustomCategory: (type: TransactionType, name: string) => Promise<boolean>;
+  renameCustomCategory?: (
+    type: TransactionType,
+    oldName: string,
+    newName: string,
+  ) => Promise<boolean>;
+  deleteCustomCategory?: (
+    type: TransactionType,
+    name: string,
+    reassignTo?: string,
+  ) => Promise<{ success: boolean; reassignedCount: number; error?: string }>;
   approveAnomaly: (transactionId: string) => Promise<boolean>;
   dismissAnomaly: (transactionId: string) => Promise<boolean>;
   addAutopay: (plan: Omit<AutopayPlan, 'id' | 'createdAt'>) => Promise<boolean>;

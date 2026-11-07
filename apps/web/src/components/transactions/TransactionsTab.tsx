@@ -17,6 +17,7 @@ import { BankImportModal } from './BankImportModal';
 import { TrashModal } from './TrashModal';
 import { ActivityHistoryModal } from './ActivityHistoryModal';
 import { EncryptedBackupModal } from './EncryptedBackupModal';
+import { CategorySettingsModal } from '../profile/CategorySettingsModal';
 import { clearActivityHistory } from '../../lib/activityHistory';
 import {
   filterTransactions,
@@ -137,6 +138,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
   const [isTrashOpen, setIsTrashOpen] = useState(false);
   const [isActivityHistoryOpen, setIsActivityHistoryOpen] = useState(false);
   const [isEncryptedBackupOpen, setIsEncryptedBackupOpen] = useState(false);
+  const [isCategorySettingsOpen, setIsCategorySettingsOpen] = useState(false);
 
   // Close more menu on click outside or Escape
   useEffect(() => {
@@ -677,6 +679,20 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                   >
                     <ClockIcon size={16} className="text-ink-2" />
                     <span>Activity History</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    id="manageCategoriesBtn"
+                    onClick={() => {
+                      setIsCategorySettingsOpen(true);
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink rounded-btn hover:bg-surface-2 transition-colors duration-fast text-left"
+                  >
+                    <TagIcon size={16} className="text-ink-2" />
+                    <span>Manage Categories</span>
                   </button>
 
                   <div className="my-1 border-t border-line" />
@@ -1288,6 +1304,12 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
         autopays={autopays}
         budgetGoal={budgetGoal}
         onRestoreTransactions={importTransactions}
+      />
+
+      {/* Category Settings Modal (CORE-19) */}
+      <CategorySettingsModal
+        isOpen={isCategorySettingsOpen}
+        onClose={() => setIsCategorySettingsOpen(false)}
       />
     </div>
   );
