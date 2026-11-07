@@ -882,18 +882,25 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - 22 tests in `apps/web/src/test/autopay_redesign.test.tsx` (100% passing).
   - Clean TypeScript compilation, linting, and full production build.
 
-### 4. [DIFF-4] Explainable insights and month-end spending projection with "Show calculation" breakdowns
+### 4. [DIFF-4] Explainable insights and month-end spending projection with "Show calculation" breakdowns [DONE]
 
 - **Priority:** `P2` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** `CORE-7`
-- **Files Likely Touched:**
-  - `apps/web/src/components/analytics/ExplainableInsights.tsx`
+- **Files Touched:**
   - `packages/shared/src/calculations/projections.ts`
+  - `packages/shared/src/calculations/index.ts`
+  - `packages/shared/test/projections.test.ts`
+  - `apps/web/src/components/analytics/CalculationBreakdownModal.tsx`
+  - `apps/web/src/components/analytics/ExplainableInsightsCard.tsx`
+  - `apps/web/src/components/analytics/AnalyticsTab.tsx`
+  - `apps/web/src/test/explainable_insights.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Generates plain-language spending statements (e.g. "Food spending is 24% above your 3-month average")
-  - [ ] Calculates projected month-end total spending at current burn pace compared against budget limit
-  - [ ] Every insight includes interactive "Show calculation" link opening transparent formula breakdown modal
-- **How It Will Be Tested:** Component test verifying projection calculation and modal formula display.
+  - [x] Generates plain-language spending statements (e.g. "Food spending is 24% above your 3-month average")
+  - [x] Calculates projected month-end total spending at current burn pace compared against budget limit
+  - [x] Every insight includes interactive "Show calculation" link opening transparent formula breakdown modal
+- **How It Was Tested:**
+  - 6 unit tests in `packages/shared/test/projections.test.ts` testing pacing, category variances, and breakdown structure.
+  - 3 component tests in `apps/web/src/test/explainable_insights.test.tsx` verifying card rendering, badge alerts, and calculation breakdown modal dialog interaction.
 
 ### 5. [DIFF-5] Trash bin with 30-day restore and activity history with batch import undo
 

@@ -9,3 +9,4 @@ export * from './validation.js';
 export * from './mathEvaluator.js';
 export * from './merchantRules.js';
 export * from './recurringDetector.js';
+export * from './projections.js';

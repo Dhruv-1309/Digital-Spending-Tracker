@@ -32,6 +32,7 @@ import {
   getRunwayInsight,
   getWeekdayExpensesInsight,
 } from './analyticsInsights';
+import { ExplainableInsightsCard } from './ExplainableInsightsCard';
 import { AnalyticsSkeleton } from './AnalyticsSkeleton';
 import {
   AlertCircleIcon,
@@ -76,7 +77,7 @@ const MONTH_OPTIONS: DropdownOption[] = [
 ];
 
 export function AnalyticsTab() {
-  const { transactions, isLoading, loadError, refreshData } = useTracker();
+  const { transactions, budgetGoal, isLoading, loadError, refreshData } = useTracker();
   const { themeTokens, animation } = useChartTheme();
 
   const now = useMemo(() => new Date(), []);
@@ -710,6 +711,12 @@ export function AnalyticsTab() {
               </div>
             </Card>
           </div>
+
+          {/* Explainable Insights & Month-End Pace Projection (DIFF-4) */}
+          <ExplainableInsightsCard
+            transactions={transactions}
+            monthlyBudgetLimit={budgetGoal?.monthlyExpenseLimit}
+          />
 
           {/* Grid: Daily Expenses & Category Doughnut */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
