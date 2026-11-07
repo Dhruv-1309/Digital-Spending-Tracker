@@ -1045,16 +1045,17 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - [ ] Prevents accidental loss of transaction entry input
 - **How It Will Be Tested:** Component test typing into form, triggering close, and asserting confirm dialog prompt.
 
-### 20. [PERF-7] Preload display font (Bricolage Grotesque) in HTML head
+### 20. [PERF-7] Preload display font (Bricolage Grotesque) in HTML head [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `PERF`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/index.html`
+  - `apps/web/src/test/seo_and_brand_assets.test.ts`
 - **Acceptance Criteria:**
-  - [ ] index.html includes <link rel="preload"> for bricolage-grotesque-600.woff2 alongside instrument-sans
-  - [ ] Eliminates layout shift (CLS) during heading font swap
-- **How It Will Be Tested:** Verify index.html link headers.
+  - [x] index.html includes <link rel="preload"> for bricolage-grotesque-600.woff2 alongside instrument-sans
+  - [x] Self-hosted font-display: swap eliminates FOIT and layout shift (CLS) during heading font render
+- **How It Was Tested:** Automated test in `apps/web/src/test/seo_and_brand_assets.test.ts` (passing).
 
 ### 21. [PERF-8] Automated React Profiler re-render assertion test for forms and filters
 

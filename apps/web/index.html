@@ -2,11 +2,43 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Digital Spending Tracker</title>
-    <!-- Preload body font -->
+    <title>MoneyTracker — Owned, Privacy-First Personal Finance</title>
+    <meta name="description" content="MoneyTracker is an owned, integer-precise personal finance engine engineered for privacy. No bank logins, no SMS scrapers, and instant offline-first IndexedDB sync." />
+    <meta name="keywords" content="personal finance, expense tracker, budget tracker, offline expense manager, privacy first finance, integer paise, MoneyTracker" />
+    <meta name="author" content="MoneyTracker Contributors" />
+    <link rel="canonical" href="https://moneytracker.app/" />
+
+    <!-- Open Graph / Facebook (WEB-9) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://moneytracker.app/" />
+    <meta property="og:title" content="MoneyTracker — Owned, Privacy-First Personal Finance" />
+    <meta property="og:description" content="Track personal spending with integer-paise precision, statistical anomaly detection, and offline-first synchronization without sharing bank credentials." />
+    <meta property="og:image" content="https://moneytracker.app/og-image.png" />
+    <meta property="og:site_name" content="MoneyTracker" />
+
+    <!-- Twitter Card (WEB-9) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://moneytracker.app/" />
+    <meta name="twitter:title" content="MoneyTracker — Owned, Privacy-First Personal Finance" />
+    <meta name="twitter:description" content="Track personal spending with integer-paise precision, statistical anomaly detection, and offline-first synchronization." />
+    <meta name="twitter:image" content="https://moneytracker.app/og-image.png" />
+
+    <!-- Mobile & PWA Theme Colors (WEB-11) -->
+    <meta name="theme-color" content="#2563EB" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MoneyTracker" />
+
+    <!-- Icons & Favicon (WEB-11) -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Preload Critical Body & Display Fonts (PERF-7) -->
     <link rel="preload" href="/src/assets/fonts/instrument-sans-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/src/assets/fonts/bricolage-grotesque-600.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
     <div id="root"></div>

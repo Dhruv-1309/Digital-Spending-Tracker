@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{371.5}{499} = \mathbf{74.4\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{372.5}{499} = \mathbf{74.6\%}$$
 
-- **Current Readiness Score:** **74.4%** (Baseline: 56.8%)
+- **Current Readiness Score:** **74.6%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **371.5 points**
+- **Earned Weight:** **372.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **112** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **25** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **113** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **24** |
 | **MISSING** | Not implemented | **33** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -39,7 +39,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
-| **PERF** | Performance, Offline and PWA | 15 | 6D / 3P / 3M (3 other) | **52.9%** | 18.0 / 34 |
+| **PERF** | Performance, Offline and PWA | 15 | 7D / 2P / 3M (3 other) | **55.9%** | 19.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 8D / 3P / 8M (1 other) | **67.4%** | 29.0 / 43 |
@@ -224,7 +224,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **PERF-4** | Long lists are paginated or virtualised, and search input is debounced | `DONE` | `apps/web/src/components/transactions/TransactionsTab.tsx`: 10 items/page pagination plus 300ms search input debouncing via `useDebounce` hook (`apps/web/src/hooks/useDebounce.ts`). Verified in `transactions_redesign.test.tsx` and `useDebounce.test.ts`. | None. |
 | **PERF-5** | Static assets are hashed and cached for a long time, HTML is not cached, and gzip or brotli is on | `NEEDS-USER` | Vite outputs hashed filenames in dist/assets | Cache-Control header rules must be configured and verified on hosting provider. |
 | **PERF-6** | The offline write queue is persisted (IndexedDB), retried with backoff, and has a defined conflict rule | `DONE` | apps/web/src/services/syncQueue.ts:1-270, apps/web/src/test/syncQueue.test.ts | - |
-| **PERF-7** | Fonts are WOFF2, subset and preloaded; images are optimised and sized | `PARTIAL` | apps/web/src/assets/fonts/*.woff2 | index.html preloads instrument-sans-400 but misses preloading bricolage-grotesque-600. |
+| **PERF-7** | Fonts are WOFF2, subset and preloaded; images are optimised and sized | `DONE` | apps/web/index.html:40-41, apps/web/src/styles/tokens.css:9-44, apps/web/src/test/font_preload.test.ts | Self-hosted WOFF2 fonts with font-display: swap; index.html preloads both Instrument Sans 400 and Bricolage Grotesque 600. | None |
 | **PERF-8** | No unnecessary re-renders while typing in forms and filters (measured, not guessed) | `PARTIAL` | Form state localized to components | No automated profiling or render count assertions. |
 | **PERF-9** | A service worker caches the app shell so the app opens offline, and a web app manifest makes it installable | `MISSING` | No sw.js or manifest.json in apps/web/public | PWA service worker and Web App Manifest are missing. |
 | **PERF-10** | A visible offline and online indicator | `DONE` | apps/web/src/components/layout/AppShell.tsx:210-235, apps/web/src/test/app_shell.test.tsx | - |
