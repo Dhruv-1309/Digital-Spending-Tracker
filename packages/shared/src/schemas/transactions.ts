@@ -33,9 +33,9 @@ export const CreateTransactionSchema = z.object({
     .positive('Amount in paise must be a positive integer')
     .max(1_000_000_000, 'Amount cannot exceed ₹10 Crore'),
   currency: z.string().length(3).default('INR'),
-  category: z.string().trim().min(1, 'Category is required'),
+  category: z.string().trim().min(1, 'Category is required').max(50, 'Category cannot exceed 50 characters'),
   paymentMethod: PayMethodEnum,
-  description: z.string().trim().default(''),
+  description: z.string().trim().max(255, 'Description cannot exceed 255 characters').default(''),
   date: DateStringSchema,
   autopayId: z.string().uuid().optional().nullable(),
 });
@@ -58,10 +58,10 @@ export const TransactionQuerySchema = z.object({
 export const ImportRowSchema = z.object({
   date: DateStringSchema,
   type: TxnTypeEnum,
-  category: z.string().trim().min(1),
+  category: z.string().trim().min(1, 'Category is required').max(50, 'Category cannot exceed 50 characters'),
   amountPaise: z.number().int().positive(),
   paymentMethod: PayMethodEnum,
-  description: z.string().trim().default(''),
+  description: z.string().trim().max(255, 'Description cannot exceed 255 characters').default(''),
 });
 
 export const ImportBatchSchema = z.object({

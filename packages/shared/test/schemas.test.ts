@@ -80,4 +80,48 @@ describe('zod validation schemas', () => {
 
     expect(UpdateProfileSchema.safeParse({ displayName: 'Dhruv', timezone: 'Asia/Kolkata' }).success).toBe(true);
   });
+
+  describe('Text field length limits (SEC-12)', () => {
+    it('enforces length limits on transaction fields', () => {
+      const base = {
+        type: 'expense',
+        amountPaise: 1000,
+        currency: 'INR',
+        category: 'Food',
+        paymentMethod: 'upi',
+        description: 'Lunch',
+        date: '2026-11-01',
+      };
+
+      // Description max 255
+      expect(CreateTransactionSchema.safeParse({ ...base, description: 'a'.repeat(255) }).success).toBe(true);
+      expect(CreateTransactionSchema.safeParse({ ...base, description: 'a'.repeat(256) }).success).toBe(false);
+
+      // Category max 50
+      expect(CreateTransactionSchema.safeParse({ ...base, category: 'c'.repeat(50) }).success).toBe(true);
+      expect(CreateTransactionSchema.safeParse({ ...base, category: 'c'.repeat(51) }).success).toBe(false);
+    });
+
+    it('enforces length limits on autopay fields', () => {
+      const base = {
+        name: 'Rent',
+        type: 'expense',
+        amountPaise: 2500000,
+        category: 'Housing',
+        day: 1,
+      };
+
+      // Name max 100
+      expect(CreateAutopaySchema.safeParse({ ...base, name: 'n'.repeat(100) }).success).toBe(true);
+      expect(CreateAutopaySchema.safeParse({ ...base, name: 'n'.repeat(101) }).success).toBe(false);
+
+      // Description max 255
+      expect(CreateAutopaySchema.safeParse({ ...base, description: 'd'.repeat(255) }).success).toBe(true);
+      expect(CreateAutopaySchema.safeParse({ ...base, description: 'd'.repeat(256) }).success).toBe(false);
+
+      // Category max 50
+      expect(CreateAutopaySchema.safeParse({ ...base, category: 'c'.repeat(50) }).success).toBe(true);
+      expect(CreateAutopaySchema.safeParse({ ...base, category: 'c'.repeat(51) }).success).toBe(false);
+    });
+  });
 });

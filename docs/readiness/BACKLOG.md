@@ -512,7 +512,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] npm audit reports 0 high or critical vulnerabilities
 - **How It Will Be Tested:** Run `npm audit` and assert 0 high/critical issues.
 
-### 17. [SEC-12] Server and client length limits on all text fields (descriptions, names, categories)
+### 17. [SEC-12] Server and client length limits on all text fields (descriptions, names, categories) `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `SEC`
 - **Dependencies:** None
@@ -521,9 +521,9 @@ Expected of a production-grade personal financial application. These ensure robu
   - `packages/shared/src/schemas/autopay.ts`
   - `apps/web/src/components/ui/TextInput.tsx`
 - **Acceptance Criteria:**
-  - [ ] CreateTransactionSchema.description has .max(255)
-  - [ ] CreateAutopaySchema.name has .max(100) and description has .max(255)
-  - [ ] TextInput UI component enforces maxLength and displays character count when nearing limit
+  - [x] CreateTransactionSchema.description has .max(255)
+  - [x] CreateAutopaySchema.name has .max(100) and description has .max(255)
+  - [x] TextInput UI component enforces maxLength and displays character count when nearing limit
 - **How It Will Be Tested:** Unit tests in schemas.test.ts verifying rejection of overly long strings.
 
 ### 18. [SEC-13] CSV import file size limit (5MB) and type validation

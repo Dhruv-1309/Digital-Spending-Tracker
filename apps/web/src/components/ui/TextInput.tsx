@@ -8,6 +8,7 @@ export interface TextInputProps extends React.InputHTMLAttributes<HTMLInputEleme
   leftAddon?: React.ReactNode;
   rightAddon?: React.ReactNode;
   containerClassName?: string;
+  showCharCount?: boolean;
 }
 
 /**
@@ -27,6 +28,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
     disabled = false,
     className = '',
     containerClassName = '',
+    showCharCount = false,
     onBlur,
     onChange,
     ...props
@@ -36,6 +38,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
   const isInvalid = Boolean(error) || hasError;
   const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
   const errorId = inputId ? `${inputId}-error` : undefined;
+  const currentLength = typeof props.value === 'string' ? props.value.length : 0;
 
   const borderStyles = isInvalid
     ? 'border-danger focus:border-danger focus:ring-danger'
@@ -83,17 +86,32 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
         )}
       </div>
 
-      {error ? (
-        <span
-          id={errorId}
-          role="alert"
-          className="text-xs text-danger font-medium transition-opacity duration-fast"
-        >
-          {error}
-        </span>
-      ) : helperText ? (
-        <span className="text-xs text-ink-3">{helperText}</span>
-      ) : null}
+      <div className="flex items-center justify-between min-h-[16px]">
+        {error ? (
+          <span
+            id={errorId}
+            role="alert"
+            className="text-xs text-danger font-medium transition-opacity duration-fast"
+          >
+            {error}
+          </span>
+        ) : helperText ? (
+          <span className="text-xs text-ink-3">{helperText}</span>
+        ) : (
+          <span />
+        )}
+
+        {props.maxLength && (showCharCount || currentLength >= props.maxLength * 0.8) && (
+          <span
+            className={`text-xs font-mono ml-auto ${
+              currentLength >= props.maxLength ? 'text-danger font-semibold' : 'text-ink-3'
+            }`}
+            data-testid="char-count"
+          >
+            {currentLength}/{props.maxLength}
+          </span>
+        )}
+      </div>
     </div>
   );
 });

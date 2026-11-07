@@ -283,6 +283,45 @@ describe('Redesigned UI Primitives (Phase 2)', () => {
       fireEvent.keyDown(input, { key: 'Enter' });
       expect(handleChange).toHaveBeenCalledWith('750', 750);
     });
+
+    it('TextInput enforces maxLength and displays character count when nearing limit (SEC-12)', () => {
+      const { rerender } = renderWithMotion(
+        <TextInput
+          label="Description"
+          maxLength={100}
+          value="Short text"
+          onChange={() => {}}
+        />
+      );
+
+      // Value is 10 chars (< 80%), character count is hidden by default
+      expect(screen.queryByTestId('char-count')).not.toBeInTheDocument();
+
+      // When reaching 85 chars (>= 80% of 100), count appears
+      rerender(
+        <TextInput
+          label="Description"
+          maxLength={100}
+          value={'a'.repeat(85)}
+          onChange={() => {}}
+        />
+      );
+      const count = screen.getByTestId('char-count');
+      expect(count).toBeInTheDocument();
+      expect(count).toHaveTextContent('85/100');
+
+      // With showCharCount explicitly true, count always renders
+      rerender(
+        <TextInput
+          label="Description"
+          maxLength={100}
+          showCharCount={true}
+          value="Test"
+          onChange={() => {}}
+        />
+      );
+      expect(screen.getByTestId('char-count')).toHaveTextContent('4/100');
+    });
   });
 
   /* ==========================================================================
