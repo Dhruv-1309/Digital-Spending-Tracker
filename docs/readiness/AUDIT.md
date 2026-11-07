@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{368.5}{499} = \mathbf{73.8\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{370.0}{499} = \mathbf{74.1\%}$$
 
-- **Current Readiness Score:** **73.8%** (Baseline: 56.8%)
+- **Current Readiness Score:** **74.1%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **368.5 points**
+- **Earned Weight:** **370.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **110** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **27** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **111** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **26** |
 | **MISSING** | Not implemented | **33** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -42,7 +42,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **PERF** | Performance, Offline and PWA | 15 | 6D / 3P / 3M (3 other) | **52.9%** | 18.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
-| **WEB** | Web Presence, Legal and Documentation | 20 | 6D / 5P / 8M (1 other) | **60.5%** | 26.0 / 43 |
+| **WEB** | Web Presence, Legal and Documentation | 20 | 7D / 4P / 8M (1 other) | **64.0%** | 27.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
 | **X** | Additional Operational Excellence | 4 | 2D / 1P / 0M (1 other) | **75.0%** | 7.5 / 10 |
 
@@ -291,7 +291,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **WEB-2** | Privacy Policy page, linked from sign-up and the footer | `DONE` | apps/web/src/components/legal/PrivacyPage.tsx, AuthModal.tsx:685, ProfileModal.tsx:520 | - |
 | **WEB-3** | A public landing page that explains the product, its privacy stance and shows screenshots, with a sign-in link | `PARTIAL` | apps/web/src/components/auth/AuthModal.tsx:250-320 (marketing hero highlights) | Dedicated standalone public marketing landing page (/index or /landing) not separate from auth screen. |
 | **WEB-4** | Terms of Use page | `DONE` | apps/web/src/components/legal/TermsPage.tsx:1-180, AuthModal.tsx:680, ProfileModal.tsx:510 | - |
-| **WEB-5** | A contact address and an in-app way to send feedback | `PARTIAL` | PrivacyPage.tsx and TermsPage.tsx list privacy@moneytracker.app | No in-app feedback dialog/modal to submit user comments. |
+| **WEB-5** | A contact address and an in-app way to send feedback | `DONE` | apps/web/src/components/common/FeedbackModal.tsx, AppShell.tsx:497,698,799, apps/web/src/test/feedback_modal.test.tsx | Dedicated in-app Send Feedback modal with category, rating, pre-filled diagnostics, mailto dispatch to support@moneytracker.app, and clipboard export. | None |
 | **WEB-6** | A disclaimer that the app is not financial advice and that forecasts are estimates | `DONE` | apps/web/src/components/legal/TermsPage.tsx:85-115 (Section 4 disclaimer) | - |
 | **WEB-7** | A LICENSE file | `DONE` | LICENSE (MIT License) committed to repository root | None |
 | **WEB-8** | API documentation published from the OpenAPI file | `DONE` | apps/api/src/routes/docsRoutes.ts, docs/openapi.yaml, apps/api/test/health.test.ts | Interactive Scalar UI served at /api/docs and /docs; raw OpenAPI 3.1 specification served at /api/openapi.yaml with cache headers. | None |

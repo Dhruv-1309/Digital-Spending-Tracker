@@ -666,17 +666,19 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Accessible via root route / when unauthenticated
 - **How It Will Be Tested:** Component test in legal_routes.test.tsx verifying landing page elements render.
 
-### 27. [WEB-5] In-app user feedback dialog and designated contact address
+### 27. [WEB-5] In-app user feedback dialog and designated contact address [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/common/FeedbackModal.tsx`
   - `apps/web/src/components/layout/AppShell.tsx`
+  - `apps/web/src/test/feedback_modal.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] User can open "Send Feedback" modal from AppShell footer or help section
-  - [ ] Submits feedback or opens mailto: with pre-populated diagnostic details (browser, screen size, app version)
-- **How It Will Be Tested:** Component test verifying feedback modal open, form input, and mailto generation.
+  - [x] Accessible FeedbackModal with category selection, satisfaction sentiment, message, and diagnostic toggle
+  - [x] Accessible from left rail footer, mobile drawer footer, and page footer
+  - [x] Generates pre-populated mailto: link to support@moneytracker.app and supports 1-click clipboard copy
+- **How It Was Tested:** Component test suite in `apps/web/src/test/feedback_modal.test.tsx` (8 tests passing), AppShell test suite (33 tests passing).
 
 ### 28. [WEB-7] Commit formal LICENSE file (MIT / Apache 2.0 / Proprietary as owner specifies) [DONE]
 

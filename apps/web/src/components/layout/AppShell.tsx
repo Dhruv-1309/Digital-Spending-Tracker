@@ -8,6 +8,7 @@ import { logger } from '../../lib/logger';
 import { navigateTo } from '../../lib/routes';
 import { Button } from '../ui/Button';
 import { NavigationTabs } from './NavigationTabs';
+import { FeedbackModal } from '../common/FeedbackModal';
 import { MAIN_NAV_ITEMS } from './navItems';
 import {
   WalletIcon,
@@ -68,6 +69,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
 
   const [isResending, setIsResending] = useState(false);
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const handleResendVerification = async () => {
     try {
@@ -478,7 +480,7 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               <span>Sign out</span>
             </button>
 
-            {/* Legal Links at Bottom of Left Rail */}
+            {/* Legal & Feedback Links at Bottom of Left Rail */}
             <div className="flex items-center justify-center gap-2 pt-2 px-1 text-[11px] text-ink-3 border-t border-line/60">
               <a
                 href="/terms"
@@ -495,6 +497,15 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               >
                 Privacy
               </a>
+              <span>•</span>
+              <button
+                id="feedbackBtn"
+                type="button"
+                onClick={() => setIsFeedbackOpen(true)}
+                className="hover:text-ink hover:underline transition-colors"
+              >
+                Feedback
+              </button>
             </div>
           </div>
         )}
@@ -689,6 +700,18 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
                 >
                   Privacy
                 </a>
+                <span>•</span>
+                <button
+                  id="mobileFeedbackBtn"
+                  type="button"
+                  onClick={() => {
+                    setIsFeedbackOpen(true);
+                    setIsMobileDrawerOpen(false);
+                  }}
+                  className="hover:text-ink hover:underline"
+                >
+                  Feedback
+                </button>
               </div>
             </div>
           </div>
@@ -774,6 +797,14 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
               >
                 Privacy Policy
               </a>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => setIsFeedbackOpen(true)}
+                className="hover:text-ink transition-colors hover:underline font-medium"
+              >
+                Feedback
+              </button>
             </div>
           </footer>
         </div>
@@ -783,6 +814,12 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
           Tablet & Phone Bottom Tab Bar (< 1025px)
           ==================================================================== */}
       <NavigationTabs />
+
+      {/* In-App Feedback Dialog (WEB-5) */}
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+      />
     </div>
   );
 }
