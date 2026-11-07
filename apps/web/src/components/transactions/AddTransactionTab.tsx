@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
 import { AmountInput } from '../ui/AmountInput';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { Dropdown } from '../ui/Dropdown';
@@ -34,8 +35,9 @@ export interface AddTransactionTabProps {
 }
 
 export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
-  const { categories, addTransaction, addCustomCategory, setCurrentTab } = useTracker();
+  const { categories, addTransaction, addCustomCategory, setCurrentTab, setNavigationGuard } = useTracker();
   const { showToast } = useToast();
+  const { showConfirm } = useConfirm();
 
   const amountRef = useRef<HTMLInputElement>(null);
   const getTodayString = () => getLocalDateString();
@@ -65,6 +67,85 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
   const [showCustomCat, setShowCustomCat] = useState<boolean>(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const [initialValues, setInitialValues] = useState({
+    type: 'expense' as TransactionType,
+    amountStr: '',
+    date: getTodayString(),
+    category,
+    paymentMethod,
+    description: '',
+  });
+
+  const isDirty = useMemo(() => {
+    return (
+      amountStr.trim() !== initialValues.amountStr.trim() ||
+      description.trim() !== initialValues.description.trim() ||
+      category !== initialValues.category ||
+      type !== initialValues.type ||
+      paymentMethod !== initialValues.paymentMethod ||
+      date !== initialValues.date ||
+      customCatInput.trim().length > 0
+    );
+  }, [amountStr, description, category, type, paymentMethod, date, customCatInput, initialValues]);
+
+  // Warn before browser tab close / refresh if form is dirty
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty]);
+
+  // Intercept navigation if form is dirty
+  useEffect(() => {
+    if (!setNavigationGuard) return;
+
+    if (isDirty) {
+      setNavigationGuard(async () => {
+        const confirmed = await showConfirm(
+          'You have unsaved changes. Discard?',
+          {
+            title: 'Discard unsaved changes?',
+            confirmText: 'Discard',
+            cancelText: 'Keep editing',
+            variant: 'warning',
+          }
+        );
+        return confirmed;
+      });
+    } else {
+      setNavigationGuard(null);
+    }
+
+    return () => {
+      setNavigationGuard(null);
+    };
+  }, [isDirty, setNavigationGuard, showConfirm]);
+
+  const handleCancel = useCallback(async () => {
+    if (isDirty) {
+      const confirmed = await showConfirm(
+        'You have unsaved changes. Discard?',
+        {
+          title: 'Discard unsaved changes?',
+          confirmText: 'Discard',
+          cancelText: 'Keep editing',
+          variant: 'warning',
+        }
+      );
+      if (!confirmed) return;
+    }
+    setNavigationGuard?.(null);
+    setCurrentTab('transactions');
+  }, [isDirty, showConfirm, setNavigationGuard, setCurrentTab]);
 
   useEffect(() => {
     amountRef.current?.focus();
@@ -185,6 +266,18 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
       });
 
       showToast('Transaction saved successfully.', 'success');
+
+      if (setNavigationGuard) {
+        setNavigationGuard(null);
+      }
+      setInitialValues({
+        type: 'expense',
+        amountStr: '',
+        date: getTodayString(),
+        category,
+        paymentMethod,
+        description: '',
+      });
 
       // Reset
       setAmountStr('');
@@ -367,17 +460,27 @@ export function AddTransactionTab({ onSuccess }: AddTransactionTabProps) {
             />
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-2">
+          {/* Submit & Cancel Buttons */}
+          <div className="pt-2 flex gap-3">
             <Button
               id="submitTransactionBtn"
               type="submit"
               variant="primary"
               size="lg"
               loading={isSubmitting}
-              className="w-full justify-center"
+              className="flex-1 justify-center"
             >
               Save Transaction
+            </Button>
+            <Button
+              id="cancelTransactionBtn"
+              type="button"
+              variant="ghost"
+              size="lg"
+              onClick={handleCancel}
+              className="justify-center"
+            >
+              Cancel
             </Button>
           </div>
         </form>

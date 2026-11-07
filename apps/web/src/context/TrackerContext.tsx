@@ -51,7 +51,23 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     return 'dashboard';
   });
 
-  const setCurrentTab = useCallback((tab: NavTab) => {
+  const navigationGuardRef = useRef<(() => Promise<boolean> | boolean) | null>(null);
+
+  const setNavigationGuard = useCallback((guard: (() => Promise<boolean> | boolean) | null) => {
+    navigationGuardRef.current = guard;
+  }, []);
+
+  const currentTabStateRef = useRef<NavTab>(currentTab);
+  useEffect(() => {
+    currentTabStateRef.current = currentTab;
+  }, [currentTab]);
+
+  const setCurrentTab = useCallback(async (tab: NavTab) => {
+    if (tab === currentTabStateRef.current) return;
+    if (navigationGuardRef.current) {
+      const canProceed = await navigationGuardRef.current();
+      if (!canProceed) return;
+    }
     setCurrentTabState(tab);
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
@@ -107,7 +123,20 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const handleUrlChange = () => {
+    const handleUrlChange = async () => {
+      if (navigationGuardRef.current) {
+        const canProceed = await navigationGuardRef.current();
+        if (!canProceed) {
+          const current = currentTabStateRef.current;
+          const target = current === 'dashboard' ? '/' : `/${current}`;
+          try {
+            window.history.pushState({}, '', target);
+          } catch {
+            window.location.hash = current === 'dashboard' ? '' : current;
+          }
+          return;
+        }
+      }
       const tab = getTabFromRoute(window.location.pathname, window.location.hash, window.location.search);
       if (tab) {
         setCurrentTabState(tab);
@@ -1264,6 +1293,7 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
       value={{
         currentTab,
         setCurrentTab,
+        setNavigationGuard,
         transactions,
         trashTransactions,
         activityHistory,

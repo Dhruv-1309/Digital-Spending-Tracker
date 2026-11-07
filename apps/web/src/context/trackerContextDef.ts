@@ -12,6 +12,7 @@ import type {
 export interface TrackerContextValue {
   currentTab: NavTab;
   setCurrentTab: (tab: NavTab) => void;
+  setNavigationGuard?: (guard: (() => Promise<boolean> | boolean) | null) => void;
   transactions: Transaction[];
   trashTransactions?: Transaction[];
   activityHistory?: ActivityLogItem[];

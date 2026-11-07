@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{398.5}{499} = \mathbf{79.9\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{400.5}{499} = \mathbf{80.3\%}$$
 
-- **Current Readiness Score:** **79.9%** (Baseline: 56.8%)
+- **Current Readiness Score:** **80.3%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **398.5 points**
+- **Earned Weight:** **400.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **133** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **134** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **10** |
-| **MISSING** | Not implemented | **27** |
+| **MISSING** | Not implemented | **26** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -38,7 +38,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 20D / 0P / 1M  | **98.5%** | 65.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 17D / 0P / 2M (3 other) | **81.2%** | 56.0 / 69 |
-| **UX** | Frontend, UX and Accessibility | 24 | 18D / 1P / 4M (1 other) | **84.5%** | 46.5 / 55 |
+| **UX** | Frontend, UX and Accessibility | 24 | 19D / 1P / 3M (1 other) | **88.2%** | 48.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 8D / 1P / 3M (3 other) | **58.8%** | 20.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
@@ -208,7 +208,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **UX-17** | Microcopy is specific and consistent, with no placeholder text or generic marketing phrases | `DONE` | Verified across UI components and legal copy | - |
 | **UX-18** | Complex metrics (Z-score, 7-day SMA, runway, confidence) have plain-language explanations in the interface | `DONE` | apps/web/src/components/analytics/analyticsInsights.ts:1-120 | - |
 | **UX-19** | Inputs use appropriate mobile keyboards (inputmode, type) | `DONE` | AmountInput.tsx:40 (inputMode="decimal"), AuthModal.tsx (type="email", type="password") | - |
-| **UX-20** | A warning appears before leaving a form with unsaved changes | `MISSING` | TransactionSlideOver.tsx, AddTransactionTab.tsx | No confirmation dialog or beforeunload hook triggered when abandoning dirty forms. |
+| **UX-20** | A warning appears before leaving a form with unsaved changes | `DONE` | TransactionSlideOver.tsx, AddTransactionTab.tsx, TrackerContext.tsx | Dirty form detection checks amount/category/method/date/description changes. Prompts confirmation dialog on drawer close, tab navigation, or Cancel, and registers beforeunload listener. Verified by 10 unit tests in dirty_form_warning.test.tsx. |
 | **UX-21** | The last-used filters, sort and category are remembered | `MISSING` | TransactionsTab.tsx resets state on component remount | Filter and sort preferences are not persisted to localStorage. |
 | **UX-22** | Keyboard shortcuts are listed in a help dialog | `PARTIAL` | AppShell.tsx:118-174 implements 'N', 'Ctrl+B', 'Escape' shortcuts | No help dialog or shortcut modal displaying keybindings to the user. |
 | **UX-23** | Dark theme | `MISSING` | tokens.css defines warm light theme palette | Dark mode tokens and theme toggle are not implemented. |

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { m, AnimatePresence } from 'motion/react';
 import { useTracker } from '../../hooks/useTracker';
 import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
 import { AmountInput } from '../ui/AmountInput';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { Dropdown } from '../ui/Dropdown';
@@ -60,6 +61,7 @@ export function TransactionSlideOver({
 }: TransactionSlideOverProps) {
   const { categories, addTransaction, updateTransaction, addCustomCategory } = useTracker();
   const { showToast } = useToast();
+  const { showConfirm } = useConfirm();
 
   const isEdit = Boolean(initialData);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -80,6 +82,35 @@ export function TransactionSlideOver({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  const [initialValues, setInitialValues] = useState<{
+    type: TransactionType;
+    amountStr: string;
+    date: string;
+    category: string;
+    paymentMethod: string;
+    description: string;
+  }>({
+    type: 'expense',
+    amountStr: '',
+    date: '',
+    category: '',
+    paymentMethod: 'card',
+    description: '',
+  });
+
+  const isDirty = useMemo(() => {
+    if (!isOpen) return false;
+    return (
+      amountStr.trim() !== initialValues.amountStr.trim() ||
+      description.trim() !== initialValues.description.trim() ||
+      category !== initialValues.category ||
+      type !== initialValues.type ||
+      paymentMethod !== initialValues.paymentMethod ||
+      date !== initialValues.date ||
+      customCatInput.trim().length > 0
+    );
+  }, [isOpen, amountStr, description, category, type, paymentMethod, date, customCatInput, initialValues]);
+
   // Check window width for motion direction
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 641;
 
@@ -95,38 +126,103 @@ export function TransactionSlideOver({
     if (!isOpen) return;
 
     if (initialData) {
-      setType(initialData.type);
-      setAmountStr(String(initialData.amount));
+      const initVals = {
+        type: initialData.type,
+        amountStr: String(initialData.amount),
+        date: initialData.date,
+        category: initialData.category,
+        paymentMethod: initialData.paymentMethod || 'card',
+        description: initialData.description || '',
+      };
+      setInitialValues(initVals);
+      setType(initVals.type);
+      setAmountStr(initVals.amountStr);
       setNumericAmount(initialData.amount);
-      setDate(initialData.date);
-      setCategory(initialData.category);
-      setPaymentMethod(initialData.paymentMethod || 'card');
-      setDescription(initialData.description || '');
+      setDate(initVals.date);
+      setCategory(initVals.category);
+      setPaymentMethod(initVals.paymentMethod);
+      setDescription(initVals.description);
       setErrors({});
       setShowCustomCat(false);
       setCustomCatInput('');
     } else {
       const initialType: TransactionType = 'expense';
+      let rememberedCat = '';
+      let rememberedMethod = 'card';
+      try {
+        rememberedCat = sessionStorage.getItem(LAST_CAT_EXPENSE) || '';
+        rememberedMethod = sessionStorage.getItem(LAST_METHOD_EXPENSE) || 'card';
+      } catch (err: unknown) {
+        logger.warn('Failed to read remembered category from sessionStorage in slide-over', err, { action: 'initSlideOver' });
+      }
+      const today = getTodayString();
+      const initVals = {
+        type: initialType,
+        amountStr: '',
+        date: today,
+        category: rememberedCat,
+        paymentMethod: rememberedMethod,
+        description: '',
+      };
+      setInitialValues(initVals);
       setType(initialType);
       setAmountStr('');
       setNumericAmount(0);
-      setDate(getTodayString());
-      try {
-        const rememberedCat = sessionStorage.getItem(LAST_CAT_EXPENSE) || '';
-        const rememberedMethod = sessionStorage.getItem(LAST_METHOD_EXPENSE) || 'card';
-        setCategory(rememberedCat);
-        setPaymentMethod(rememberedMethod);
-      } catch (err: unknown) {
-        logger.warn('Failed to read remembered category from sessionStorage in slide-over', err, { action: 'initSlideOver' });
-        setCategory('');
-        setPaymentMethod('card');
-      }
+      setDate(today);
+      setCategory(rememberedCat);
+      setPaymentMethod(rememberedMethod);
       setDescription('');
       setErrors({});
       setShowCustomCat(false);
       setCustomCatInput('');
     }
   }, [isOpen, initialData]);
+
+  // Return focus to trigger on close
+  const forceClose = useCallback(() => {
+    onClose();
+    setTimeout(() => {
+      triggerRef.current?.focus();
+    }, 50);
+  }, [onClose]);
+
+  const handleClose = useCallback(async () => {
+    if (isDirty) {
+      const confirmed = await showConfirm(
+        'You have unsaved changes. Discard?',
+        {
+          title: 'Discard unsaved changes?',
+          confirmText: 'Discard',
+          cancelText: 'Keep editing',
+          variant: 'warning',
+        }
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+    forceClose();
+  }, [isDirty, showConfirm, forceClose]);
+
+  const handleCloseRef = useRef(handleClose);
+  useEffect(() => {
+    handleCloseRef.current = handleClose;
+  }, [handleClose]);
+
+  // Warn before browser tab close / refresh if form is dirty
+  useEffect(() => {
+    if (!isOpen || !isDirty) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isOpen, isDirty]);
 
   // Focus trap and auto-focus first input
   useEffect(() => {
@@ -139,7 +235,7 @@ export function TransactionSlideOver({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        void handleCloseRef.current();
         return;
       }
 
@@ -167,15 +263,7 @@ export function TransactionSlideOver({
       clearTimeout(timer);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
-
-  // Return focus to trigger on close
-  const handleClose = useCallback(() => {
-    onClose();
-    setTimeout(() => {
-      triggerRef.current?.focus();
-    }, 50);
-  }, [onClose]);
+  }, [isOpen]);
 
   // Available categories for selected type
   const availableCategories = useMemo(() => {
@@ -310,7 +398,7 @@ export function TransactionSlideOver({
       }
 
       onSuccess?.();
-      handleClose();
+      forceClose();
     } catch (err: unknown) {
       showToast(toUserFriendlyError(err, 'Failed to save transaction. Please try again.'), 'error');
     } finally {
@@ -519,17 +607,27 @@ export function TransactionSlideOver({
                 />
               </div>
 
-              {/* Submit Button */}
-              <div className="pt-4 border-t border-line">
+              {/* Submit & Cancel Buttons */}
+              <div className="pt-4 border-t border-line flex gap-3">
                 <Button
                   id="txFormSubmitBtn"
                   type="submit"
                   variant="primary"
                   size="lg"
                   loading={isSubmitting}
-                  className="w-full justify-center"
+                  className="flex-1 justify-center"
                 >
                   {isEdit ? 'Update Transaction' : 'Save Transaction'}
+                </Button>
+                <Button
+                  id="txFormCancelBtn"
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  onClick={handleClose}
+                  className="justify-center"
+                >
+                  Cancel
                 </Button>
               </div>
             </form>

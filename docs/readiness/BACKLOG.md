@@ -1177,17 +1177,23 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 8 automated tests in `apps/web/src/test/onboarding_stepper.test.tsx` asserting auto-triggering on zero-transaction accounts, sequential stepping through 3 steps, instant loading of 8 realistic sample transactions + 4 autopay plans, and persistence of dismissal in localStorage. Full test suite passing (684 tests).
 
-### 19. [UX-20] Dirty form warning before navigating away or closing drawer with unsaved changes
+### 19. [UX-20] Dirty form warning before navigating away or closing drawer with unsaved changes [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/components/transactions/TransactionSlideOver.tsx`
   - `apps/web/src/components/transactions/AddTransactionTab.tsx`
+  - `apps/web/src/context/TrackerContext.tsx`
+  - `apps/web/src/context/trackerContextDef.ts`
+  - `apps/web/src/test/dirty_form_warning.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Closing drawer or switching tabs with partially filled form prompts "You have unsaved changes. Discard?"
-  - [ ] Prevents accidental loss of transaction entry input
-- **How It Will Be Tested:** Component test typing into form, triggering close, and asserting confirm dialog prompt.
+  - [x] Closing drawer or switching tabs with partially filled form prompts "You have unsaved changes. Discard?"
+  - [x] Prevents accidental loss of transaction entry input
+  - [x] Handles backdrop click, close 'X' button, Escape key, and Cancel button in TransactionSlideOver
+  - [x] Adds navigation guard in TrackerContext and beforeunload event listeners protecting against tab/browser close or refresh
+- **How It Was Tested:**
+  - 10 automated unit tests in `apps/web/src/test/dirty_form_warning.test.tsx` asserting clean form close without prompt, dirty form warning on close/backdrop/Escape/Cancel, rejection maintaining form state, confirmation discarding and closing, beforeunload listener attachment, and seamless submit without warning. Full test suite passing (694 tests).
 
 ### 20. [PERF-7] Preload display font (Bricolage Grotesque) in HTML head [DONE]
 
