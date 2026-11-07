@@ -118,10 +118,14 @@ export function ConfirmDialog({
             aria-describedby={`${id}-message`}
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            exit={{
+              opacity: 0,
+              y: 12,
+              scale: 0.98,
+              transition: { duration: 0.22, ease: EASING.in },
+            }}
             transition={{
               duration: 0.32,
-              exit: { duration: 0.22, ease: EASING.in },
               ease: EASING.out,
             }}
             className="relative z-10 w-full max-w-md rounded-card bg-surface border border-line shadow-3 p-6 sm:p-7 flex flex-col gap-5 focus:outline-none"

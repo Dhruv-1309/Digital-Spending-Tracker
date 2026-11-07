@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{347.5}{499} = \mathbf{69.6\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{349.0}{499} = \mathbf{69.9\%}$$
 
-- **Current Readiness Score:** **69.6%** (Baseline: 56.8%)
+- **Current Readiness Score:** **69.9%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **347.5 points**
+- **Earned Weight:** **349.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **99** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **35** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **100** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **34** |
 | **MISSING** | Not implemented | **36** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -37,7 +37,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **CORE** | Core Behavior and Data Correctness | 22 | 19D / 2P / 0M (1 other) | **95.5%** | 63.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 11D / 1P / 1M (1 other) | **87.5%** | 35.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
-| **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
+| **SEC** | Security and Privacy | 22 | 12D / 3P / 4M (3 other) | **68.8%** | 47.5 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
 | **QA** | Testing and Code Quality | 18 | 9D / 4P / 4M (1 other) | **67.4%** | 31.0 / 46 |
@@ -171,7 +171,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **SEC-7** | Database rules or query scoping tested with negative tests (another user's id, missing auth, tampered ids) | `DONE` | apps/api/test/isolation.test.ts:1-75, apps/api/test/auth.test.ts:1-80 | - |
 | **SEC-8** | No sensitive data in logs, URLs or analytics; tokens are not kept in localStorage where avoidable | `DONE` | apps/api/src/utils/logger.ts, apps/api/src/middleware/requestId.ts, apps/web/src/services/apiClient.ts | - |
 | **SEC-9** | A privacy policy states accurately what is stored, where, for how long, and how to delete it | `DONE` | apps/web/src/components/legal/PrivacyPage.tsx:1-176, apps/web/src/test/legal_routes.test.tsx | - |
-| **SEC-10** | Dependency audit has no high or critical findings, and automated update PRs are enabled | `PARTIAL` | npm audit output (24 vulnerabilities: 12 high, 11 moderate, 1 low) | Vulnerable transitive packages in @grpc/grpc-js, brace-expansion, minimatch, etc. need resolution; Dependabot not set up. |
+| **SEC-10** | Dependency audit has no high or critical findings, and automated update PRs are enabled | `DONE` | package.json:22-35, .github/dependabot.yml:1-25 | Resolved all high and critical vulnerabilities (0 high, 0 critical in npm audit); automated weekly Dependabot updates configured for npm workspaces and GitHub Actions. |
 | **SEC-11** | Firebase API key restrictions and authorised domains are configured | `NEEDS-USER` | apps/web/.env.example | Requires configuration in Google Cloud & Firebase Console. |
 | **SEC-12** | Every input field has a length limit, enforced on the server as well | `PARTIAL` | packages/shared/src/schemas/*.ts | CreateTransactionSchema.description and CreateAutopaySchema.name lack .max(...) length caps. |
 | **SEC-13** | CSV import is size and type limited and parsed so a huge file cannot freeze the tab | `PARTIAL` | apps/web/src/components/transactions/TransactionsTab.tsx:394-398 | No file size limit check before reading file; parser runs synchronously without chunking. |

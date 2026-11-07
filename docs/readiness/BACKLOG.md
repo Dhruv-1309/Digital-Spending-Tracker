@@ -498,7 +498,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Configures Prisma query execution timeout to prevent hanging connections during network latency
 - **How It Will Be Tested:** Unit test verifying Prisma client instantiation options and connection parameters.
 
-### 16. [SEC-10] Dependency vulnerability remediation (npm audit fix) and automated Dependabot updates
+### 16. [SEC-10] Dependency vulnerability remediation (npm audit fix) and automated Dependabot updates `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `M` | **Category:** `SEC`
 - **Dependencies:** `QA-1`
@@ -507,9 +507,9 @@ Expected of a production-grade personal financial application. These ensure robu
   - `package-lock.json`
   - `.github/dependabot.yml`
 - **Acceptance Criteria:**
-  - [ ] Remediate high/critical vulnerabilities reported in npm audit without breaking runtime dependencies
-  - [ ] Add .github/dependabot.yml configured for weekly npm workspace updates
-  - [ ] npm audit reports 0 high or critical vulnerabilities
+  - [x] Remediate high/critical vulnerabilities reported in npm audit without breaking runtime dependencies
+  - [x] Add .github/dependabot.yml configured for weekly npm workspace updates
+  - [x] npm audit reports 0 high or critical vulnerabilities
 - **How It Will Be Tested:** Run `npm audit` and assert 0 high/critical issues.
 
 ### 17. [SEC-12] Server and client length limits on all text fields (descriptions, names, categories)

@@ -158,10 +158,13 @@ export function DayOfMonthPicker({
             aria-label="Day of month selector"
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
+            exit={{
+              opacity: 0,
+              scale: 0.96,
+              transition: { duration: 0.11, ease: EASING.in },
+            }}
             transition={{
               duration: 0.16,
-              exit: { duration: 0.11, ease: EASING.in },
               ease: EASING.out,
             }}
             className="absolute z-50 left-0 top-full mt-1.5 w-72 sm:w-80 rounded-card bg-surface border border-line shadow-2 p-3.5 focus:outline-none"

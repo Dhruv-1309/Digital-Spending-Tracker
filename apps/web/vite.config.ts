@@ -1,9 +1,5 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { fileURLToPath } from 'url'
-import path from 'path'
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,11 +11,6 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
-      react: path.resolve(__dirname, 'node_modules/react'),
-      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-    },
     dedupe: ['react', 'react-dom'],
   },
   build: {

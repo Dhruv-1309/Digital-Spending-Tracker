@@ -256,10 +256,13 @@ export function Dropdown({
             aria-activedescendant={selectedOption ? `opt-${selectedOption.value}` : undefined}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
+            exit={{
+              opacity: 0,
+              scale: 0.96,
+              transition: { duration: 0.11, ease: EASING.in },
+            }}
             transition={{
               duration: 0.16,
-              exit: { duration: 0.11, ease: EASING.in },
               ease: EASING.out,
             }}
             style={{
