@@ -121,14 +121,163 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
   const listTopRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
-  // Filters & Pagination State
-  const [searchQuery, setSearchQuery] = useState('');
+  // Filters & Pagination State (restored from URL search params for deep-linking, UX-12)
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('q') || params.get('search') || '';
+  });
   const debouncedSearchQuery = useDebounce(searchQuery, searchDebounceMs);
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [monthFilter, setMonthFilter] = useState('all');
-  const [sortBy, setSortBy] = useState<TransactionSortOption>('date-desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [typeFilter, setTypeFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('type') || 'all';
+  });
+  const [monthFilter, setMonthFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('month') || 'all';
+  });
+  const [sortBy, setSortBy] = useState<TransactionSortOption>(() => {
+    if (typeof window === 'undefined') return 'date-desc';
+    const params = new URLSearchParams(window.location.search);
+    const s = params.get('sort');
+    if (
+      s === 'date-asc' ||
+      s === 'date-desc' ||
+      s === 'amount-asc' ||
+      s === 'amount-desc' ||
+      s === 'category-asc' ||
+      s === 'month-desc' ||
+      s === 'month-asc'
+    ) {
+      return s;
+    }
+    return 'date-desc';
+  });
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window === 'undefined') return 1;
+    const params = new URLSearchParams(window.location.search);
+    const p = parseInt(params.get('page') || '1', 10);
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  });
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+
+  // URL search params sync (UX-12)
+  const updateUrlParams = useCallback(
+    (
+      newParams: {
+        month?: string;
+        page?: number;
+        type?: string;
+        search?: string;
+        sort?: string;
+      },
+      replace = false,
+    ) => {
+      if (typeof window === 'undefined') return;
+      try {
+        const url = new URL(window.location.href);
+        const searchParams = url.searchParams;
+
+        if (newParams.month !== undefined) {
+          if (newParams.month === 'all' || !newParams.month) {
+            searchParams.delete('month');
+          } else {
+            searchParams.set('month', newParams.month);
+          }
+        }
+
+        if (newParams.page !== undefined) {
+          if (newParams.page <= 1) {
+            searchParams.delete('page');
+          } else {
+            searchParams.set('page', String(newParams.page));
+          }
+        }
+
+        if (newParams.type !== undefined) {
+          if (newParams.type === 'all' || !newParams.type) {
+            searchParams.delete('type');
+          } else {
+            searchParams.set('type', newParams.type);
+          }
+        }
+
+        if (newParams.search !== undefined) {
+          if (!newParams.search.trim()) {
+            searchParams.delete('q');
+            searchParams.delete('search');
+          } else {
+            searchParams.set('q', newParams.search.trim());
+          }
+        }
+
+        if (newParams.sort !== undefined) {
+          if (newParams.sort === 'date-desc' || !newParams.sort) {
+            searchParams.delete('sort');
+          } else {
+            searchParams.set('sort', newParams.sort);
+          }
+        }
+
+        // If on root path and using query param routing or tab param was present
+        if (url.pathname === '/' && !searchParams.has('tab')) {
+          searchParams.set('tab', 'transactions');
+        }
+
+        const newSearch = searchParams.toString();
+        const newPath = `${url.pathname}${newSearch ? `?${newSearch}` : ''}${url.hash}`;
+        const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+        if (newPath !== currentPath) {
+          if (replace) {
+            window.history.replaceState({}, '', newPath);
+          } else {
+            window.history.pushState({}, '', newPath);
+          }
+        }
+      } catch {
+        // ignore navigation history error
+      }
+    },
+    [],
+  );
+
+  // Sync debounced search with URL (replaceState to avoid polluting history on every keystroke)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const urlQuery = params.get('q') || params.get('search') || '';
+    if (debouncedSearchQuery !== urlQuery) {
+      updateUrlParams({ search: debouncedSearchQuery }, true);
+    }
+  }, [debouncedSearchQuery, updateUrlParams]);
+
+  // Handle browser Back / Forward popstate
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlMonth = params.get('month') || 'all';
+      const urlPage = Math.max(1, parseInt(params.get('page') || '1', 10) || 1);
+      const urlType = params.get('type') || 'all';
+      const urlSearch = params.get('q') || params.get('search') || '';
+      const urlSort = (params.get('sort') as TransactionSortOption) || 'date-desc';
+
+      setMonthFilter(urlMonth);
+      setCurrentPage(urlPage);
+      setTypeFilter(urlType);
+      setSearchQuery(urlSearch);
+      setSortBy(urlSort);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   // Slide-over modal state (Add / Edit)
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
@@ -292,8 +441,9 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
   // Pagination page change: cross-fades and scrolls list top into view
   const handlePageChange = useCallback((newPage: number) => {
     setCurrentPage(newPage);
-    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
+    updateUrlParams({ page: newPage });
+    listTopRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }, [updateUrlParams]);
 
   // Open Add slide-over
   const handleOpenAdd = (e: React.MouseEvent<HTMLElement>) => {
@@ -315,7 +465,8 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
     setTypeFilter('all');
     setMonthFilter('all');
     setCurrentPage(1);
-  }, []);
+    updateUrlParams({ search: '', type: 'all', month: 'all', page: 1 });
+  }, [updateUrlParams]);
 
   // Export handlers
   const handleExport = (format: 'csv-detailed' | 'csv-basic' | 'json-backup') => {
@@ -803,6 +954,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                     onClick={() => {
                       setSearchQuery('');
                       setCurrentPage(1);
+                      updateUrlParams({ search: '', page: 1 });
                     }}
                     aria-label="Clear search"
                     className="p-1 rounded-chip text-ink-3 hover:text-ink hover:bg-surface-2 transition-colors duration-fast"
@@ -825,6 +977,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                 onChange={(val) => {
                   setTypeFilter(val);
                   setCurrentPage(1);
+                  updateUrlParams({ type: val, page: 1 });
                 }}
                 options={[
                   { value: 'all', label: 'All' },
@@ -842,6 +995,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                 onChange={(val) => {
                   setMonthFilter(val);
                   setCurrentPage(1);
+                  updateUrlParams({ month: val, page: 1 });
                 }}
                 options={monthOptions}
                 placeholder="All Months"
@@ -856,6 +1010,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                 onChange={(val) => {
                   setSortBy(val as TransactionSortOption);
                   setCurrentPage(1);
+                  updateUrlParams({ sort: val, page: 1 });
                 }}
                 options={[
                   { value: 'date-desc', label: 'Date: Newest' },
@@ -884,6 +1039,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                   onClick={() => {
                     setSearchQuery('');
                     setCurrentPage(1);
+                    updateUrlParams({ search: '', page: 1 });
                   }}
                   aria-label="Remove search filter"
                   className="hover:text-danger focus-visible:outline-none"
@@ -901,6 +1057,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                   onClick={() => {
                     setTypeFilter('all');
                     setCurrentPage(1);
+                    updateUrlParams({ type: 'all', page: 1 });
                   }}
                   aria-label="Remove type filter"
                   className="hover:text-danger focus-visible:outline-none"
@@ -918,6 +1075,7 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                   onClick={() => {
                     setMonthFilter('all');
                     setCurrentPage(1);
+                    updateUrlParams({ month: 'all', page: 1 });
                   }}
                   aria-label="Remove month filter"
                   className="hover:text-danger focus-visible:outline-none"

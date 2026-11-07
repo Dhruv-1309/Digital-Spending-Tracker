@@ -21,7 +21,7 @@ import { isOnline as checkOnline, subscribeNetworkStatus } from '../services/net
 import { DEFAULT_CATEGORIES } from '../lib/categories.js';
 import { toUserFriendlyError } from '../lib/errorMessages.js';
 import { logger } from '../lib/logger.js';
-import { getTabFromRoute } from '../lib/routes.js';
+import { getTabFromRoute, resolveAppRoute } from '../lib/routes.js';
 import { rupeesToPaise } from '@moneytracker/shared';
 import {
   getOfflineTrash,
@@ -54,10 +54,50 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
   const setCurrentTab = useCallback((tab: NavTab) => {
     setCurrentTabState(tab);
     if (typeof window !== 'undefined') {
-      const targetPath = tab === 'dashboard' ? '/' : `/${tab}`;
-      if (window.location.pathname !== targetPath && window.location.hash !== `#${tab}`) {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has('redirect')) {
+        searchParams.delete('redirect');
+      }
+
+      // If query-based tab parameter is in use, update it
+      if (searchParams.has('tab')) {
+        if (tab === 'dashboard') {
+          searchParams.delete('tab');
+        } else {
+          searchParams.set('tab', tab);
+        }
+        // Changing tabs clears previous tab-specific query parameters
+        searchParams.delete('month');
+        searchParams.delete('page');
+        searchParams.delete('type');
+        searchParams.delete('q');
+        searchParams.delete('search');
+        searchParams.delete('sort');
+
+        const qs = searchParams.toString();
+        const target = qs ? `/?${qs}` : '/';
         try {
-          window.history.pushState({}, '', targetPath);
+          window.history.pushState({}, '', target);
+        } catch {
+          window.location.hash = tab === 'dashboard' ? '' : tab;
+        }
+        return;
+      }
+
+      const targetPath = tab === 'dashboard' ? '/' : `/${tab}`;
+      searchParams.delete('month');
+      searchParams.delete('page');
+      searchParams.delete('type');
+      searchParams.delete('q');
+      searchParams.delete('search');
+      searchParams.delete('sort');
+
+      const qs = searchParams.toString();
+      const target = qs ? `${targetPath}?${qs}` : targetPath;
+
+      if (window.location.pathname !== targetPath || window.location.search !== (qs ? `?${qs}` : '')) {
+        try {
+          window.history.pushState({}, '', target);
         } catch {
           window.location.hash = tab === 'dashboard' ? '' : tab;
         }
@@ -71,6 +111,8 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
       const tab = getTabFromRoute(window.location.pathname, window.location.hash, window.location.search);
       if (tab) {
         setCurrentTabState(tab);
+      } else if (resolveAppRoute(window.location.pathname, window.location.hash) === null) {
+        setCurrentTabState('dashboard');
       }
     };
     window.addEventListener('popstate', handleUrlChange);

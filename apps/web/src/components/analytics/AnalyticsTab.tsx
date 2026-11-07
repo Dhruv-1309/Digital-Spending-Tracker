@@ -111,11 +111,29 @@ export function AnalyticsTab() {
 
   const [preset, setPreset] = useState<AnalyticsPreset>(null);
   const [period, setPeriod] = useState<AnalyticsPeriod>('monthly');
-  const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
+  const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('month') || null;
+  });
   const [userSelectedYear, setUserSelectedYear] = useState<string | null>(null);
 
   const selectedMonth = userSelectedMonth ?? defaultMonthYear.month;
   const selectedYear = userSelectedYear ?? defaultMonthYear.year;
+
+  // Sync month with browser Back / Forward (popstate, UX-12)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const m = params.get('month');
+      setUserSelectedMonth(m || null);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   // Category Doughnut <-> Legend bidirectional hover state
   const [hoveredCategoryIndex, setHoveredCategoryIndex] = useState<number | null>(null);
@@ -146,6 +164,24 @@ export function AnalyticsTab() {
   const handleMonthChange = (val: string) => {
     setPreset(null);
     setUserSelectedMonth(val);
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        if (val) {
+          url.searchParams.set('month', val);
+        } else {
+          url.searchParams.delete('month');
+        }
+        if (url.pathname === '/' && !url.searchParams.has('tab')) {
+          url.searchParams.set('tab', 'analytics');
+        }
+        const newSearch = url.searchParams.toString();
+        const target = `${url.pathname}${newSearch ? `?${newSearch}` : ''}${url.hash}`;
+        window.history.pushState({}, '', target);
+      } catch {
+        // ignore history state error
+      }
+    }
   };
 
   const handleYearChange = (val: string) => {

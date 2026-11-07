@@ -245,11 +245,13 @@ describe('Phase 5: Transactions Redesign Screen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    window.history.replaceState({}, '', '/');
     // Mock scrollIntoView
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
   afterEach(() => {
+    window.history.replaceState({}, '', '/');
     vi.restoreAllMocks();
   });
 

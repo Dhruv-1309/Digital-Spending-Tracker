@@ -1131,17 +1131,21 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - Complete architectural review against PRD v3.0, verified alignment with Zod schemas, isolation tests, rate limiters, CSP, and Turnstile integration.
 
-### 16. [UX-12] Reflect active tab, month filter, and pagination in URL search params
+### 16. [UX-12] Reflect active tab, month filter, and pagination in URL search params [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `UX`
 - **Dependencies:** None
-- **Files Likely Touched:**
-  - `apps/web/src/components/layout/AppLayout.tsx`
+- **Files Touched:**
+  - `apps/web/src/context/TrackerContext.tsx`
   - `apps/web/src/components/transactions/TransactionsTab.tsx`
+  - `apps/web/src/components/analytics/AnalyticsTab.tsx`
+  - `apps/web/src/test/url_search_params.test.tsx`
+  - `apps/web/src/test/transactions_redesign.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Switching tabs updates URL hash/query (?tab=transactions&month=2026-11&page=2)
-  - [ ] Browser Back and Forward buttons navigate between previous filter/tab states naturally
-- **How It Will Be Tested:** Component test verifying history.pushState calls on filter change.
+  - [x] Switching tabs updates URL hash/query (?tab=transactions&month=2026-11&page=2)
+  - [x] Browser Back and Forward buttons navigate between previous filter/tab states naturally
+- **How It Was Tested:**
+  - Added 9 automated unit and component tests in `apps/web/src/test/url_search_params.test.tsx` testing URL param hydration (?month, ?page, ?type, ?q), `pushState` on filter and pagination changes, and `popstate` restoration. Full test suite passing (664 tests).
 
 ### 17. [UX-13] Dynamic document.title updates and route-change accessible focus management
 
