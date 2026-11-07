@@ -35,7 +35,7 @@ export interface BudgetStatus {
   percentSpent: number;
   clampedPercent: number;
   remaining: number;
-  statusChip: 'Not set' | 'On track' | 'Near limit' | 'Over budget';
+  statusChip: 'Not set' | 'On track' | 'Near limit' | 'At limit' | 'Over budget';
   alertLevel: BudgetAlertLevel;
   metaText: string;
 }
@@ -69,6 +69,17 @@ export function evaluateBudgetStatus(
       statusChip: 'Over budget',
       alertLevel: 'critical',
       metaText: `${formatCurrency(overBy)} over your monthly limit!`,
+    };
+  }
+
+  if (currentSpent === limit) {
+    return {
+      percentSpent: 100,
+      clampedPercent: 100,
+      remaining: 0,
+      statusChip: 'At limit',
+      alertLevel: 'critical',
+      metaText: 'You have reached your monthly limit.',
     };
   }
 

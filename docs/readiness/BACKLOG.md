@@ -371,7 +371,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] If not undone, transaction proceeds to soft-delete
 - **How It Will Be Tested:** Component test simulating delete, clicking Undo in toast, and asserting transaction reappears.
 
-### 6. [CORE-10] Exact boundary evaluations for budget thresholds (just below, at threshold, at limit, over limit)
+### 6. [CORE-10] Exact boundary evaluations for budget thresholds (just below, at threshold, at limit, over limit) `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `CORE-2`

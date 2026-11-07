@@ -54,4 +54,62 @@ describe('budget', () => {
     expect(overBudget.clampedPercent).toBe(100);
     expect(overBudget.metaText).toContain('over your monthly limit');
   });
+
+  describe('exact budget threshold boundary evaluations (CORE-10, QA-2)', () => {
+    const limit = 10000;
+    const threshold = 80;
+
+    it('evaluates exactly 1 rupee below warning threshold (7,999 / 10,000) as On track', () => {
+      const res = evaluateBudgetStatus(7999, limit, threshold);
+      expect(res.statusChip).toBe('On track');
+      expect(res.alertLevel).toBe('none');
+      expect(res.remaining).toBe(2001);
+      expect(res.percentSpent).toBe(79.99);
+    });
+
+    it('evaluates exactly at warning threshold (8,000 / 10,000) as Near limit with warning', () => {
+      const res = evaluateBudgetStatus(8000, limit, threshold);
+      expect(res.statusChip).toBe('Near limit');
+      expect(res.alertLevel).toBe('warning');
+      expect(res.remaining).toBe(2000);
+      expect(res.percentSpent).toBe(80);
+      expect(res.metaText).toContain('80% alert reached');
+    });
+
+    it('evaluates exactly 1 rupee above warning threshold (8,001 / 10,000) as Near limit with warning', () => {
+      const res = evaluateBudgetStatus(8001, limit, threshold);
+      expect(res.statusChip).toBe('Near limit');
+      expect(res.alertLevel).toBe('warning');
+      expect(res.remaining).toBe(1999);
+      expect(res.percentSpent).toBe(80.01);
+    });
+
+    it('evaluates exactly 1 rupee below 100% budget limit (9,999 / 10,000) as Near limit with 1 rupee remaining', () => {
+      const res = evaluateBudgetStatus(9999, limit, threshold);
+      expect(res.statusChip).toBe('Near limit');
+      expect(res.alertLevel).toBe('warning');
+      expect(res.remaining).toBe(1);
+      expect(res.percentSpent).toBe(99.99);
+      expect(res.clampedPercent).toBe(99.99);
+    });
+
+    it('evaluates exactly at 100% of budget limit (10,000 / 10,000) as At limit with critical alert and 0 remaining', () => {
+      const res = evaluateBudgetStatus(10000, limit, threshold);
+      expect(res.statusChip).toBe('At limit');
+      expect(res.alertLevel).toBe('critical');
+      expect(res.remaining).toBe(0);
+      expect(res.clampedPercent).toBe(100);
+      expect(res.percentSpent).toBe(100);
+      expect(res.metaText).toBe('You have reached your monthly limit.');
+    });
+
+    it('evaluates exactly 1 rupee over budget limit (10,001 / 10,000) as Over budget with critical alert', () => {
+      const res = evaluateBudgetStatus(10001, limit, threshold);
+      expect(res.statusChip).toBe('Over budget');
+      expect(res.alertLevel).toBe('critical');
+      expect(res.remaining).toBe(-1);
+      expect(res.clampedPercent).toBe(100);
+      expect(res.metaText).toBe('₹1 over your monthly limit!');
+    });
+  });
 });

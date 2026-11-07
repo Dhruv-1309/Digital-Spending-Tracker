@@ -83,12 +83,23 @@ describe('budget', () => {
       expect(res.percentSpent).toBe(80.01);
     });
 
-    it('evaluates exactly at 100% of budget limit (10,000 / 10,000) as Near limit with 0 remaining', () => {
-      const res = evaluateBudgetStatus(10000, limit, threshold);
+    it('evaluates exactly 1 rupee below 100% budget limit (9,999 / 10,000) as Near limit with 1 rupee remaining', () => {
+      const res = evaluateBudgetStatus(9999, limit, threshold);
       expect(res.statusChip).toBe('Near limit');
       expect(res.alertLevel).toBe('warning');
+      expect(res.remaining).toBe(1);
+      expect(res.percentSpent).toBe(99.99);
+      expect(res.clampedPercent).toBe(99.99);
+    });
+
+    it('evaluates exactly at 100% of budget limit (10,000 / 10,000) as At limit with critical alert and 0 remaining', () => {
+      const res = evaluateBudgetStatus(10000, limit, threshold);
+      expect(res.statusChip).toBe('At limit');
+      expect(res.alertLevel).toBe('critical');
       expect(res.remaining).toBe(0);
       expect(res.clampedPercent).toBe(100);
+      expect(res.percentSpent).toBe(100);
+      expect(res.metaText).toBe('You have reached your monthly limit.');
     });
 
     it('evaluates exactly 1 rupee over budget limit (10,001 / 10,000) as Over budget with critical alert', () => {
