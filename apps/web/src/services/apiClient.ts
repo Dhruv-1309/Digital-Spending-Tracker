@@ -44,79 +44,166 @@ async function getAuthHeader(): Promise<Record<string, string>> {
 export interface RequestOptions {
   headers?: Record<string, string>;
   idempotencyKey?: string;
+  retries?: number;
+  retryDelayMs?: number;
+  sleepFn?: (ms: number) => Promise<void>;
+}
+
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY_MS = 250;
+const RETRYABLE_STATUS_CODES = new Set([502, 503, 504]);
+
+function isIdempotentMethod(method: string): boolean {
+  const m = method.toUpperCase();
+  return m === 'GET' || m === 'HEAD' || m === 'OPTIONS' || m === 'PUT' || m === 'DELETE';
+}
+
+function isRetryable(status?: number, method: string = 'GET', hasIdempotencyKey: boolean = false): boolean {
+  if (status && RETRYABLE_STATUS_CODES.has(status)) {
+    return isIdempotentMethod(method) || hasIdempotencyKey;
+  }
+  if (!status || status === 0) {
+    return isIdempotentMethod(method) || hasIdempotencyKey;
+  }
+  return false;
+}
+
+function parseRetryAfter(response: Response): number | null {
+  const header = response.headers?.get?.('Retry-After');
+  if (!header) return null;
+  const seconds = parseInt(header, 10);
+  if (!isNaN(seconds) && seconds >= 0) {
+    return seconds * 1000;
+  }
+  const date = Date.parse(header);
+  if (!isNaN(date)) {
+    const diff = date - Date.now();
+    return diff > 0 ? diff : 0;
+  }
+  return null;
+}
+
+function defaultSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function apiRequest<T = any>(
   path: string,
   options: Omit<RequestInit, 'headers'> & RequestOptions = {},
 ): Promise<T> {
-  const authHeader = await getAuthHeader();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...authHeader,
-    ...(options.headers || {}),
-  };
+  const method = (options.method || 'GET').toUpperCase();
+  const hasIdempotencyKey = Boolean(options.idempotencyKey);
+  const maxRetries = options.retries !== undefined ? options.retries : DEFAULT_MAX_RETRIES;
+  const baseDelay = options.retryDelayMs !== undefined ? options.retryDelayMs : DEFAULT_RETRY_DELAY_MS;
+  const sleep = options.sleepFn || defaultSleep;
 
-  if (options.idempotencyKey) {
-    headers['Idempotency-Key'] = options.idempotencyKey;
-  }
+  let attempt = 0;
 
-  const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      ...options,
-      headers,
-    });
-  } catch (err: unknown) {
-    if (err instanceof ApiError) {
-      throw err;
+  while (true) {
+    const authHeader = await getAuthHeader();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...authHeader,
+      ...(options.headers || {}),
+    };
+
+    if (options.idempotencyKey) {
+      headers['Idempotency-Key'] = options.idempotencyKey;
     }
-    throw new ApiError(
-      0,
-      'NETWORK_ERROR',
-      'Unable to connect to the server. Please check your internet connection and try again.',
-      err,
-    );
-  }
 
-  if (!response.ok) {
-    let errorJson: any = null;
+    const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+    let response: Response;
+    let networkError: unknown = null;
+
     try {
-      errorJson = await response.json();
+      response = await fetch(url, {
+        ...options,
+        headers,
+      });
     } catch (err: unknown) {
-      logger.warn('Failed to parse non-JSON error response from API server', err, { action: 'apiRequest.parseErrorJson', status: response.status });
+      if (err instanceof ApiError) {
+        throw err;
+      }
+      networkError = err;
+      response = null as any;
     }
 
-    const code = errorJson?.error?.code || 'API_ERROR';
-    let message = errorJson?.error?.message;
-    if (!message) {
-      if (response.status === 401) {
-        message = 'Your session has expired. Please sign in again to continue.';
-      } else if (response.status === 403) {
-        message = 'You do not have permission to perform this action.';
-      } else if (response.status === 404) {
-        message = 'The requested item could not be found.';
-      } else if (response.status === 409) {
-        message = 'This item already exists or conflicts with another record.';
-      } else if (response.status === 429) {
-        message = 'You are doing that a bit too fast. Please wait a moment and try again.';
-      } else if (response.status >= 500) {
-        message = 'Something went wrong on our end. Please try again in a few moments.';
-      } else {
-        message = 'The request could not be completed. Please try again.';
+    // 1. Transient network error retry
+    if (networkError) {
+      if (attempt < maxRetries && isRetryable(undefined, method, hasIdempotencyKey)) {
+        attempt += 1;
+        const backoff = baseDelay * Math.pow(2, attempt - 1);
+        logger.warn(
+          `Transient network error on ${method} ${path}. Retrying attempt ${attempt}/${maxRetries} after ${Math.round(backoff)}ms...`,
+          networkError,
+          { attempt, maxRetries, path, method },
+        );
+        await sleep(backoff);
+        continue;
+      }
+      throw new ApiError(
+        0,
+        'NETWORK_ERROR',
+        'Unable to connect to the server. Please check your internet connection and try again.',
+        networkError,
+      );
+    }
+
+    // 2. HTTP 502/503/504 retry (cold starts, bad gateway, gateway timeouts)
+    if (RETRYABLE_STATUS_CODES.has(response.status)) {
+      if (attempt < maxRetries && isRetryable(response.status, method, hasIdempotencyKey)) {
+        attempt += 1;
+        const retryAfterMs = parseRetryAfter(response);
+        const backoff = retryAfterMs ?? baseDelay * Math.pow(2, attempt - 1);
+        logger.warn(
+          `API returned ${response.status} on ${method} ${path}. Retrying attempt ${attempt}/${maxRetries} after ${Math.round(backoff)}ms...`,
+          undefined,
+          { attempt, maxRetries, status: response.status, path, method },
+        );
+        await sleep(backoff);
+        continue;
       }
     }
-    const details = errorJson?.error?.details;
-    throw new ApiError(response.status, code, message, details);
-  }
 
-  // Handle 204 or empty response
-  if (response.status === 204) {
-    return null as T;
-  }
+    // 3. Handle non-2xx responses
+    if (!response.ok) {
+      let errorJson: any = null;
+      try {
+        errorJson = await response.json();
+      } catch (err: unknown) {
+        logger.warn('Failed to parse non-JSON error response from API server', err, { action: 'apiRequest.parseErrorJson', status: response.status });
+      }
 
-  return response.json();
+      const code = errorJson?.error?.code || 'API_ERROR';
+      let message = errorJson?.error?.message;
+      if (!message) {
+        if (response.status === 401) {
+          message = 'Your session has expired. Please sign in again to continue.';
+        } else if (response.status === 403) {
+          message = 'You do not have permission to perform this action.';
+        } else if (response.status === 404) {
+          message = 'The requested item could not be found.';
+        } else if (response.status === 409) {
+          message = 'This item already exists or conflicts with another record.';
+        } else if (response.status === 429) {
+          message = 'You are doing that a bit too fast. Please wait a moment and try again.';
+        } else if (response.status >= 500) {
+          message = 'Something went wrong on our end. Please try again in a few moments.';
+        } else {
+          message = 'The request could not be completed. Please try again.';
+        }
+      }
+      const details = errorJson?.error?.details;
+      throw new ApiError(response.status, code, message, details);
+    }
+
+    // Handle 204 or empty response
+    if (response.status === 204) {
+      return null as T;
+    }
+
+    return response.json();
+  }
 }
 
 // Transform helpers between DB paise and UI rupees

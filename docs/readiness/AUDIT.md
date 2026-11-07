@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{361.0}{499} = \mathbf{72.3\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{364.0}{499} = \mathbf{72.9\%}$$
 
-- **Current Readiness Score:** **72.3%** (Baseline: 56.8%)
+- **Current Readiness Score:** **72.9%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **361.0 points**
+- **Earned Weight:** **364.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **107** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **108** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **28** |
-| **MISSING** | Not implemented | **35** |
+| **MISSING** | Not implemented | **34** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -44,7 +44,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 4D / 6P / 9M (1 other) | **50.0%** | 21.5 / 43 |
 | **DIFF** | Differentiating Features | 9 | 0D / 5P / 4M  | **33.3%** | 5 / 15 |
-| **X** | Additional Operational Excellence | 4 | 1D / 1P / 1M (1 other) | **45.0%** | 4.5 / 10 |
+| **X** | Additional Operational Excellence | 4 | 2D / 1P / 0M (1 other) | **75.0%** | 7.5 / 10 |
 
 ---
 
@@ -327,7 +327,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | ID | Check | Status | Evidence | Gap |
 | :--- | :--- | :--- | :--- | :--- |
 | **X-1** | Build & Lint Hygiene: zero React Compiler errors, zero eslint problems, and elimination of build chunking warnings | `DONE` | apps/web/vite.config.ts, apps/web/src/services/syncQueue.ts, apps/web/src/components/analytics/AnalyticsTab.tsx | Zero React compiler errors; zero ESLint errors; manualChunks configured for vendor-react, vendor-charts, vendor-firebase, vendor-icons, vendor-motion; zero >500kB chunk warnings; all chunks under 115 kB gzipped. | None |
-| **X-2** | Database & API Resilience: client-side graceful retry and exponential backoff on cold starts or 503 errors | `MISSING` | apps/web/src/services/apiClient.ts:70-100 throws on non-200 responses immediately | Client apiRequest lacks automatic retry with backoff for 502/503/504 cold-start recovery. |
+| **X-2** | Database & API Resilience: client-side graceful retry and exponential backoff on cold starts or 503 errors | `DONE` | apps/web/src/services/apiClient.ts:70-134, apps/web/src/test/apiClient_retry.test.ts | Automatic exponential backoff with jitter on 502/503/504 and transient network drops; respects Retry-After headers; safe idempotent retries for mutating operations. | None |
 | **X-3** | Transactional Email Service Setup: configured provider credentials and sender domain for weekly summary and alerts | `NEEDS-USER` | None | Requires owner to configure an email provider (Resend, SendGrid, or AWS SES) and verify domain. |
 | **X-4** | Data Export Schema Versioning & Checksum: export JSON with schema version tag and SHA-256 verification hash | `PARTIAL` | packages/shared/src/calculations/transactions.ts:223-234 (exportedAt timestamp) | Export JSON lacks explicit version attribute (version: "1.0") and SHA-256 payload integrity checksum. |
 

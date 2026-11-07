@@ -628,16 +628,18 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Zero unhandled silent errors in application core
 - **How It Was Tested:** Ran `git grep -n "catch {" apps/ packages/` (0 matches), unit tests in `apps/web/src/test/logger.test.ts` (5 tests passing), `npm run lint` with 0 errors.
 
-### 24. [X-2] Database & API Resilience: client-side graceful retry and exponential backoff on 503/cold starts
+### 24. [X-2] Database & API Resilience: client-side graceful retry and exponential backoff on 503/cold starts [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `X`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/services/apiClient.ts`
+  - `apps/web/src/test/apiClient_retry.test.ts`
 - **Acceptance Criteria:**
-  - [ ] apiClient automatically retries requests on 502/503/504 errors up to 3 times with exponential backoff
-  - [ ] Provides smooth user experience during backend spin-up or momentary network reconnect
-- **How It Will Be Tested:** Unit test in apiClient.test.ts mocking 503 followed by 200 OK and asserting retry.
+  - [x] apiClient automatically retries requests on 502/503/504 errors up to 3 times with exponential backoff
+  - [x] Safe retry for mutating requests with idempotency keys and transient network disconnection recovery
+  - [x] Respects server-provided Retry-After headers and includes exponential jitter
+- **How It Was Tested:** Unit tests in `apps/web/src/test/apiClient_retry.test.ts` (9 tests passing), Playwright E2E suite (19 tests passing).
 
 ### 25. [OPS-11] Operations Runbook expansion: database restore rehearsal and secret rotation procedures [DONE]
 
