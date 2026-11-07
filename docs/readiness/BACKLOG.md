@@ -678,16 +678,16 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Submits feedback or opens mailto: with pre-populated diagnostic details (browser, screen size, app version)
 - **How It Will Be Tested:** Component test verifying feedback modal open, form input, and mailto generation.
 
-### 28. [WEB-7] Commit formal LICENSE file (MIT / Apache 2.0 / Proprietary as owner specifies)
+### 28. [WEB-7] Commit formal LICENSE file (MIT / Apache 2.0 / Proprietary as owner specifies) [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `WEB`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `LICENSE`
 - **Acceptance Criteria:**
-  - [ ] Standard LICENSE file committed to repository root
-  - [ ] Documents copyright, permissions, and warranty disclaimers
-- **How It Will Be Tested:** Verify LICENSE file exists in git tree.
+  - [x] Standard LICENSE file committed to repository root
+  - [x] Documents copyright, permissions, and warranty disclaimers
+- **How It Was Tested:** Verified LICENSE file exists in repository root and conforms to MIT license format.
 
 ### 29. [WEB-8] Serve interactive API documentation from OpenAPI specification (/api/docs)
 
