@@ -1,8 +1,8 @@
 import { createApp } from './app.js';
 import { config } from './config/index.js';
-import { initJobScheduler, stopJobScheduler } from './jobs/scheduler.js';
+import { initJobScheduler } from './jobs/scheduler.js';
 import { logger } from './utils/logger.js';
-import { prisma } from './db/prisma.js';
+import { createShutdownHandler } from './utils/shutdown.js';
 
 const app = createApp();
 
@@ -11,14 +11,9 @@ const server = app.listen(config.port, async () => {
   await initJobScheduler();
 });
 
-async function shutdown(signal: string) {
-  logger.info({ signal }, 'Shutting down server gracefully');
-  server.close(async () => {
-    await stopJobScheduler();
-    await prisma.$disconnect();
-    process.exit(0);
-  });
-}
+const handleShutdown = createShutdownHandler({ server });
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+
+export { server, handleShutdown };

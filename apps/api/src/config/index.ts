@@ -16,6 +16,7 @@ export interface ApiConfig {
   allowedOrigins: string[];
   dbPool: ConnectionPoolConfig;
   tombstoneRetentionDays: number;
+  shutdownTimeoutMs: number;
   firebase: {
     projectId: string;
     clientEmail?: string;
@@ -69,6 +70,7 @@ export const config: ApiConfig = {
   allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:4173,http://127.0.0.1:5173').split(',').map((o) => o.trim()),
   dbPool: dbPoolConfig,
   tombstoneRetentionDays: parseInt(process.env.TOMBSTONE_RETENTION_DAYS || '90', 10),
+  shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS || '10000', 10),
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID || 'digital-spending-tracker',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,

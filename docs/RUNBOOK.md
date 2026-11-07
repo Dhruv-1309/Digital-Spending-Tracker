@@ -136,6 +136,19 @@ Managed via `pg-boss` background worker `idempotency-cleanup` scheduled daily at
   DELETE FROM "AutopayPlan" WHERE "deletedAt" < NOW() - INTERVAL '90 days';
   ```
 
+### 5.4 Graceful Shutdown & Connection Draining (BE-19)
+- **Signal Handling:** The API process listens for `SIGTERM` (container orchestrator termination, e.g. Render/Kubernetes/Docker) and `SIGINT` (keyboard interrupt / local shutdown).
+- **Draining Protocol:**
+  1. Stops accepting new inbound HTTP connections (`server.close()`).
+  2. Closes idle keep-alive sockets immediately (`server.closeIdleConnections()`), while allowing in-flight HTTP requests to finish cleanly.
+  3. Stops the `pg-boss` background worker (`stopJobScheduler()`), allowing active job locks to finish execution without abrupt cancellation.
+  4. Disconnects the Prisma PostgreSQL connection pool (`prisma.$disconnect()`).
+- **Shutdown Timeout & Safeguards:**
+  - Configurable hard timeout via `SHUTDOWN_TIMEOUT_MS` (default: `10000` ms / 10 seconds).
+  - If draining does not complete within the timeout window, the handler logs an error and forces termination (`process.exit(1)`).
+  - Duplicate termination signals are deduplicated to avoid racing teardown cycles.
+
+
 ---
 
 ## 6. [SEC-1] Firebase Web API Key Restriction & Rotation Playbook (Owner Action)

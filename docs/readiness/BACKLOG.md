@@ -1057,15 +1057,23 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 2 automated unit tests in `apps/api/test/tombstone_purge.test.ts` verifying 90-day purge threshold and custom retention durations.
 
-### 12. [BE-19] Graceful shutdown connection draining and worker termination
+### 12. [BE-19] Graceful shutdown connection draining and worker termination [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `BE`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/api/src/config/index.ts`
+  - `apps/api/src/utils/shutdown.ts`
   - `apps/api/src/server.ts`
+  - `docs/RUNBOOK.md`
+  - `apps/api/test/shutdown.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Server gracefully completes in-flight HTTP requests and finishes active pg-boss job locks before exit
-- **How It Will Be Tested:** Integration test verifying SIGTERM signal handling.
+  - [x] Server gracefully completes in-flight HTTP requests and finishes active pg-boss job locks before exit
+  - [x] Closes idle keep-alive connections via `closeIdleConnections()` and disconnects Prisma connection pool
+  - [x] Enforces configurable hard timeout (`SHUTDOWN_TIMEOUT_MS`, default 10s) with forced exit fallback
+  - [x] Deduplicates multiple termination signals (e.g. concurrent SIGTERM and SIGINT)
+- **How It Was Tested:**
+  - 4 automated unit and integration tests in `apps/api/test/shutdown.test.ts` verifying orderly connection draining, background worker shutdown, Prisma pool disconnection, signal deduplication, error resilience, and hard timeout fallback.
 
 ### 13. [BE-20] Prisma seed script with realistic sample personal finance data for dev & demo
 
