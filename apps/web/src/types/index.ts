@@ -11,6 +11,7 @@ export type PaymentMethod =
 export interface Transaction {
   id: string;
   amount: number;
+  amountPaise?: number;
   type: TransactionType;
   category: string;
   paymentMethod: PaymentMethod | string;
@@ -157,4 +158,7 @@ export type TransactionSortOption =
   | 'date-desc'
   | 'date-asc'
   | 'month-desc'
-  | 'month-asc';
+  | 'month-asc'
+  | 'amount-desc'
+  | 'amount-asc'
+  | 'category-asc';

@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{378.5}{499} = \mathbf{75.9\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{379.5}{499} = \mathbf{76.1\%}$$
 
-- **Current Readiness Score:** **75.9%** (Baseline: 56.8%)
+- **Current Readiness Score:** **76.1%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **378.5 points**
+- **Earned Weight:** **379.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **117** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **22** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **118** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **21** |
 | **MISSING** | Not implemented | **31** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -34,7 +34,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CORE** | Core Behavior and Data Correctness | 22 | 19D / 2P / 0M (1 other) | **95.5%** | 63.0 / 66 |
+| **CORE** | Core Behavior and Data Correctness | 22 | 20D / 1P / 0M (1 other) | **97.0%** | 64.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 11D / 1P / 1M (1 other) | **87.5%** | 35.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 19D / 0P / 2M  | **95.5%** | 63.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 15D / 0P / 4M (3 other) | **75.4%** | 52.0 / 69 |
@@ -106,7 +106,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **CORE-14** | The app stays responsive with 10,000 or more transactions | `DONE` | packages/shared/test/performance.test.ts:1-110, apps/web/src/components/transactions/TransactionsTab.tsx:170-220 | Automated Vitest benchmark executes filtering, pagination, and full analytics pipeline across 10,000 transactions in < 25ms with 0 UI blocking. | None |
 | **CORE-15** | Every screen has a first-use state with no data | `DONE` | apps/web/src/components/ui/EmptyState.tsx, DashboardTab.tsx:351, TransactionsTab.tsx:720, AutopayTab.tsx:349, AnalyticsTab.tsx:626 | - |
 | **CORE-16** | Indian number grouping and the rupee sign are used consistently on screens, charts and exports | `DONE` | apps/web/src/components/ui/formatIndianGrouping.ts, apps/web/src/ui/chartTheme.ts:15-30, packages/shared/src/calculations/formatters.ts | - |
-| **CORE-17** | Sorting is stable and has a tie-breaker (same date, same amount) | `PARTIAL` | packages/shared/src/calculations/transactions.ts:371-390, apps/api/src/repositories/transactionRepository.ts:172-188 | Sorting switch omits amount and category sort options; no secondary unique id tie-breaker in SQL or client. |
+| **CORE-17** | Sorting is stable and has a tie-breaker (same date, same amount) | `DONE` | packages/shared/src/calculations/transactions.ts:500-580, apps/web/src/lib/transactions.ts:400-455, apps/api/src/repositories/transactionRepository.ts:172-188, packages/shared/test/sorting_tiebreaker.test.ts | Multi-tier deterministic sorting across date-desc/asc, amount-desc/asc, category-asc, and month-desc/asc with primary-key ID tie-breakers in SQL and client. | None |
 | **CORE-18** | Search is case-insensitive and safe with special and regex characters | `DONE` | packages/shared/src/calculations/transactions.ts:354-360 (toLowerCase().includes), apps/api/src/repositories/transactionRepository.ts:149 | - |
 | **CORE-19** | Categories can be renamed and deleted with reassignment; duplicates and case variants are prevented | `PARTIAL` | apps/api/src/repositories/categoryRepository.ts:13-38, prisma unique index on [userId, type, name] | No category rename endpoint or UI; deleting in-use category throws error instead of prompting reassignment. |
 | **CORE-20** | Very long descriptions and category names truncate without breaking layout | `DONE` | apps/web/src/components/transactions/TransactionsTab.tsx:816,877 (truncate max-w-xs md:max-w-md), DashboardTab.tsx:321 | - |

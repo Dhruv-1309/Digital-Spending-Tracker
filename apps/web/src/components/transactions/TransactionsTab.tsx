@@ -714,6 +714,9 @@ export function TransactionsTab({ searchDebounceMs = 300 }: TransactionsTabProps
                 options={[
                   { value: 'date-desc', label: 'Date: Newest' },
                   { value: 'date-asc', label: 'Date: Oldest' },
+                  { value: 'amount-desc', label: 'Amount: High to Low' },
+                  { value: 'amount-asc', label: 'Amount: Low to High' },
+                  { value: 'category-asc', label: 'Category: A to Z' },
                   { value: 'month-desc', label: 'Month: Newest' },
                   { value: 'month-asc', label: 'Month: Oldest' },
                 ]}

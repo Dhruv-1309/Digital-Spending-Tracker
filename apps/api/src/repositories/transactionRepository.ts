@@ -168,23 +168,23 @@ export class TransactionRepository {
       }
     }
 
-    // Sort order
-    let orderBy: Prisma.TransactionOrderByWithRelationInput = { txnDate: 'desc' };
+    // Sort order with deterministic primary-key tie-breaker (CORE-17)
+    let orderBy: Prisma.TransactionOrderByWithRelationInput[] = [{ txnDate: 'desc' }, { id: 'desc' }];
     switch (filter.sort) {
       case 'date-asc':
-        orderBy = { txnDate: 'asc' };
+        orderBy = [{ txnDate: 'asc' }, { id: 'asc' }];
         break;
       case 'amount-desc':
-        orderBy = { amountPaise: 'desc' };
+        orderBy = [{ amountPaise: 'desc' }, { id: 'desc' }];
         break;
       case 'amount-asc':
-        orderBy = { amountPaise: 'asc' };
+        orderBy = [{ amountPaise: 'asc' }, { id: 'asc' }];
         break;
       case 'category-asc':
-        orderBy = { category: 'asc' };
+        orderBy = [{ category: 'asc' }, { id: 'asc' }];
         break;
       default:
-        orderBy = { txnDate: 'desc' };
+        orderBy = [{ txnDate: 'desc' }, { id: 'desc' }];
     }
 
     const [total, items] = await Promise.all([

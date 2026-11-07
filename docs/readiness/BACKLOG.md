@@ -895,17 +895,22 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - [ ] User holds encryption key; zero server knowledge fits privacy-first principle
 - **How It Will Be Tested:** Unit test verifying round-trip encryption, decryption, and wrong-password rejection.
 
-### 7. [CORE-17] Deterministic sorting with stable ID tie-breakers in database queries and UI
+### 7. [CORE-17] Deterministic sorting with stable ID tie-breakers in database queries and UI [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `packages/shared/src/calculations/transactions.ts`
+  - `apps/web/src/types/index.ts`
+  - `apps/web/src/lib/transactions.ts`
   - `apps/api/src/repositories/transactionRepository.ts`
+  - `apps/web/src/components/transactions/TransactionsTab.tsx`
+  - `packages/shared/test/sorting_tiebreaker.test.ts`
 - **Acceptance Criteria:**
-  - [ ] SQL order queries and client sort functions append id as secondary tie-breaker
-  - [ ] Supports all sort options: date-desc, date-asc, amount-desc, amount-asc, category-asc
-- **How It Will Be Tested:** Unit test asserting identical order for items sharing same date and amount.
+  - [x] SQL order queries and client sort functions append id as secondary tie-breaker
+  - [x] Supports all sort options: date-desc, date-asc, amount-desc, amount-asc, category-asc, month-desc, month-asc
+- **How It Was Tested:**
+  - 5 unit test assertions in `packages/shared/test/sorting_tiebreaker.test.ts` verifying identical deterministic order for items sharing same date and amount.
 
 ### 8. [CORE-19] Category rename and delete with transaction reassignment
 

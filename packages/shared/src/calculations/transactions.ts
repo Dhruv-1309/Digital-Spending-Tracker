@@ -4,7 +4,10 @@ export type TransactionSortOption =
   | 'date-desc'
   | 'date-asc'
   | 'month-desc'
-  | 'month-asc';
+  | 'month-asc'
+  | 'amount-desc'
+  | 'amount-asc'
+  | 'category-asc';
 
 // Pure standard SHA-256 for universal execution in both Node and Browser
 function sha256(ascii: string): string {
@@ -480,7 +483,18 @@ export function importBackupFromJson(
   };
 }
 
-export function filterTransactions<T extends { date: string; type: string; category: string; description?: string; createdAt?: string }>(
+export function filterTransactions<
+  T extends {
+    id?: string;
+    date: string;
+    type: string;
+    category: string;
+    amount?: number;
+    amountPaise?: number | bigint;
+    description?: string;
+    createdAt?: string;
+  },
+>(
   transactions: T[],
   query: string,
   typeFilter: string,
@@ -507,23 +521,68 @@ export function filterTransactions<T extends { date: string; type: string; categ
   }
 
   result.sort((a, b) => {
+    const idA = a.id || '';
+    const idB = b.id || '';
+    const amountA = Number(a.amountPaise ?? Math.round((a.amount ?? 0) * 100));
+    const amountB = Number(b.amountPaise ?? Math.round((b.amount ?? 0) * 100));
+
     switch (sortOption) {
       case 'date-desc':
-        return b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || '');
+        return (
+          b.date.localeCompare(a.date) ||
+          (b.createdAt || '').localeCompare(a.createdAt || '') ||
+          idB.localeCompare(idA)
+        );
       case 'date-asc':
-        return a.date.localeCompare(b.date) || (a.createdAt || '').localeCompare(b.createdAt || '');
+        return (
+          a.date.localeCompare(b.date) ||
+          (a.createdAt || '').localeCompare(b.createdAt || '') ||
+          idA.localeCompare(idB)
+        );
       case 'month-desc': {
         const ma = a.date.slice(0, 7);
         const mb = b.date.slice(0, 7);
-        return mb.localeCompare(ma) || b.date.localeCompare(a.date);
+        return (
+          mb.localeCompare(ma) ||
+          b.date.localeCompare(a.date) ||
+          (b.createdAt || '').localeCompare(a.createdAt || '') ||
+          idB.localeCompare(idA)
+        );
       }
       case 'month-asc': {
         const ma = a.date.slice(0, 7);
         const mb = b.date.slice(0, 7);
-        return ma.localeCompare(mb) || a.date.localeCompare(b.date);
+        return (
+          ma.localeCompare(mb) ||
+          a.date.localeCompare(b.date) ||
+          (a.createdAt || '').localeCompare(b.createdAt || '') ||
+          idA.localeCompare(idB)
+        );
       }
+      case 'amount-desc':
+        return (
+          amountB - amountA ||
+          b.date.localeCompare(a.date) ||
+          idB.localeCompare(idA)
+        );
+      case 'amount-asc':
+        return (
+          amountA - amountB ||
+          a.date.localeCompare(b.date) ||
+          idA.localeCompare(idB)
+        );
+      case 'category-asc':
+        return (
+          a.category.localeCompare(b.category) ||
+          b.date.localeCompare(a.date) ||
+          idA.localeCompare(idB)
+        );
       default:
-        return b.date.localeCompare(a.date);
+        return (
+          b.date.localeCompare(a.date) ||
+          (b.createdAt || '').localeCompare(a.createdAt || '') ||
+          idB.localeCompare(idA)
+        );
     }
   });
 
