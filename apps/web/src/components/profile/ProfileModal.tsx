@@ -23,8 +23,11 @@ import {
   CheckCircleIcon,
   GoogleIcon,
   TagIcon,
+  ShieldIcon,
+  MailIcon,
 } from '../icons';
 import { CategorySettingsModal } from './CategorySettingsModal';
+import { TwoFactorModal } from './TwoFactorModal';
 
 export interface ProfileModalProps {
   isOpen: boolean;
@@ -60,6 +63,23 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [passSuccess, setPassSuccess] = useState<string | null>(null);
   const [passLoading, setPassLoading] = useState(false);
   const [isCategorySettingsOpen, setIsCategorySettingsOpen] = useState(false);
+  const [isTwoFactorOpen, setIsTwoFactorOpen] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const email = user?.email || 'user@moneytracker.local';
+      const saved = localStorage.getItem(`mt_2fa_${email.toLowerCase()}`);
+      return saved ? JSON.parse(saved).enabled === true : false;
+    } catch {
+      return false;
+    }
+  });
+
+  // Weekly Email Digest Opt-in state (DIFF-9)
+  const [weeklyDigestOptIn, setWeeklyDigestOptIn] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('mt_weekly_digest_opt_in') === 'true';
+  });
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Re-authentication state for sensitive operations (AUTH-10)
@@ -559,6 +579,74 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             </p>
           </Card>
 
+          {/* Card: Two-Factor Authentication (AUTH-14) */}
+          <Card className="p-4 sm:p-5 border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong space-y-3.5" id="twoFactorSection">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
+              <div className="flex items-center gap-2 text-ink font-semibold text-sm">
+                <ShieldIcon size={16} className={is2FAEnabled ? 'text-income' : 'text-accent'} />
+                <span>Two-Factor Authentication (2FA)</span>
+              </div>
+              <Button
+                type="button"
+                id="configure2FABtn"
+                variant={is2FAEnabled ? 'secondary' : 'primary'}
+                size="md"
+                onClick={() => setIsTwoFactorOpen(true)}
+              >
+                {is2FAEnabled ? 'Manage 2FA' : 'Set Up 2FA'}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs sm:text-sm text-ink-2 leading-relaxed">
+                Add an extra layer of defense using Time-Based One-Time Passwords (TOTP) from an authenticator app.
+              </p>
+              <span
+                className={`ml-3 px-2.5 py-1 rounded-chip text-xs font-semibold shrink-0 ${
+                  is2FAEnabled ? 'bg-income-tint text-income' : 'bg-surface-2 text-ink-3'
+                }`}
+              >
+                {is2FAEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+          </Card>
+
+          {/* Card: Notifications & Weekly Digest (DIFF-9) */}
+          <Card className="p-4 sm:p-5 border-line rounded-card shadow-1 transition-all duration-base hover:border-line-strong space-y-3.5" id="emailDigestSection">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
+              <div className="flex items-center gap-2 text-ink font-semibold text-sm">
+                <MailIcon size={16} className="text-accent" />
+                <span>Weekly Email Digest</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="weeklyDigestToggle"
+                  checked={weeklyDigestOptIn}
+                  onChange={(e) => {
+                    const nextVal = e.target.checked;
+                    setWeeklyDigestOptIn(nextVal);
+                    try {
+                      localStorage.setItem('mt_weekly_digest_opt_in', String(nextVal));
+                    } catch {
+                      // ignore storage error
+                    }
+                    showToast(
+                      nextVal
+                        ? 'Subscribed to weekly financial summary email digest.'
+                        : 'Unsubscribed from weekly summary email digest.',
+                      'info',
+                    );
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-surface-2 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-line after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent" />
+              </label>
+            </div>
+            <p className="text-xs sm:text-sm text-ink-2 leading-relaxed">
+              Receive a private Monday morning email with your past week's spending summary, current budget status, and upcoming autopay charges.
+            </p>
+          </Card>
+
           {/* Card 4: Separate Danger Zone Card for Account Deletion */}
           <Card className="p-4 sm:p-5 border-danger/30 bg-danger-tint/15 rounded-card shadow-1 transition-all duration-base hover:border-danger/50 space-y-3.5" id="dangerZoneSection">
             <div className="flex items-center gap-2 text-danger font-semibold text-sm pb-2 border-b border-danger/20">
@@ -735,6 +823,14 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           onClose={() => setIsCategorySettingsOpen(false)}
         />
       )}
+
+      {/* Two-Factor Authentication Modal (AUTH-14) */}
+      <TwoFactorModal
+        isOpen={isTwoFactorOpen}
+        onClose={() => setIsTwoFactorOpen(false)}
+        userEmail={user?.email || 'user@moneytracker.local'}
+        onStatusChange={(enabled) => setIs2FAEnabled(enabled)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import PgBoss from 'pg-boss';
 import { config } from '../config/index.js';
 import { autopayService } from '../services/autopayService.js';
 import { idempotencyRepository } from '../repositories/idempotencyRepository.js';
+import { processWeeklyDigests } from './weeklyDigestJob.js';
 import { prisma } from '../db/prisma.js';
 import { logger } from '../utils/logger.js';
 
@@ -72,6 +73,16 @@ export async function initJobScheduler(): Promise<PgBoss | null> {
       logger.info('Executing scheduled idempotency-cleanup job');
       const deletedCount = await idempotencyRepository.deleteOlderThanDays(7);
       logger.info({ deletedCount }, 'Completed idempotency-cleanup job');
+    });
+
+    // 4. Register weekly-digest job (Mondays at 08:00 AM - DIFF-9)
+    await boss.createQueue('weekly-digest');
+    await boss.schedule('weekly-digest', '0 8 * * 1', {}, { retryLimit: 2 });
+
+    await boss.work('weekly-digest', async () => {
+      logger.info('Executing scheduled weekly-digest job');
+      const result = await processWeeklyDigests();
+      logger.info(result, 'Completed weekly-digest job');
     });
 
     return boss;

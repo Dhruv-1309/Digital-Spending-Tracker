@@ -22,6 +22,11 @@ export interface ApiConfig {
     clientEmail?: string;
     privateKey?: string;
   };
+  email: {
+    fromAddress: string;
+    resendApiKey?: string;
+    sendgridApiKey?: string;
+  };
 }
 
 export function buildDatabaseUrl(
@@ -75,5 +80,10 @@ export const config: ApiConfig = {
     projectId: process.env.FIREBASE_PROJECT_ID || 'digital-spending-tracker',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+  email: {
+    fromAddress: process.env.EMAIL_FROM || 'MoneyTracker <digest@moneytracker.local>',
+    resendApiKey: process.env.RESEND_API_KEY,
+    sendgridApiKey: process.env.SENDGRID_API_KEY,
   },
 };

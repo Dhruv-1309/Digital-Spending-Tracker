@@ -1582,25 +1582,44 @@ Long-term roadmap items and polish enhancements that can be addressed post-launc
   - [x] Local persistence to `localStorage.mt_savings_goals`
 - **How It Was Tested:** Shared calculations tested in `packages/shared/test/savings.test.ts` and component test suite in `apps/web/src/test/diff_features_category_and_savings.test.tsx`.
 
-### 3. [DIFF-9] Opt-in weekly financial summary email digest
+### 3. [DIFF-9] Opt-in weekly financial summary email digest [DONE]
 
 - **Priority:** `P3` | **Effort:** `M` | **Category:** `DIFF`
 - **Dependencies:** `X-3`
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/api/src/config/index.ts`
+  - `apps/api/src/services/weeklyDigestService.ts`
   - `apps/api/src/jobs/weeklyDigestJob.ts`
+  - `apps/api/src/jobs/scheduler.ts`
+  - `apps/api/test/testDb.ts`
+  - `apps/api/test/weekly_digest.test.ts`
+  - `apps/web/src/components/profile/ProfileModal.tsx`
 - **Acceptance Criteria:**
-  - [ ] Weekly background job compiling spending summary and upcoming autopays for opt-in users
-- **How It Will Be Tested:** Test weekly digest template rendering.
+  - [x] Weekly background job compiling spending summary and upcoming autopays for opt-in users
+  - [x] Accessible HTML and plain-text responsive email templates with Rupee symbols and zero tracker pixels
+  - [x] Resilient email transport supporting Resend, SendGrid, and dry-run fallback when credentials unconfigured
+  - [x] User opt-in toggle in Profile settings
+- **How It Was Tested:** Automated integration tests in `apps/api/test/weekly_digest.test.ts` verifying data aggregation, 7-day expense calculation, upcoming autopays, template rendering, and batch worker execution.
 
-### 4. [AUTH-14] Optional Two-Factor Authentication (2FA / TOTP)
+### 4. [AUTH-14] Optional Two-Factor Authentication (2FA / TOTP) [DONE]
 
 - **Priority:** `P3` | **Effort:** `L` | **Category:** `AUTH`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `packages/shared/src/crypto/totp.ts`
+  - `packages/shared/src/crypto/index.ts`
+  - `packages/shared/src/schemas/user.ts`
+  - `packages/shared/test/totp.test.ts`
   - `apps/web/src/components/profile/TwoFactorModal.tsx`
+  - `apps/web/src/components/profile/ProfileModal.tsx`
+  - `apps/web/src/test/two_factor_auth.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] TOTP authenticator app integration
-- **How It Will Be Tested:** 2FA authentication challenge test.
+  - [x] Standard RFC 6238 TOTP authenticator app integration (Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden)
+  - [x] Cryptographic Base32 secret generation and standard `otpauth://` URI link
+  - [x] 6-digit verification challenge with time-step drift tolerance
+  - [x] One-time recovery backup codes generation, copy, and download (.txt)
+  - [x] Two-Factor Authentication status card in Profile Modal with disable flow
+- **How It Was Tested:** RFC 6238 official test vector tests in `packages/shared/test/totp.test.ts` and component test suite in `apps/web/src/test/two_factor_auth.test.tsx`.
 
 ### 5. [BE-21] Formal API backward-compatibility policy documentation [DONE]
 

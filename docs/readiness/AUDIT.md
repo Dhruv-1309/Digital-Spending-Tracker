@@ -10,19 +10,19 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{442.5}{499} = \mathbf{88.7\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{444.5}{499} = \mathbf{89.1\%}$$
 
-- **Current Readiness Score:** **88.7%** (Baseline: 56.8%)
+- **Current Readiness Score:** **89.1%** (Baseline: 56.8%)
 - **Total Audited Items:** **191**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **442.5 points**
+- **Earned Weight:** **444.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **169** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **171** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **0** |
-| **MISSING** | Not implemented | **2** |
+| **MISSING** | Not implemented | **0** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
@@ -35,7 +35,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | Category | Description | Items | Done / Partial / Missing | Score | Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CORE** | Core Behavior and Data Correctness | 22 | 22D / 0P / 0M | **100.0%** | 66.0 / 66 |
-| **AUTH** | Authentication and Accounts | 14 | 12D / 0P / 1M (1 other) | **90.0%** | 36.0 / 40 |
+| **AUTH** | Authentication and Accounts | 14 | 13D / 0P / 0M (1 other) | **92.5%** | 37.0 / 40 |
 | **BE** | Backend, API and Database | 21 | 21D / 0P / 0M | **100.0%** | 66.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 19D / 0P / 0M (3 other) | **84.1%** | 58.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 23D / 0P / 0M (1 other) | **94.5%** | 52.0 / 55 |
@@ -43,7 +43,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **QA** | Testing and Code Quality | 18 | 18D / 0P / 0M | **100.0%** | 46.0 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 12D / 0P / 0M (9 other) | **57.1%** | 28.0 / 49 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 19D / 0P / 0M (1 other) | **100.0%** | 43.0 / 43 |
-| **DIFF** | Differentiating Features | 9 | 8D / 0P / 1M | **93.3%** | 14.0 / 15 |
+| **DIFF** | Differentiating Features | 9 | 9D / 0P / 0M | **100.0%** | 15.0 / 15 |
 | **X** | Additional Operational Excellence | 4 | 3D / 0P / 0M (1 other) | **94.4%** | 8.5 / 9 |
 
 ---
@@ -130,7 +130,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **AUTH-11** | Google sign-in handles blocked popups and an email that already has a password account | `DONE` | apps/web/src/services/auth.ts:169-181 (explicit handling for auth/popup-blocked and auth/account-exists-with-different-credential) | - |
 | **AUTH-12** | Protected routes redirect to sign-in and return to the intended page afterwards | `DONE` | apps/web/src/lib/routes.ts:15-80, apps/web/src/context/TrackerContext.tsx:45-85, apps/web/src/components/layout/AppLayout.tsx:48-70, apps/web/src/components/auth/AuthModal.tsx:120-165, apps/web/src/test/auth_deep_linking.test.tsx:1-175 | None. Protected route deep-linking implemented end-to-end: unauthenticated deep-link requests (/transactions, /autopay, /analytics) capture intended route into sessionStorage and reflect ?redirect=/tab in URL; AuthModal renders contextual sign-in banner; upon successful sign-in (email or Google), intended route and tab state are restored. |
 | **AUTH-13** | Profile shows last sign-in and sign-in method | `DONE` | apps/web/src/components/profile/ProfileModal.tsx:351-368 (#profileAuthMethod, #profileLastSignIn) | - |
-| **AUTH-14** | Optional two-factor authentication | `MISSING` | None | 2FA / Multi-factor authentication is not implemented. |
+| **AUTH-14** | Optional two-factor authentication | `DONE` | packages/shared/src/crypto/totp.ts, packages/shared/test/totp.test.ts, apps/web/src/components/profile/TwoFactorModal.tsx, apps/web/src/components/profile/ProfileModal.tsx, apps/web/src/test/two_factor_auth.test.tsx | Standard RFC 6238 TOTP authenticator app integration; Base32 secret generation and otpauth:// link; 6-digit verification challenge with time-step drift tolerance; 8 one-time backup recovery codes; Profile 2FA card and management flow. | None |
 
 ### BE: Backend, API and Database
 
@@ -320,7 +320,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **DIFF-6** | Passphrase-encrypted backup and restore using Web Crypto | `DONE` | packages/shared/src/crypto/encryptedBackup.ts, packages/shared/test/encryptedBackup.test.ts, apps/web/src/components/transactions/EncryptedBackupModal.tsx, apps/web/src/test/encrypted_backup_modal.test.tsx, apps/web/src/components/transactions/TransactionsTab.tsx | Zero-knowledge client-side backup encryption using browser Web Crypto API (PBKDF2 with SHA-256 and 100,000 iterations, AES-GCM 256-bit with random 16-byte salt and 12-byte IV); exported as .enc JSON envelope; decrypt-and-restore with authentication tag validation, schema validation, and duplicate skipping; 100% offline. | None |
 | **DIFF-7** | Per-category budgets with threshold warnings | `DONE` | packages/shared/src/schemas/budget.ts, packages/shared/src/calculations/budget.ts, packages/shared/test/budget.test.ts, apps/web/src/components/budget/CategoryBudgetModal.tsx, apps/web/src/test/diff_features_category_and_savings.test.tsx | Per-category monthly spending limits with customizable warning threshold % (default 80%); real-time spending aggregation in paise; status badges (On Track, Near Limit, At Limit, Over Budget); progress meter; modal accessible from Dashboard. | None |
 | **DIFF-8** | Savings goals with progress and required monthly saving | `DONE` | packages/shared/src/schemas/savings.ts, packages/shared/src/calculations/savings.ts, packages/shared/test/savings.test.ts, apps/web/src/components/savings/SavingsGoalsModal.tsx, apps/web/src/test/diff_features_category_and_savings.test.tsx | Savings goals tracker with target amount, target date, current saved balance, and required monthly deposit calculation; quick "+ Add Funds" deposit flow; status chips; progress meter; modal accessible from Dashboard. | None |
-| **DIFF-9** | Opt-in weekly summary email | `MISSING` | None | Email digest worker and user subscription opt-in not implemented. |
+| **DIFF-9** | Opt-in weekly summary email | `DONE` | apps/api/src/services/weeklyDigestService.ts, apps/api/src/jobs/weeklyDigestJob.ts, apps/api/src/jobs/scheduler.ts, apps/api/test/weekly_digest.test.ts, apps/web/src/components/profile/ProfileModal.tsx | Weekly background job compiling 7-day spending, category breakdown, monthly budget pace, and upcoming 7-day autopays; responsive HTML and plain-text templates with Rupee symbols; Resend/SendGrid and graceful dry-run fallback; user opt-in toggle in Profile. | None |
 
 ### X: Additional Operational Excellence
 

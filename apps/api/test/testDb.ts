@@ -28,13 +28,25 @@ export function setupInMemoryPrisma() {
 
   // 1. User
   vi.spyOn(prisma.user, 'findUnique').mockImplementation(async (args: any) => {
+    let u: any = null;
     if (args.where?.firebaseUid) {
-      return inMemoryDb.users.find((u) => u.firebaseUid === args.where.firebaseUid) || null;
+      u = inMemoryDb.users.find((user) => user.firebaseUid === args.where.firebaseUid) || null;
+    } else if (args.where?.id) {
+      u = inMemoryDb.users.find((user) => user.id === args.where.id) || null;
     }
-    if (args.where?.id) {
-      return inMemoryDb.users.find((u) => u.id === args.where.id) || null;
+    if (u && args.include?.budgetGoal) {
+      const bg = inMemoryDb.budgetGoals.find((b) => b.userId === u.id);
+      return { ...u, budgetGoal: bg || null };
     }
-    return null;
+    return u;
+  });
+
+  vi.spyOn(prisma.user, 'findMany').mockImplementation(async (args: any = {}) => {
+    let result = [...inMemoryDb.users];
+    if (args.where?.email?.not !== undefined) {
+      result = result.filter((u) => u.email !== null && u.email !== undefined);
+    }
+    return result;
   });
 
   vi.spyOn(prisma.user, 'create').mockImplementation(async (args: any) => {
@@ -501,6 +513,17 @@ export function setupInMemoryPrisma() {
   // 5. BudgetGoal
   vi.spyOn(prisma.budgetGoal, 'findUnique').mockImplementation(async (args: any) => {
     return inMemoryDb.budgetGoals.find((b) => b.userId === args.where.userId) || null;
+  });
+
+  vi.spyOn(prisma.budgetGoal, 'create').mockImplementation(async (args: any) => {
+    const goal: BudgetGoal = {
+      userId: args.data.userId,
+      monthlyExpenseLimitPaise: args.data.monthlyExpenseLimitPaise,
+      thresholdPercent: args.data.thresholdPercent ?? 80,
+      updatedAt: new Date(),
+    };
+    inMemoryDb.budgetGoals.push(goal);
+    return goal;
   });
 
   vi.spyOn(prisma.budgetGoal, 'upsert').mockImplementation(async (args: any) => {
