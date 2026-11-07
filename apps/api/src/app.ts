@@ -4,6 +4,7 @@ import cors from 'cors';
 import compression from 'compression';
 import { config } from './config/index.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
+import { metricsMiddleware } from './middleware/metrics.js';
 import { authMiddleware } from './middleware/auth.js';
 import { idempotencyMiddleware } from './middleware/idempotency.js';
 import { generalRateLimiter, globalIpRateLimiter } from './middleware/rateLimiter.js';
@@ -82,8 +83,9 @@ export function createApp() {
     }),
   );
 
-  // 4. Request ID tracking (BE-6.3)
+  // 4. Request ID tracking & Application Metrics (BE-6.3, OPS-13)
   app.use(requestIdMiddleware);
+  app.use(metricsMiddleware);
 
   // 4. Body Parsers (SEC-3: 1MB general, up to 5MB for imports)
   app.use('/api/v1/transactions/import', express.json({ limit: '5mb' }));

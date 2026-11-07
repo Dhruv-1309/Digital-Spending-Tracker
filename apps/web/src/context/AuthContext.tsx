@@ -36,11 +36,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const unsubscribe = onAuthStateChange((profile) => {
-      setUser(profile);
+      setUser((current) => {
+        if (current?.uid === 'demo_user_visitor' && !profile) {
+          return current;
+        }
+        return profile;
+      });
       setLoading(false);
     });
 
     return () => unsubscribe();
+  }, []);
+
+  const isDemoMode = user?.uid === 'demo_user_visitor';
+
+  const enterDemoMode = useCallback(() => {
+    setUser({
+      uid: 'demo_user_visitor',
+      email: 'demo@moneytracker.app',
+      displayName: 'Demo Guest',
+      authMethod: 'anonymous',
+      createdAt: new Date().toISOString(),
+      lastSignIn: new Date().toISOString(),
+      isAnonymous: true,
+      emailVerified: true,
+    });
+    setLoading(false);
   }, []);
 
   const signInWithEmail = useCallback(async (email: string, pass: string) => {
@@ -60,9 +81,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (user?.uid === 'demo_user_visitor') {
+      setUser(null);
+      return;
+    }
     await apiSignOutUser();
     setUser(null);
-  }, []);
+  }, [user]);
 
   const updateDisplayName = useCallback(async (name: string) => {
     await apiUpdateDisplayName(name);
@@ -98,6 +123,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         loading,
+        isDemoMode,
+        enterDemoMode,
         signInWithEmail,
         signUpWithEmail,
         signInWithGoogle,

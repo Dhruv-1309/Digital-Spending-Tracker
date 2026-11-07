@@ -4,6 +4,8 @@ import type { UserProfile } from '../types';
 export interface AuthContextValue {
   user: UserProfile | null;
   loading: boolean;
+  isDemoMode?: boolean;
+  enterDemoMode?: () => void;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, turnstileToken?: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;

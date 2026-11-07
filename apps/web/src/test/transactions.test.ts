@@ -249,5 +249,33 @@ describe('transactions', () => {
       expect(newTransactions.length).toBe(0);
       expect(skippedCount).toBe(sampleTransactions.length);
     });
+
+    it('X-4: export includes schemaVersion 1.0 and sha256Checksum', () => {
+      const jsonString = exportTransactionsJson({
+        transactions: sampleTransactions,
+        autopays: [],
+        budgetGoal: { monthlyExpenseLimit: 40000, thresholdPercent: 80 },
+      });
+
+      const parsed = JSON.parse(jsonString);
+      expect(parsed.schemaVersion).toBe('1.0');
+      expect(typeof parsed.sha256Checksum).toBe('string');
+      expect(parsed.sha256Checksum).toHaveLength(64);
+    });
+
+    it('X-4: rejects tampered backup JSON with failed checksum', () => {
+      const jsonString = exportTransactionsJson({
+        transactions: sampleTransactions,
+        autopays: [],
+        budgetGoal: { monthlyExpenseLimit: 40000, thresholdPercent: 80 },
+      });
+
+      const parsed = JSON.parse(jsonString);
+      parsed.transactions[0].amount = 888888;
+
+      const result = importBackupFromJson(JSON.stringify(parsed), []);
+      expect(result.error).toContain('Checksum verification failed');
+      expect(result.newTransactions.length).toBe(0);
+    });
   });
 });

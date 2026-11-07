@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Monorepo NPM Workspaces (apps/api, apps/web, packages/shared)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -16,6 +17,7 @@ updates:
       - "dependencies"
       - "security"
 
+  # GitHub Actions Workflows
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -26,4 +28,17 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "github-actions"
+      - "security"
+
+  # Docker Container Base Images (OPS-14)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
+    labels:
+      - "docker"
       - "security"

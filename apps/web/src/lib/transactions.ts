@@ -4,6 +4,7 @@ import type {
   BudgetGoal,
   TransactionSortOption,
 } from '../types';
+import { computeSha256Hex } from '@moneytracker/shared';
 import { logger } from './logger';
 
 export function parseCsvRecords(content: string): string[][] {
@@ -147,7 +148,11 @@ export function exportTransactionsJson(data: {
     .filter((t) => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
 
+  const sha256Checksum = computeSha256Hex(JSON.stringify(data.transactions));
+
   const payload = {
+    schemaVersion: '1.0',
+    sha256Checksum,
     exportedAt: new Date().toISOString(),
     summary: {
       transactionCount: data.transactions.length,
@@ -303,6 +308,18 @@ export function importBackupFromJson(
       skippedCount: 0,
       error: 'Backup JSON is missing a valid transactions list.',
     };
+  }
+
+  // Integrity Check: Validate SHA-256 checksum if provided to detect file corruption or tampering (X-4)
+  if (parsed.sha256Checksum) {
+    const computedChecksum = computeSha256Hex(JSON.stringify(parsed.transactions));
+    if (computedChecksum !== parsed.sha256Checksum) {
+      return {
+        newTransactions: [],
+        skippedCount: 0,
+        error: 'Checksum verification failed: Backup file appears to be corrupted or tampered with.',
+      };
+    }
   }
 
   const existingSignatures = new Set(

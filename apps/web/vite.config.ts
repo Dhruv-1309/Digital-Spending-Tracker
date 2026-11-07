@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,7 +10,16 @@ export default defineConfig({
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
-  ],
+    process.env.ANALYZE === 'true' &&
+      visualizer({
+        filename: '../../docs/bundle-stats.html',
+        title: 'MoneyTracker Production Bundle Visualizer',
+        template: 'treemap',
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
+  ].filter(Boolean) as any,
   resolve: {
     dedupe: ['react', 'react-dom'],
   },

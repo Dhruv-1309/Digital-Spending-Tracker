@@ -23,6 +23,7 @@ import { toUserFriendlyError } from '../lib/errorMessages.js';
 import { logger } from '../lib/logger.js';
 import { getTabFromRoute, resolveAppRoute } from '../lib/routes.js';
 import { rupeesToPaise } from '@moneytracker/shared';
+import { generateSampleData } from '../lib/sampleData.js';
 import {
   getOfflineTrash,
   saveOfflineTrash,
@@ -346,6 +347,29 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    if (user.uid === 'demo_user_visitor') {
+      const sample = generateSampleData();
+      const sampleTxWithIds: Transaction[] = sample.sampleTransactions.map((t, idx) => ({
+        ...t,
+        id: `demo_tx_${idx + 1}`,
+        createdAt: new Date().toISOString(),
+      }));
+      const sampleAutopaysWithIds: AutopayPlan[] = sample.sampleAutopays.map((a, idx) => ({
+        ...a,
+        id: `demo_autopay_${idx + 1}`,
+        createdAt: new Date().toISOString(),
+      }));
+      setTransactions(sampleTxWithIds);
+      setAutopays(sampleAutopaysWithIds);
+      setBudgetGoal(sample.sampleBudget);
+      setCategories(DEFAULT_CATEGORIES);
+      setApprovedAnomalies([]);
+      setIsLoading(false);
+      setLoadError(null);
+      setPendingSyncCount(0);
+      return;
+    }
+
     setIsLoading(true);
     setLoadError(null);
 
@@ -489,6 +513,18 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     async (txInput: Omit<Transaction, 'id' | 'createdAt'>): Promise<boolean> => {
       if (!user) return false;
 
+      if (user.uid === 'demo_user_visitor') {
+        const newId = generateClientId();
+        const newTx: Transaction = {
+          ...txInput,
+          id: newId,
+          createdAt: new Date().toISOString(),
+        };
+        setTransactions((prev) => [newTx, ...prev]);
+        showToast('Transaction added (Demo Mode - session only)', 'success');
+        return true;
+      }
+
       const newId = generateClientId();
       const newTx: Transaction = {
         ...txInput,
@@ -595,6 +631,16 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
   const deleteTransaction = useCallback(
     async (id: string): Promise<boolean> => {
       if (!user) return false;
+
+      if (user.uid === 'demo_user_visitor') {
+        const toDelete = transactions.find((t) => t.id === id);
+        if (toDelete) {
+          setTransactions((prev) => prev.filter((t) => t.id !== id));
+          setTrashTransactions((prev) => [toDelete, ...prev.filter((t) => t.id !== id)]);
+          showToast('Transaction moved to Trash (Demo Mode)', 'success');
+        }
+        return true;
+      }
 
       const toDelete = transactions.find((t) => t.id === id);
       const updated = transactions.filter((t) => t.id !== id);
@@ -1119,6 +1165,19 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
     async (planInput: Omit<AutopayPlan, 'id' | 'createdAt'>): Promise<boolean> => {
       if (!user) return false;
 
+      if (user.uid === 'demo_user_visitor') {
+        const newId = generateClientId();
+        const newPlan: AutopayPlan = {
+          ...planInput,
+          id: newId,
+          createdAt: new Date().toISOString(),
+          active: true,
+        };
+        setAutopays((prev) => [...prev, newPlan]);
+        showToast('Autopay scheduled (Demo Mode - session only)', 'success');
+        return true;
+      }
+
       const newId = generateClientId();
       const newPlan: AutopayPlan = {
         ...planInput,
@@ -1261,6 +1320,12 @@ export function TrackerProvider({ children }: { children: React.ReactNode }) {
   const updateBudgetGoal = useCallback(
     async (goal: BudgetGoal): Promise<boolean> => {
       if (!user) return false;
+
+      if (user.uid === 'demo_user_visitor') {
+        setBudgetGoal(goal);
+        showToast('Budget updated (Demo Mode - session only)', 'success');
+        return true;
+      }
 
       setBudgetGoal(goal);
       syncQueue.setCachedData('budgetGoal', goal);

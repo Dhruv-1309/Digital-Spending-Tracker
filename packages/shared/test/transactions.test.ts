@@ -11,6 +11,7 @@ import {
   extractUniqueMonths,
   computeImportHash,
 } from '../src/calculations/transactions.js';
+import { computeSha256Hex } from '../src/crypto/sha256.js';
 
 describe('transactions', () => {
   const sampleTransactions = [
@@ -325,6 +326,47 @@ invalid-date,expense,Food,200
       const { newTransactions, skippedCount } = importBackupFromJson(jsonString, sampleTransactions);
       expect(newTransactions.length).toBe(0);
       expect(skippedCount).toBe(sampleTransactions.length);
+    });
+
+    it('X-4: export includes schemaVersion 1.0 and valid sha256Checksum', () => {
+      const jsonString = exportTransactionsJson({
+        transactions: sampleTransactions,
+        autopays: [],
+        budgetGoal: { monthlyExpenseLimit: 50000, thresholdPercent: 80 },
+      });
+
+      const parsed = JSON.parse(jsonString);
+      expect(parsed.schemaVersion).toBe('1.0');
+      expect(typeof parsed.sha256Checksum).toBe('string');
+      expect(parsed.sha256Checksum).toHaveLength(64);
+      expect(parsed.sha256Checksum).toBe(computeSha256Hex(JSON.stringify(sampleTransactions)));
+    });
+
+    it('X-4: import validates checksum and rejects tampered transactions', () => {
+      const jsonString = exportTransactionsJson({
+        transactions: sampleTransactions,
+        autopays: [],
+        budgetGoal: { monthlyExpenseLimit: 50000, thresholdPercent: 80 },
+      });
+
+      const parsed = JSON.parse(jsonString);
+      // Tamper with the transaction amount
+      parsed.transactions[0].amount = 999999;
+      const tamperedJson = JSON.stringify(parsed);
+
+      const result = importBackupFromJson(tamperedJson, []);
+      expect(result.error).toContain('Checksum verification failed');
+      expect(result.newTransactions.length).toBe(0);
+    });
+  });
+
+  describe('X-4: computeSha256Hex standard compliance', () => {
+    it('matches standard NIST SHA-256 test vectors', () => {
+      expect(computeSha256Hex('')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+      expect(computeSha256Hex('abc')).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+      expect(computeSha256Hex('The quick brown fox jumps over the lazy dog')).toBe(
+        'd7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592',
+      );
     });
   });
 });

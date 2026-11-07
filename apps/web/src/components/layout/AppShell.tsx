@@ -21,6 +21,7 @@ import {
   PanelLeftOpenIcon,
   SettingsIcon,
   AlertCircleIcon,
+  SparklesIcon,
 } from '../icons';
 
 export interface AppShellProps {
@@ -63,7 +64,7 @@ function getPageTitle(tab: NavTab): string {
  *    - Pressing 'Ctrl+B' or 'Cmd+B' smoothly toggles the sidebar between expanded and collapsed rail.
  */
 export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: AppShellProps) {
-  const { user, signOut, resendVerificationEmail, reloadUser } = useAuth();
+  const { user, signOut, resendVerificationEmail, reloadUser, isDemoMode } = useAuth();
   const { currentTab, setCurrentTab, isOnline } = useTracker();
   const { showToast } = useToast();
 
@@ -768,6 +769,33 @@ export function AppShell({ children, onOpenProfile, defaultSidebarCollapsed }: A
         }`}
       >
         <div className="mx-auto max-w-content w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col justify-between">
+          {/* Demo Mode Notice Banner (WEB-14) */}
+          {isDemoMode && (
+            <div
+              id="demoModeBanner"
+              role="alert"
+              className="mb-6 p-3.5 sm:p-4 rounded-card bg-accent-tint/60 border border-accent/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-ink"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <SparklesIcon size={18} className="text-accent shrink-0" />
+                <span>
+                  <strong>Interactive Demo Mode:</strong> Exploring with sample personal finance records. Changes exist in session memory only.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  id="demoExitOrSignUpBtn"
+                  onClick={signOut}
+                >
+                  Create Account / Exit
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Email Verification Banner (AUTH-4) */}
           {user && user.email && user.emailVerified === false && (
             <div

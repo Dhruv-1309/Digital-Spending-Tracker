@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: moneytracker-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: moneytracker
+      POSTGRES_USER: moneytracker
+      POSTGRES_PASSWORD: moneytracker_prod_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moneytracker -d moneytracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - moneytracker-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: moneytracker-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://moneytracker:moneytracker_prod_password@postgres:5432/moneytracker
+      ALLOWED_ORIGINS: http://localhost,http://127.0.0.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks:
+      - moneytracker-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: moneytracker-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - moneytracker-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  moneytracker-network:
+    driver: bridge

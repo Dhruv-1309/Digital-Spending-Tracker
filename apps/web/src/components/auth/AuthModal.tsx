@@ -22,6 +22,7 @@ import {
   ArrowRightIcon,
   ShieldIcon,
   CheckIcon,
+  SparklesIcon,
 } from '../icons';
 import { TurnstileWidget } from './TurnstileWidget';
 import authWaveUrl from '../../assets/art/auth-wave.svg';
@@ -89,7 +90,7 @@ export function AuthModal({ turnstileSiteKey: propSiteKey }: { turnstileSiteKey?
     propSiteKey ??
     ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_TURNSTILE_SITE_KEY) || '');
 
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle, sendPasswordReset } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle, sendPasswordReset, enterDemoMode } = useAuth();
   const { showToast } = useToast();
 
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -703,6 +704,27 @@ export function AuthModal({ turnstileSiteKey: propSiteKey }: { turnstileSiteKey?
             icon={<GoogleIcon size={18} id="googleIcon" />}
           >
             <span id="googleSignInText">Continue with Google</span>
+          </Button>
+
+          {/* Explore Demo Mode Divider & Button (WEB-14) */}
+          <div className="relative flex items-center justify-center my-3">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-line/60" />
+            </div>
+            <span className="relative bg-surface px-2 text-[11px] text-ink-3 uppercase tracking-wider">
+              or explore first
+            </span>
+          </div>
+
+          <Button
+            id="exploreDemoModeBtn"
+            type="button"
+            variant="ghost"
+            onClick={() => enterDemoMode?.()}
+            className="w-full justify-center gap-2 border border-dashed border-accent/40 bg-accent-tint/30 hover:bg-accent-tint hover:border-accent text-accent font-medium text-xs min-h-[40px]"
+            icon={<SparklesIcon size={15} />}
+          >
+            <span>Explore Demo Mode (No account required)</span>
           </Button>
 
           {/* Auth Card Footer with Trust Note & Legal Links */}
