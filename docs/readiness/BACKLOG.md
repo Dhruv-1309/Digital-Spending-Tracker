@@ -486,7 +486,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Returns paginated structure { items, total, page, pageSize, totalPages } matching transaction endpoints
 - **How It Will Be Tested:** Supertest in apps/api/test/autopay.test.ts asserting paginated response structure.
 
-### 15. [BE-12] Prisma database connection pool sizing and query timeout configuration
+### 15. [BE-12] Prisma database connection pool sizing and query timeout configuration `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `BE`
 - **Dependencies:** None
@@ -494,8 +494,8 @@ Expected of a production-grade personal financial application. These ensure robu
   - `apps/api/src/config/index.ts`
   - `apps/api/src/db/prisma.ts`
 - **Acceptance Criteria:**
-  - [ ] Appends connection_limit and pool_timeout parameters to DATABASE_URL if absent
-  - [ ] Configures Prisma query execution timeout to prevent hanging connections during network latency
+  - [x] Appends connection_limit and pool_timeout parameters to DATABASE_URL if absent
+  - [x] Configures Prisma query execution timeout to prevent hanging connections during network latency
 - **How It Will Be Tested:** Unit test verifying Prisma client instantiation options and connection parameters.
 
 ### 16. [SEC-10] Dependency vulnerability remediation (npm audit fix) and automated Dependabot updates
