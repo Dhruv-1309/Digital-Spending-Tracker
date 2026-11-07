@@ -21,6 +21,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      const e2eUser = window.localStorage.getItem('e2e_mock_user');
+      if (e2eUser) {
+        try {
+          setUser(JSON.parse(e2eUser));
+          setLoading(false);
+          return;
+        } catch {
+          // ignore invalid json
+        }
+      }
+    }
+
     const unsubscribe = onAuthStateChange((profile) => {
       setUser(profile);
       setLoading(false);

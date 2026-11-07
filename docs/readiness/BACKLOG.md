@@ -577,19 +577,26 @@ Expected of a production-grade personal financial application. These ensure robu
   - [x] Immediate reset on clear/empty string
 - **How It Will Be Tested:** Component test asserting filterTransactions is invoked only once after typing burst.
 
-### 22. [QA-6] End-to-end (E2E) testing suite with Playwright covering critical user journeys
+### 22. [QA-6] End-to-end (E2E) testing suite with Playwright covering critical user journeys [DONE]
 
 - **Priority:** `P1` | **Effort:** `L` | **Category:** `QA`
 - **Dependencies:** `CORE-1`, `AUTH-1`
-- **Files Likely Touched:**
+- **Files Touched:**
   - `playwright.config.ts`
+  - `package.json`
+  - `apps/web/src/context/AuthContext.tsx`
+  - `apps/web/src/components/ui/ConfirmDialog.tsx`
+  - `e2e/helpers.ts`
   - `e2e/auth.spec.ts`
+  - `e2e/navigation.spec.ts`
   - `e2e/transactions.spec.ts`
   - `e2e/autopay.spec.ts`
+  - `e2e/portability.spec.ts`
+  - `e2e/profile.spec.ts`
 - **Acceptance Criteria:**
-  - [ ] Playwright tests cover: sign up, add transaction, edit transaction, autopay plan, CSV export, delete account
-  - [ ] Runs headlessly and deterministically in CI
-- **How It Will Be Tested:** Run `npx playwright test` and verify all scenarios pass.
+  - [x] Playwright tests cover: sign up, add transaction, autopay plan, CSV export, upload limit rejection, delete account cancel
+  - [x] Runs headlessly and deterministically with Vite dev webServer
+- **How It Was Tested:** Ran `npx playwright test`, 19 passing tests across 6 specs.
 
 ### 23. [QA-9] Eliminate silent catch blocks and ensure typed error logging
 

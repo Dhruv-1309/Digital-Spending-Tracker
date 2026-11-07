@@ -10,12 +10,14 @@
     "dev:api": "npm --workspace=apps/api run dev",
     "build": "npm run --workspaces --if-present build",
     "test": "npm run --workspaces --if-present test",
+    "test:e2e": "playwright test",
     "lint": "npm run --workspaces --if-present lint",
     "precommit": "npm run lint && npx tsc -b && npm test && npm run build",
     "migrate:firestore": "tsx scripts/migrate-firestore-to-postgres.ts",
     "verify:parity": "tsx scripts/verify-parity.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@vitest/coverage-v8": "^5.0.5",
     "jsdom": "^30.1.3"
   },
