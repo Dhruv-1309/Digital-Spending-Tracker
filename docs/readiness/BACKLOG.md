@@ -1207,15 +1207,18 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
   - [x] Self-hosted font-display: swap eliminates FOIT and layout shift (CLS) during heading font render
 - **How It Was Tested:** Automated test in `apps/web/src/test/seo_and_brand_assets.test.ts` (passing).
 
-### 21. [PERF-8] Automated React Profiler re-render assertion test for forms and filters
+### 21. [PERF-8] Automated React Profiler re-render assertion test for forms and filters [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `PERF`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
   - `apps/web/src/test/render_performance.test.tsx`
 - **Acceptance Criteria:**
-  - [ ] Verifies typing in search input or amount field does not trigger cascading re-renders in sibling cards
-- **How It Will Be Tested:** Run vitest test asserting render call counts.
+  - [x] Verifies typing in search input or amount field does not trigger cascading re-renders in sibling cards
+  - [x] Verifies debounced search input prevents thrashing transaction filtering calculations on every keystroke
+  - [x] Profiles commit duration and phase transitions via React.Profiler to ensure render budget remains well within 60fps frame threshold
+- **How It Was Tested:**
+  - 5 automated tests in `apps/web/src/test/render_performance.test.tsx` verifying render isolation of AmountInput/TextInput from sibling cards, profiling filter update commit durations, and asserting search debounce execution. Full test suite passing (699 tests).
 
 ### 22. [PERF-9] PWA Web App Manifest and Service Worker for offline app shell caching
 

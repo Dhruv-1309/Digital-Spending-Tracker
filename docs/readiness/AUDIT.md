@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{400.5}{499} = \mathbf{80.3\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{401.5}{499} = \mathbf{80.5\%}$$
 
-- **Current Readiness Score:** **80.3%** (Baseline: 56.8%)
+- **Current Readiness Score:** **80.5%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **400.5 points**
+- **Earned Weight:** **401.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **134** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **10** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **135** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **9** |
 | **MISSING** | Not implemented | **26** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -39,7 +39,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **BE** | Backend, API and Database | 21 | 20D / 0P / 1M  | **98.5%** | 65.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 17D / 0P / 2M (3 other) | **81.2%** | 56.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 19D / 1P / 3M (1 other) | **88.2%** | 48.5 / 55 |
-| **PERF** | Performance, Offline and PWA | 15 | 8D / 1P / 3M (3 other) | **58.8%** | 20.0 / 34 |
+| **PERF** | Performance, Offline and PWA | 15 | 9D / 0P / 3M (3 other) | **61.8%** | 21.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 11D / 3P / 3M (1 other) | **77.2%** | 35.5 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 6D / 2P / 4M (9 other) | **36.4%** | 20.0 / 55 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 11D / 2P / 6M (1 other) | **79.1%** | 34.0 / 43 |
@@ -225,7 +225,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **PERF-5** | Static assets are hashed and cached for a long time, HTML is not cached, and gzip or brotli is on | `NEEDS-USER` | Vite outputs hashed filenames in dist/assets | Cache-Control header rules must be configured and verified on hosting provider. |
 | **PERF-6** | The offline write queue is persisted (IndexedDB), retried with backoff, and has a defined conflict rule | `DONE` | apps/web/src/services/syncQueue.ts:1-270, apps/web/src/test/syncQueue.test.ts | - |
 | **PERF-7** | Fonts are WOFF2, subset and preloaded; images are optimised and sized | `DONE` | apps/web/index.html:40-41, apps/web/src/styles/tokens.css:9-44, apps/web/src/test/font_preload.test.ts | Self-hosted WOFF2 fonts with font-display: swap; index.html preloads both Instrument Sans 400 and Bricolage Grotesque 600. | None |
-| **PERF-8** | No unnecessary re-renders while typing in forms and filters (measured, not guessed) | `PARTIAL` | Form state localized to components | No automated profiling or render count assertions. |
+| **PERF-8** | No unnecessary re-renders while typing in forms and filters (measured, not guessed) | `DONE` | apps/web/src/test/render_performance.test.tsx | Automated React.Profiler test suite verifies that typing in AmountInput and TextInput isolates renders from sibling cards, search debounce prevents list recalculation cascades, and filter updates complete within frame budget. | None |
 | **PERF-9** | A service worker caches the app shell so the app opens offline, and a web app manifest makes it installable | `MISSING` | No sw.js or manifest.json in apps/web/public | PWA service worker and Web App Manifest are missing. |
 | **PERF-10** | A visible offline and online indicator | `DONE` | apps/web/src/components/layout/AppShell.tsx:210-235, apps/web/src/test/app_shell.test.tsx | - |
 | **PERF-11** | Event listeners, timers and subscriptions are cleaned up (no memory growth over a long session) | `DONE` | AppShell.tsx:172, App.tsx:61, Toast.tsx, TrackerContext.tsx | - |
