@@ -19,5 +19,11 @@ export const CreateAutopaySchema = z.object({
 
 export const UpdateAutopaySchema = CreateAutopaySchema.partial().omit({ id: true });
 
+export const AutopayQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50),
+});
+
 export type CreateAutopayInput = z.infer<typeof CreateAutopaySchema>;
 export type UpdateAutopayInput = z.infer<typeof UpdateAutopaySchema>;
+export type AutopayQueryInput = z.infer<typeof AutopayQuerySchema>;

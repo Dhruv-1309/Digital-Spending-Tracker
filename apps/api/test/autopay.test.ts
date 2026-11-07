@@ -41,9 +41,53 @@ describe('Autopay & Background Scheduler (BE-3.1 - BE-3.5)', () => {
     const listRes = await request(app).get('/api/v1/autopay').set('Authorization', token);
     expect(listRes.status).toBe(200);
     expect(listRes.body.plans.length).toBe(2);
+    expect(listRes.body.items.length).toBe(2);
+    expect(listRes.body.total).toBe(2);
+    expect(listRes.body.page).toBe(1);
+    expect(listRes.body.pageSize).toBe(50);
+    expect(listRes.body.totalPages).toBe(1);
     expect(listRes.body.scheduledIncomePaise).toBe(8000000);
     expect(listRes.body.scheduledExpensePaise).toBe(64900);
     expect(listRes.body.monthlyFlowPaise).toBe(8000000 - 64900);
+  });
+
+  it('supports pagination with page and pageSize query parameters (BE-9)', async () => {
+    for (let i = 1; i <= 3; i++) {
+      await request(app)
+        .post('/api/v1/autopay')
+        .set('Authorization', token)
+        .send({
+          name: `Sub ${i}`,
+          type: 'expense',
+          amountPaise: 10000 * i,
+          category: 'Utilities',
+          day: i,
+        });
+    }
+
+    // Page 1 with pageSize 2
+    const page1 = await request(app)
+      .get('/api/v1/autopay?page=1&pageSize=2')
+      .set('Authorization', token);
+
+    expect(page1.status).toBe(200);
+    expect(page1.body.page).toBe(1);
+    expect(page1.body.pageSize).toBe(2);
+    expect(page1.body.total).toBe(3);
+    expect(page1.body.totalPages).toBe(2);
+    expect(page1.body.items.length).toBe(2);
+
+    // Page 2 with pageSize 2
+    const page2 = await request(app)
+      .get('/api/v1/autopay?page=2&pageSize=2')
+      .set('Authorization', token);
+
+    expect(page2.status).toBe(200);
+    expect(page2.body.page).toBe(2);
+    expect(page2.body.pageSize).toBe(2);
+    expect(page2.body.total).toBe(3);
+    expect(page2.body.totalPages).toBe(2);
+    expect(page2.body.items.length).toBe(1);
   });
 
   it('returns upcoming agenda with days countdown (BE-3.4)', async () => {

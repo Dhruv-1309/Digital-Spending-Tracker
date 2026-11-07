@@ -10,18 +10,18 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{344.5}{499} = \mathbf{69.0\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{346.0}{499} = \mathbf{69.3\%}$$
 
-- **Current Readiness Score:** **69.0%** (Baseline: 56.8%)
+- **Current Readiness Score:** **69.3%** (Baseline: 56.8%)
 - **Total Audited Items:** **190**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **344.5 points**
+- **Earned Weight:** **346.0 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **97** |
-| **PARTIAL** | Core implementation exists; specific documented gaps remain | **37** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **98** |
+| **PARTIAL** | Core implementation exists; specific documented gaps remain | **36** |
 | **MISSING** | Not implemented | **36** |
 | **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
@@ -36,7 +36,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CORE** | Core Behavior and Data Correctness | 22 | 19D / 2P / 0M (1 other) | **95.5%** | 63.0 / 66 |
 | **AUTH** | Authentication and Accounts | 14 | 11D / 1P / 1M (1 other) | **87.5%** | 35.0 / 40 |
-| **BE** | Backend, API and Database | 21 | 17D / 2P / 2M  | **90.9%** | 60 / 66 |
+| **BE** | Backend, API and Database | 21 | 18D / 1P / 2M  | **93.2%** | 61.5 / 66 |
 | **SEC** | Security and Privacy | 22 | 11D / 4P / 4M (3 other) | **66.7%** | 46 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 15D / 4P / 4M (1 other) | **79.1%** | 43.5 / 55 |
 | **PERF** | Performance, Offline and PWA | 15 | 4D / 5P / 3M (3 other) | **44.1%** | 15 / 34 |
@@ -144,7 +144,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **BE-6** | Migrations are versioned and repeatable, and have been run on an empty database and on a copy of production-like data | `DONE` | apps/api/prisma/migrations/0_init/migration.sql, apps/api/test/migration.test.ts | - |
 | **BE-7** | Rate limiting per user and per IP | `DONE` | apps/api/src/middleware/rateLimiter.ts:4-38, apps/api/src/app.ts:60,70, apps/api/test/auth.test.ts:87-128 | Global IP rate limiting protects server from IP floods; user-level token bucket rate limiter mounted post-authMiddleware in apiV1 keys on req.user.id/firebaseUid across differing IPs and isolates users on shared IPs. |
 | **BE-8** | CORS uses an allowlist of origins, not a wildcard | `DONE` | apps/api/src/app.ts:25-35, apps/api/src/config/index.ts:25 | - |
-| **BE-9** | Every list endpoint is paginated with a maximum page size | `PARTIAL` | packages/shared/src/schemas/transactions.ts:49-50, apps/api/src/repositories/transactionRepository.ts:180-200 | Autopay plans endpoint (/autopay) returns all records without pagination. |
+| **BE-9** | Every list endpoint is paginated with a maximum page size | `DONE` | packages/shared/src/schemas/transactions.ts:49-50, apps/api/src/repositories/transactionRepository.ts:180-200, packages/shared/src/schemas/autopay.ts:22-25, apps/api/src/routes/autopayRoutes.ts:14-30 | Both transactions (/transactions) and autopay plans (/autopay) list endpoints are strictly paginated with AutopayQuerySchema (page min 1, pageSize max 100), returning standardized items, total, page, pageSize, totalPages metadata. |
 | **BE-10** | Create operations accept an idempotency key so a retry cannot duplicate data | `DONE` | apps/api/src/middleware/idempotency.ts:1-55, apps/api/test/idempotency.test.ts | - |
 | **BE-11** | Indexes exist for the columns used in filtering and sorting; slow queries have been checked | `DONE` | apps/api/prisma/schema.prisma:98-106 (indexes on userId, txnDate, category, type, deletedAt) | - |
 | **BE-12** | Connection pool size and query and request timeouts are configured | `PARTIAL` | apps/api/src/db/prisma.ts:1-25 | Explicit connection pool limit (connection_limit) and query timeouts are not set in Prisma connection string. |

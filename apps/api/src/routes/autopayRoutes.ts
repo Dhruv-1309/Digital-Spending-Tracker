@@ -5,21 +5,30 @@ import { validate } from '../middleware/validate.js';
 import {
   CreateAutopaySchema,
   UpdateAutopaySchema,
+  AutopayQuerySchema,
 } from '@moneytracker/shared';
 
 export const autopayRouter = Router();
 
 autopayRouter.use(authMiddleware());
 
-// GET /api/v1/autopay (BE-3.5: returns monthly flow with plan list)
-autopayRouter.get('/', async (req, res, next) => {
-  try {
-    const result = await autopayService.listAutopayPlans(req.user!.id);
-    res.status(200).json(result);
-  } catch (err) {
-    next(err);
-  }
-});
+// GET /api/v1/autopay (BE-3.5, BE-9: paginated autopay list with flow summary)
+autopayRouter.get(
+  '/',
+  validate({ query: AutopayQuerySchema }),
+  async (req, res, next) => {
+    try {
+      const query = req.query as unknown as { page?: number; pageSize?: number };
+      const result = await autopayService.listAutopayPlans(req.user!.id, {
+        page: query.page,
+        pageSize: query.pageSize,
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /api/v1/autopay/upcoming (BE-3.4: remaining plans this month)
 autopayRouter.get('/upcoming', async (req, res, next) => {

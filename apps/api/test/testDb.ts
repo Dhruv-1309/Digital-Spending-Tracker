@@ -294,7 +294,7 @@ export function setupInMemoryPrisma() {
 
   // 4. AutopayPlan
   vi.spyOn(prisma.autopayPlan, 'findMany').mockImplementation(async (args: any = {}) => {
-    return inMemoryDb.autopayPlans.filter((p) => {
+    let list = inMemoryDb.autopayPlans.filter((p) => {
       if (args.where?.userId && p.userId !== args.where.userId) return false;
       if (args.where?.deletedAt === null && p.deletedAt !== null) return false;
       if (args.where?.active !== undefined && p.active !== args.where.active) return false;
@@ -302,6 +302,20 @@ export function setupInMemoryPrisma() {
       if (args.where?.deletedAt?.gt && (!p.deletedAt || p.deletedAt <= args.where.deletedAt.gt)) return false;
       return true;
     });
+
+    if (args.orderBy?.day === 'asc') {
+      list.sort((a, b) => a.day - b.day);
+    } else if (args.orderBy?.day === 'desc') {
+      list.sort((a, b) => b.day - a.day);
+    }
+
+    if (args.skip !== undefined || args.take !== undefined) {
+      const skip = args.skip || 0;
+      const take = args.take !== undefined ? args.take : list.length;
+      list = list.slice(skip, skip + take);
+    }
+
+    return list;
   });
 
   vi.spyOn(prisma.autopayPlan, 'findFirst').mockImplementation(async (args: any) => {

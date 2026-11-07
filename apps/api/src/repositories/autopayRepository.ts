@@ -16,34 +16,61 @@ export interface CreateAutopayRepoInput {
 }
 
 export class AutopayRepository {
-  async listAutopayPlans(userId: string): Promise<{
+  async listAutopayPlans(
+    userId: string,
+    options?: { page?: number; pageSize?: number },
+  ): Promise<{
+    items: AutopayPlan[];
     plans: AutopayPlan[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
     monthlyFlowPaise: number;
     scheduledIncomePaise: number;
     scheduledExpensePaise: number;
   }> {
+    const page = Math.max(1, options?.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, options?.pageSize ?? 50));
+    const skip = (page - 1) * pageSize;
+
+    const total = await prisma.autopayPlan.count({
+      where: { userId, deletedAt: null },
+    });
+
     const plans = await prisma.autopayPlan.findMany({
       where: { userId, deletedAt: null },
       orderBy: { day: 'asc' },
+      skip,
+      take: pageSize,
+    });
+
+    // Compute monthly flow projection across ALL active plans of this user
+    const allActivePlans = await prisma.autopayPlan.findMany({
+      where: { userId, deletedAt: null, active: true },
     });
 
     let scheduledIncomePaise = 0;
     let scheduledExpensePaise = 0;
 
-    plans.forEach((p) => {
-      if (p.active) {
-        if (p.type === 'income') {
-          scheduledIncomePaise += Number(p.amountPaise);
-        } else {
-          scheduledExpensePaise += Number(p.amountPaise);
-        }
+    allActivePlans.forEach((p) => {
+      if (p.type === 'income') {
+        scheduledIncomePaise += Number(p.amountPaise);
+      } else {
+        scheduledExpensePaise += Number(p.amountPaise);
       }
     });
 
     const monthlyFlowPaise = scheduledIncomePaise - scheduledExpensePaise;
+    const totalPages = Math.ceil(total / pageSize) || 1;
 
     return {
+      items: plans,
       plans,
+      total,
+      page,
+      pageSize,
+      totalPages,
       monthlyFlowPaise,
       scheduledIncomePaise,
       scheduledExpensePaise,

@@ -474,7 +474,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Handles auth/requires-recent-login by presenting inline re-auth modal without unmounting settings
 - **How It Will Be Tested:** Component test in auth_profile_redesign.test.tsx testing re-authentication prompt.
 
-### 14. [BE-9] Pagination on autopay plans list API endpoint
+### 14. [BE-9] Pagination on autopay plans list API endpoint `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `BE`
 - **Dependencies:** None
@@ -482,8 +482,8 @@ Expected of a production-grade personal financial application. These ensure robu
   - `apps/api/src/repositories/autopayRepository.ts`
   - `apps/api/src/routes/autopayRoutes.ts`
 - **Acceptance Criteria:**
-  - [ ] GET /api/v1/autopay supports page and pageSize query parameters (default 50, max 100)
-  - [ ] Returns paginated structure { items, total, page, pageSize } matching transaction endpoints
+  - [x] GET /api/v1/autopay supports page and pageSize query parameters (default 50, max 100)
+  - [x] Returns paginated structure { items, total, page, pageSize, totalPages } matching transaction endpoints
 - **How It Will Be Tested:** Supertest in apps/api/test/autopay.test.ts asserting paginated response structure.
 
 ### 15. [BE-12] Prisma database connection pool sizing and query timeout configuration

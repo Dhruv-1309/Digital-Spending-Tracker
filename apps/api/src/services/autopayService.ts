@@ -7,8 +7,11 @@ import { getClampedDueDay } from '@moneytracker/shared';
 import { logger } from '../utils/logger.js';
 
 export class AutopayService {
-  async listAutopayPlans(userId: string) {
-    return autopayRepository.listAutopayPlans(userId);
+  async listAutopayPlans(
+    userId: string,
+    options?: { page?: number; pageSize?: number },
+  ) {
+    return autopayRepository.listAutopayPlans(userId, options);
   }
 
   async createAutopayPlan(userId: string, input: CreateAutopayRepoInput) {
