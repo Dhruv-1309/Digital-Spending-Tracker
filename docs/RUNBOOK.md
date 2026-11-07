@@ -110,12 +110,31 @@ If a critical issue is discovered within the 30-day cutover window:
 
 ## 5. Ongoing Operations & Monitoring
 
-- **Autopay Scheduler**: Managed by `pg-boss`. Check job queue health:
+### 5.1 Autopay Scheduler Operations
+Managed via `pg-boss` background job queues. Autopay executes every 15 minutes (`*/15 * * * *`) with automatic 3x retries. Check queue health:
+```sql
+SELECT name, state, count(*) FROM pgboss.job GROUP BY name, state;
+```
+
+### 5.2 Idempotency Key Cleanup
+Managed via `pg-boss` background worker `idempotency-cleanup` scheduled daily at 01:00 AM. Purges keys older than 7 days to maintain lightweight database storage.
+
+### 5.3 Soft-Delete Retention & Tombstone Purge Job (BE-18)
+- **Retention Guarantee:** When users delete transactions or autopay plans, records are soft-deleted by setting `deletedAt = NOW()`. Records remain recoverable in the Trash for a guaranteed **90-day retention window**.
+- **Automated Purge Worker:** The `tombstone-purge` job is registered in `apps/api/src/jobs/scheduler.ts` and executed daily at midnight UTC (`0 0 * * *`) via `pg-boss`.
+- **Configurable Threshold:** The retention duration is configurable via the `TOMBSTONE_RETENTION_DAYS` environment variable in `apps/api/.env` (default: `90`).
+- **Idempotency & Safety:** The purge operation uses `DELETE ... WHERE "deletedAt" < cutoffDate`, which is strictly idempotent and safely deletes only records past their retention window while preserving active transactions and recent trash.
+- **Manual / Operator Purge SQL:**
+  If operators need to manually inspect or purge expired tombstones:
   ```sql
-  SELECT name, state, count(*) FROM pgboss.job GROUP BY name, state;
+  -- Inspect tombstones eligible for permanent purge
+  SELECT count(*) FROM "Transaction" WHERE "deletedAt" IS NOT NULL AND "deletedAt" < NOW() - INTERVAL '90 days';
+  SELECT count(*) FROM "AutopayPlan" WHERE "deletedAt" IS NOT NULL AND "deletedAt" < NOW() - INTERVAL '90 days';
+
+  -- Manually purge expired tombstones
+  DELETE FROM "Transaction" WHERE "deletedAt" < NOW() - INTERVAL '90 days';
+  DELETE FROM "AutopayPlan" WHERE "deletedAt" < NOW() - INTERVAL '90 days';
   ```
-- **Tombstone Purging**: Automatic daily job removes soft-deleted transactions older than 90 days.
-- **Idempotency Keys**: Automatic daily job purges keys older than 7 days.
 
 ---
 

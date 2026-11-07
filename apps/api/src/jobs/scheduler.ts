@@ -5,6 +5,28 @@ import { idempotencyRepository } from '../repositories/idempotencyRepository.js'
 import { prisma } from '../db/prisma.js';
 import { logger } from '../utils/logger.js';
 
+/**
+ * Purges soft-deleted records older than the retention cutoff (BE-18).
+ * Defaults to config.tombstoneRetentionDays (90 days).
+ */
+export async function purgeTombstones(
+  retentionDays: number = config.tombstoneRetentionDays,
+): Promise<{ deletedTransactions: number; deletedPlans: number }> {
+  const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+  const [txResult, planResult] = await Promise.all([
+    prisma.transaction.deleteMany({
+      where: { deletedAt: { lt: cutoffDate } },
+    }),
+    prisma.autopayPlan.deleteMany({
+      where: { deletedAt: { lt: cutoffDate } },
+    }),
+  ]);
+  return {
+    deletedTransactions: txResult.count,
+    deletedPlans: planResult.count,
+  };
+}
+
 let boss: PgBoss | null = null;
 
 export async function initJobScheduler(): Promise<PgBoss | null> {
@@ -38,19 +60,8 @@ export async function initJobScheduler(): Promise<PgBoss | null> {
 
     await boss.work('tombstone-purge', async () => {
       logger.info('Executing scheduled tombstone-purge job');
-      const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-      const [txResult, planResult] = await Promise.all([
-        prisma.transaction.deleteMany({
-          where: { deletedAt: { lt: ninetyDaysAgo } },
-        }),
-        prisma.autopayPlan.deleteMany({
-          where: { deletedAt: { lt: ninetyDaysAgo } },
-        }),
-      ]);
-      logger.info(
-        { deletedTransactions: txResult.count, deletedPlans: planResult.count },
-        'Completed tombstone-purge job',
-      );
+      const result = await purgeTombstones();
+      logger.info(result, 'Completed tombstone-purge job');
     });
 
     // 3. Register idempotency-cleanup job (daily at 01:00 AM)

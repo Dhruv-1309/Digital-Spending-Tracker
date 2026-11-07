@@ -1041,16 +1041,21 @@ Features that enhance user delight, optimize performance, and deliver MoneyTrack
 - **How It Was Tested:**
   - 10 automated unit and component tests in `apps/web/src/test/auth_deep_linking.test.tsx` verifying protected route resolution, deep-link tab parsing from path, hash, and `?redirect=` param, redirect notice rendering, and post-login route restoration.
 
-### 11. [BE-18] Soft-delete retention documentation and configurable purge threshold
+### 11. [BE-18] Soft-delete retention documentation and configurable purge threshold [DONE]
 
 - **Priority:** `P2` | **Effort:** `S` | **Category:** `BE`
 - **Dependencies:** None
-- **Files Likely Touched:**
+- **Files Touched:**
+  - `apps/api/src/config/index.ts`
   - `apps/api/src/jobs/scheduler.ts`
   - `docs/RUNBOOK.md`
+  - `apps/api/test/tombstone_purge.test.ts`
 - **Acceptance Criteria:**
-  - [ ] Documents 90-day tombstone purge job and verifies idempotent execution
-- **How It Will Be Tested:** Verify scheduler job tests pass.
+  - [x] Documents 90-day tombstone purge job, SLA, and idempotent execution in RUNBOOK.md
+  - [x] Configurable retention duration via TOMBSTONE_RETENTION_DAYS (defaults to 90 days)
+  - [x] Automated unit and integration test verifies expired tombstones purge while recent trash and active data remain untouched
+- **How It Was Tested:**
+  - 2 automated unit tests in `apps/api/test/tombstone_purge.test.ts` verifying 90-day purge threshold and custom retention durations.
 
 ### 12. [BE-19] Graceful shutdown connection draining and worker termination
 
