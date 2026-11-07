@@ -3,6 +3,8 @@ import {
   validateTransactionForm,
   validateAutopayForm,
   validateBudgetGoalForm,
+  validatePassword,
+  COMMON_PASSWORDS,
 } from '../src/calculations/validation.js';
 
 describe('validation', () => {
@@ -104,5 +106,71 @@ describe('validation', () => {
 
     const validDecimals = validateTransactionForm({ ...base, amount: '12.34' });
     expect(validDecimals.isValid).toBe(true);
+  });
+
+  describe('validatePassword (AUTH-5)', () => {
+    it('rejects empty and null passwords', () => {
+      expect(validatePassword('').isValid).toBe(false);
+      expect(validatePassword('').error).toMatch(/enter a password/i);
+      expect(validatePassword(null as any).isValid).toBe(false);
+    });
+
+    it('rejects passwords shorter than 8 characters', () => {
+      const short = validatePassword('Pass1!');
+      expect(short.isValid).toBe(false);
+      expect(short.error).toMatch(/at least 8 characters/i);
+      expect(short.score).toBe(1);
+    });
+
+    it('rejects passwords without numbers or special characters', () => {
+      const lettersOnly = validatePassword('abcdefghijk');
+      expect(lettersOnly.isValid).toBe(false);
+      expect(lettersOnly.error).toMatch(/number or special character/i);
+    });
+
+    it('rejects common blacklisted passwords regardless of case or whitespace', () => {
+      const sampleCommon = [
+        'password',
+        'PASSWORD123',
+        ' 123456 ',
+        'qwerty',
+        'admin123',
+        'moneytracker',
+        'letmein',
+        'iloveyou',
+      ];
+
+      for (const pwd of sampleCommon) {
+        const result = validatePassword(pwd);
+        expect(result.isValid).toBe(false);
+        expect(result.isBlacklisted).toBe(true);
+        expect(result.error).toMatch(/too common/i);
+      }
+    });
+
+    it('accepts strong passwords and calculates scores correctly', () => {
+      // 8 chars with number
+      const basic = validatePassword('abcdefg1');
+      expect(basic.isValid).toBe(true);
+      expect(basic.isBlacklisted).toBeUndefined();
+
+      // Medium: uppercase, lowercase, numbers
+      const medium = validatePassword('MoneyTracker99');
+      expect(medium.isValid).toBe(true);
+      expect(medium.score).toBeGreaterThanOrEqual(3);
+
+      // Strong: 12+ chars, uppercase, lowercase, number, symbol
+      const strong = validatePassword('SuperSecure#2026!');
+      expect(strong.isValid).toBe(true);
+      expect(strong.score).toBe(4);
+      expect(strong.strengthLabel).toBe('Strong');
+    });
+
+    it('ensures COMMON_PASSWORDS set contains anticipated weak passwords', () => {
+      expect(COMMON_PASSWORDS.has('password')).toBe(true);
+      expect(COMMON_PASSWORDS.has('123456')).toBe(true);
+      expect(COMMON_PASSWORDS.has('moneytracker')).toBe(true);
+      expect(COMMON_PASSWORDS.has('qwerty')).toBe(true);
+    });
   });
 });

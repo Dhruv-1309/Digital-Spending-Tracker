@@ -238,6 +238,45 @@ describe('Phase 8: Auth Redesign Screen', () => {
       });
     });
 
+    it('rejects common blacklisted passwords and shows inline warning (AUTH-5)', async () => {
+      const { authValue } = renderAuthModal();
+
+      fireEvent.click(screen.getByRole('radio', { name: 'Sign Up' }));
+
+      fireEvent.change(screen.getByLabelText(/Email/i, { selector: 'input' }), {
+        target: { value: 'newuser@example.com' },
+      });
+      fireEvent.change(screen.getByLabelText(/Password/i, { selector: 'input' }), {
+        target: { value: 'password123' },
+      });
+
+      // Warning text and common label shown
+      expect(await screen.findByText(/Common \/ Insecure/i)).toBeInTheDocument();
+      expect(screen.getByText(/This password is too common and easily guessed/i)).toBeInTheDocument();
+
+      // Attempting to submit blocked
+      fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
+      expect(authValue.signUpWithEmail).not.toHaveBeenCalled();
+    });
+
+    it('rejects passwords shorter than 8 characters on sign up (AUTH-5)', async () => {
+      const { authValue } = renderAuthModal();
+
+      fireEvent.click(screen.getByRole('radio', { name: 'Sign Up' }));
+
+      fireEvent.change(screen.getByLabelText(/Email/i, { selector: 'input' }), {
+        target: { value: 'short@example.com' },
+      });
+      fireEvent.change(screen.getByLabelText(/Password/i, { selector: 'input' }), {
+        target: { value: 'pass1' },
+      });
+
+      expect(await screen.findByText(/Password must be at least 8 characters long/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /Create Account/i }));
+      expect(authValue.signUpWithEmail).not.toHaveBeenCalled();
+    });
+
     it('renders full-width secondary button with Google mark and calls signInWithGoogle', async () => {
       const { authValue } = renderAuthModal();
 

@@ -138,3 +138,120 @@ export function validateBudgetGoalForm(input: BudgetGoalFormInput): {
     errors,
   };
 }
+
+export const COMMON_PASSWORDS: ReadonlySet<string> = new Set([
+  '123456',
+  '1234567',
+  '12345678',
+  '123456789',
+  '1234567890',
+  'password',
+  'password1',
+  'password12',
+  'password123',
+  'pass1234',
+  'qwerty',
+  'qwerty123',
+  'qwertyuiop',
+  'admin',
+  'admin123',
+  'admin1234',
+  'welcome',
+  'welcome1',
+  'welcome123',
+  'moneytracker',
+  'moneytracker123',
+  'letmein',
+  'letmein123',
+  'iloveyou',
+  'monkey',
+  'dragon',
+  'football',
+  'baseball',
+  'master',
+  'shadow',
+  'superman',
+  'trustno1',
+  'secret',
+  'secret123',
+  '111111',
+  '000000',
+  '123123',
+  '123321',
+  'sunshine',
+  'princess',
+  'charlie',
+]);
+
+export interface PasswordValidationResult {
+  isValid: boolean;
+  score: number; // 0 (empty) to 4 (strong)
+  strengthLabel: 'Very Weak' | 'Weak' | 'Medium' | 'Strong';
+  error?: string;
+  isBlacklisted?: boolean;
+}
+
+export function validatePassword(password: string): PasswordValidationResult {
+  if (!password || typeof password !== 'string' || password.length === 0) {
+    return {
+      isValid: false,
+      score: 0,
+      strengthLabel: 'Very Weak',
+      error: 'Please enter a password',
+    };
+  }
+
+  const normalized = password.toLowerCase().trim();
+  if (COMMON_PASSWORDS.has(normalized)) {
+    return {
+      isValid: false,
+      score: 1,
+      strengthLabel: 'Very Weak',
+      error: 'This password is too common and easily guessed. Please choose a stronger password.',
+      isBlacklisted: true,
+    };
+  }
+
+  if (password.length < 8) {
+    return {
+      isValid: false,
+      score: 1,
+      strengthLabel: 'Weak',
+      error: 'Password must be at least 8 characters long',
+    };
+  }
+
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+
+  if (!hasDigit && !hasSpecial) {
+    return {
+      isValid: false,
+      score: 2,
+      strengthLabel: 'Weak',
+      error: 'Password must contain at least one number or special character',
+    };
+  }
+
+  // Calculate score between 2 and 4
+  let score = 2;
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+
+  if (password.length >= 10 && (hasDigit || hasSpecial)) {
+    score += 1;
+  }
+  if (password.length >= 12 && hasLower && hasUpper && hasDigit && hasSpecial) {
+    score = 4;
+  } else if (password.length >= 8 && hasLower && hasUpper && (hasDigit || hasSpecial) && score < 4) {
+    score = Math.min(4, score + 1);
+  }
+
+  const strengthLabel = score >= 4 ? 'Strong' : score >= 3 ? 'Medium' : 'Weak';
+
+  return {
+    isValid: true,
+    score,
+    strengthLabel,
+  };
+}

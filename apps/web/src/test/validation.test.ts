@@ -3,6 +3,8 @@ import {
   validateTransactionForm,
   validateAutopayForm,
   validateBudgetGoalForm,
+  validatePassword,
+  COMMON_PASSWORDS,
 } from '../lib/validation';
 
 describe('validation', () => {
@@ -69,5 +71,26 @@ describe('validation', () => {
       thresholdPercent: 85,
     });
     expect(valid.isValid).toBe(true);
+  });
+
+  describe('validatePassword (AUTH-5)', () => {
+    it('rejects common passwords with specific blacklist indicator', () => {
+      expect(COMMON_PASSWORDS.has('password123')).toBe(true);
+      const res = validatePassword('password123');
+      expect(res.isValid).toBe(false);
+      expect(res.isBlacklisted).toBe(true);
+      expect(res.error).toMatch(/too common/i);
+    });
+
+    it('rejects passwords without minimum 8 chars and number/symbol', () => {
+      expect(validatePassword('short').isValid).toBe(false);
+      expect(validatePassword('toolongwithoutnumbers').isValid).toBe(false);
+    });
+
+    it('approves compliant strong passwords', () => {
+      const res = validatePassword('Antigravity#2026');
+      expect(res.isValid).toBe(true);
+      expect(res.score).toBeGreaterThanOrEqual(3);
+    });
   });
 });

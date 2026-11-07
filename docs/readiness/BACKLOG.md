@@ -438,7 +438,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Reloading after clicking verification link removes the reminder banner
 - **How It Will Be Tested:** Mock Firebase Auth sendEmailVerification in tests and assert banner appearance.
 
-### 11. [AUTH-5] Password validation rules with common password rejection blacklist
+### 11. [AUTH-5] Password validation rules with common password rejection blacklist `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `AUTH`
 - **Dependencies:** `AUTH-1`

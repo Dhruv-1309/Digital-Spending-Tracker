@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { m } from 'motion/react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { toUserFriendlyError } from '../../lib/errorMessages';
+import { validatePassword } from '../../lib/validation';
 import { Button } from '../ui/Button';
 import { TextInput } from '../ui/TextInput';
 import { SegmentedControl } from '../ui/SegmentedControl';
@@ -101,13 +102,10 @@ export function AuthModal() {
   } | null>(null);
   const [isShaking, setIsShaking] = useState(false);
 
-  // Password strength calculation for sign up
+  // Password strength calculation and common password rejection for sign up (AUTH-5)
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
   const passwordLength = password.length;
-  const hasNumberOrSymbol = /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
-  const strengthScore =
-    passwordLength === 0
-      ? 0
-      : (passwordLength >= 8 ? 2 : 1) + (hasNumberOrSymbol ? 2 : 0);
+  const strengthScore = passwordLength === 0 ? 0 : passwordValidation.score;
 
   const triggerError = (msg: string) => {
     setStatusMessage({ text: msg, type: 'error' });
@@ -132,6 +130,10 @@ export function AuthModal() {
       setStatusMessage(null);
       setLoading(true);
       if (authMode === 'signup') {
+        if (!passwordValidation.isValid) {
+          triggerError(passwordValidation.error || 'Password does not meet requirements');
+          return;
+        }
         await signUpWithEmail(cleanEmail, password);
         showToast(
           'Account created! A verification link has been sent to your email.',
@@ -427,19 +429,22 @@ export function AuthModal() {
                 <div className="flex items-center justify-between text-[11px] text-ink-2 font-medium">
                   <span>Password strength:</span>
                   <span
+                    id="passwordStrengthLabel"
                     className={
-                      strengthScore >= 4
+                      passwordValidation.isBlacklisted
+                        ? 'text-danger font-semibold'
+                        : strengthScore >= 4
                         ? 'text-income font-semibold'
+                        : strengthScore >= 3
+                        ? 'text-accent font-semibold'
                         : strengthScore >= 2
                         ? 'text-warning font-semibold'
                         : 'text-danger font-semibold'
                     }
                   >
-                    {strengthScore >= 4
-                      ? 'Strong'
-                      : strengthScore >= 2
-                      ? 'Medium'
-                      : 'Weak'}
+                    {passwordValidation.isBlacklisted
+                      ? 'Common / Insecure'
+                      : passwordValidation.strengthLabel}
                   </span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5 h-1.5">
@@ -450,20 +455,29 @@ export function AuthModal() {
                   />
                   <div
                     className={`rounded-full transition-all duration-base ${
-                      strengthScore >= 2 ? 'bg-warning' : 'bg-line'
+                      strengthScore >= 2 && !passwordValidation.isBlacklisted ? 'bg-warning' : 'bg-line'
                     }`}
                   />
                   <div
                     className={`rounded-full transition-all duration-base ${
-                      strengthScore >= 3 ? 'bg-accent' : 'bg-line'
+                      strengthScore >= 3 && !passwordValidation.isBlacklisted ? 'bg-accent' : 'bg-line'
                     }`}
                   />
                   <div
                     className={`rounded-full transition-all duration-base ${
-                      strengthScore >= 4 ? 'bg-income' : 'bg-line'
+                      strengthScore >= 4 && !passwordValidation.isBlacklisted ? 'bg-income' : 'bg-line'
                     }`}
                   />
                 </div>
+                {passwordValidation.isBlacklisted ? (
+                  <p id="passwordBlacklistWarning" className="text-[11px] text-danger font-medium">
+                    ⚠️ This password is too common and easily guessed.
+                  </p>
+                ) : !passwordValidation.isValid ? (
+                  <p id="passwordRequirementHint" className="text-[11px] text-ink-3">
+                    {passwordValidation.error}
+                  </p>
+                ) : null}
               </div>
             )}
 

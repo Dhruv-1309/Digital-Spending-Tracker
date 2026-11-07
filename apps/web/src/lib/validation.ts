@@ -107,3 +107,9 @@ export function validateBudgetGoalForm(input: BudgetGoalInput): {
     errors,
   };
 }
+
+export {
+  COMMON_PASSWORDS,
+  validatePassword,
+  type PasswordValidationResult,
+} from '@moneytracker/shared';
