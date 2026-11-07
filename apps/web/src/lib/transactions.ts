@@ -5,36 +5,65 @@ import type {
   TransactionSortOption,
 } from '../types';
 
-export function parseCsvLine(line: string): string[] {
-  const values: string[] = [];
-  let current = '';
+export function parseCsvRecords(content: string): string[][] {
+  // Strip UTF-8 BOM if present (CORE-12, QA-2)
+  const cleanContent = content.charCodeAt(0) === 0xFEFF ? content.slice(1) : content;
+
+  const records: string[][] = [];
+  let currentRecord: string[] = [];
+  let currentField = '';
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
-    const nextChar = line[i + 1];
+  for (let i = 0; i < cleanContent.length; i += 1) {
+    const char = cleanContent[i];
+    const nextChar = cleanContent[i + 1];
 
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
-        current += '"';
+        currentField += '"';
         i += 1;
       } else {
         inQuotes = !inQuotes;
       }
     } else if (char === ',' && !inQuotes) {
-      values.push(current.trim());
-      current = '';
+      currentRecord.push(currentField.trim());
+      currentField = '';
+    } else if ((char === '\r' || char === '\n') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i += 1;
+      }
+      currentRecord.push(currentField.trim());
+      currentField = '';
+      if (currentRecord.length > 1 || (currentRecord.length === 1 && currentRecord[0] !== '')) {
+        records.push(currentRecord);
+      }
+      currentRecord = [];
     } else {
-      current += char;
+      currentField += char;
     }
   }
 
-  values.push(current.trim());
-  return values;
+  if (currentField.length > 0 || currentRecord.length > 0) {
+    currentRecord.push(currentField.trim());
+    if (currentRecord.length > 1 || (currentRecord.length === 1 && currentRecord[0] !== '')) {
+      records.push(currentRecord);
+    }
+  }
+
+  return records;
+}
+
+export function parseCsvLine(line: string): string[] {
+  const records = parseCsvRecords(line);
+  return records[0] || [];
 }
 
 export function toCsvSafeValue(value: unknown): string {
-  const text = value == null ? '' : String(value);
+  let text = value == null ? '' : String(value);
+  // Neutralize formula injection / DDE (OWASP CWE-1236):
+  if (/^[\t\r]/.test(text) || /^\s*[=+\-@]/.test(text)) {
+    text = `'${text}`;
+  }
   return `"${text.replace(/"/g, '""')}"`;
 }
 
@@ -142,15 +171,9 @@ export function importTransactionsFromCsv(
   skippedCount: number;
   error?: string;
 } {
-  // Strip UTF-8 BOM if present (CORE-12, QA-2)
-  const cleanContent = content.charCodeAt(0) === 0xFEFF ? content.slice(1) : content;
+  const records = parseCsvRecords(content);
 
-  const lines = cleanContent
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  if (lines.length < 2) {
+  if (records.length < 2) {
     return {
       newTransactions: [],
       skippedCount: 0,
@@ -158,7 +181,7 @@ export function importTransactionsFromCsv(
     };
   }
 
-  const headers = parseCsvLine(lines[0]).map((h) =>
+  const headers = records[0].map((h) =>
     h.toLowerCase().replace(/\s+/g, ' ').trim(),
   );
 
@@ -196,8 +219,8 @@ export function importTransactionsFromCsv(
   const imported: Transaction[] = [];
   let skipped = 0;
 
-  for (let i = 1; i < lines.length; i += 1) {
-    const cols = parseCsvLine(lines[i]);
+  for (let i = 1; i < records.length; i += 1) {
+    const cols = records[i];
     const dateRaw = cols[indexMap.date] || '';
     const parsedDate = new Date(dateRaw);
     const date = !isNaN(parsedDate.getTime())

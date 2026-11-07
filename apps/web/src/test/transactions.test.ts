@@ -138,4 +138,54 @@ describe('transactions', () => {
     expect(months[0].label).toBe('Oct 2026');
     expect(months[1].value).toBe('2026-09');
   });
+
+  describe('CSV parsing, UTF-8 BOM, and edge cases (CORE-12, QA-2)', () => {
+    it('strips UTF-8 BOM character from CSV import header without rejecting Date column', () => {
+      const bomCsv = '\uFEFFDate,Type,Category,Description,Payment Method,Amount\n2026-10-20,expense,Travel,Train Ticket,upi,450';
+      const { newTransactions, skippedCount, error } = importTransactionsFromCsv(bomCsv, []);
+      expect(error).toBeUndefined();
+      expect(skippedCount).toBe(0);
+      expect(newTransactions.length).toBe(1);
+      expect(newTransactions[0].date).toBe('2026-10-20');
+      expect(newTransactions[0].amount).toBe(450);
+      expect(newTransactions[0].category).toBe('Travel');
+    });
+
+    it('rejects empty CSV and single-line CSV missing data rows', () => {
+      const empty = importTransactionsFromCsv('', []);
+      expect(empty.error).toBe('CSV file is empty or missing data rows.');
+
+      const onlyHeader = importTransactionsFromCsv('Date,Type,Category,Amount\n', []);
+      expect(onlyHeader.error).toBe('CSV file is empty or missing data rows.');
+    });
+
+    it('rejects CSV missing required Date or Amount columns', () => {
+      const missingAmount = importTransactionsFromCsv('Date,Type,Category\n2026-10-01,expense,Food', []);
+      expect(missingAmount.error).toBe('CSV must include at least Date and Amount columns.');
+
+      const missingDate = importTransactionsFromCsv('Category,Amount\nFood,500', []);
+      expect(missingDate.error).toBe('CSV must include at least Date and Amount columns.');
+    });
+
+    it('handles multiline fields enclosed in quotes without splitting rows (CORE-12)', () => {
+      const multilineCsv = `Date,Type,Category,Description,Amount\r\n2026-10-25,expense,Dining,"Dinner with team\r\nat Italian Restaurant\r\nTable 4",1850\r\n2026-10-26,income,Salary,"Standard monthly\npayroll",75000`;
+      const { newTransactions, skippedCount, error } = importTransactionsFromCsv(multilineCsv, []);
+      expect(error).toBeUndefined();
+      expect(skippedCount).toBe(0);
+      expect(newTransactions.length).toBe(2);
+      expect(newTransactions[0].description).toBe('Dinner with team\r\nat Italian Restaurant\r\nTable 4');
+      expect(newTransactions[0].amount).toBe(1850);
+      expect(newTransactions[1].description).toBe('Standard monthly\npayroll');
+      expect(newTransactions[1].amount).toBe(75000);
+    });
+
+    it('gracefully handles uneven columns and truncated lines without crashing (CORE-12)', () => {
+      const unevenCsv = `Date,Type,Category,Description,Amount\n2026-10-27,expense\n2026-10-28,expense,Groceries,Supermarket,3200\n,,\n`;
+      const { newTransactions, skippedCount, error } = importTransactionsFromCsv(unevenCsv, []);
+      expect(error).toBeUndefined();
+      expect(newTransactions.length).toBe(1);
+      expect(newTransactions[0].amount).toBe(3200);
+      expect(skippedCount).toBe(2);
+    });
+  });
 });

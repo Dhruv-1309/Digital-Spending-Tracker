@@ -386,7 +386,7 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Unit tests assert each exact boundary point
 - **How It Will Be Tested:** Unit tests in budget.test.ts asserting behavior at 79.99%, 80.00%, 99.99%, 100.00%, and 100.01% of limit.
 
-### 7. [CORE-12] Robust CSV parser: UTF-8 BOM stripping, large file protection, and malformed row recovery
+### 7. [CORE-12] Robust CSV parser: UTF-8 BOM stripping, large file protection, and malformed row recovery `[DONE]`
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `CORE`
 - **Dependencies:** `CORE-3`

@@ -242,5 +242,26 @@ invalid-date,expense,Food,200
       expect(newTransactions.length).toBe(1);
       expect(skippedCount).toBe(3);
     });
+
+    it('handles multiline fields enclosed in quotes without splitting rows (CORE-12)', () => {
+      const multilineCsv = `Date,Type,Category,Description,Amount\r\n2026-10-25,expense,Dining,"Dinner with team\r\nat Italian Restaurant\r\nTable 4",1850\r\n2026-10-26,income,Salary,"Standard monthly\npayroll",75000`;
+      const { newTransactions, skippedCount, error } = importTransactionsFromCsv(multilineCsv, []);
+      expect(error).toBeUndefined();
+      expect(skippedCount).toBe(0);
+      expect(newTransactions.length).toBe(2);
+      expect(newTransactions[0].description).toBe('Dinner with team\r\nat Italian Restaurant\r\nTable 4');
+      expect(newTransactions[0].amount).toBe(1850);
+      expect(newTransactions[1].description).toBe('Standard monthly\npayroll');
+      expect(newTransactions[1].amount).toBe(75000);
+    });
+
+    it('gracefully handles uneven columns and truncated lines without crashing (CORE-12)', () => {
+      const unevenCsv = `Date,Type,Category,Description,Amount\n2026-10-27,expense\n2026-10-28,expense,Groceries,Supermarket,3200\n,,\n`;
+      const { newTransactions, skippedCount, error } = importTransactionsFromCsv(unevenCsv, []);
+      expect(error).toBeUndefined();
+      expect(newTransactions.length).toBe(1);
+      expect(newTransactions[0].amount).toBe(3200);
+      expect(skippedCount).toBe(2);
+    });
   });
 });
