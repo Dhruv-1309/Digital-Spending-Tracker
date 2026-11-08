@@ -2,10 +2,24 @@ node_modules
 dist
 .git
 .github
-.env
-.env.local
-.env.development
-.env.test
-apps/web
-docs
+.env*
 coverage
+playwright-report
+test-results
+
+# Ignore web source/build artifacts, but keep package manifests for npm workspace resolution
+apps/web/src
+apps/web/public
+apps/web/dist
+apps/web/coverage
+apps/web/index.html
+apps/web/vite.config.ts
+
+# Ignore heavy media assets in docs, keep openapi.yaml
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.gif
+docs/**/*.webp
+docs/redesign
+docs/architecture/assets

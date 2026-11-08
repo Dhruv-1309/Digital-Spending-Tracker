@@ -18,6 +18,7 @@ RUN npm ci
 # Copy source code and build configs
 COPY packages/shared/ ./packages/shared/
 COPY apps/api/ ./apps/api/
+COPY docs/ ./docs/
 COPY tsconfig*.json ./
 
 # Build shared package and generate Prisma client
