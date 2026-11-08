@@ -57,7 +57,13 @@ export function createApp() {
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (!origin || config.allowedOrigins.includes(origin) || config.nodeEnv === 'development' || config.nodeEnv === 'test') {
+        if (
+          !origin ||
+          config.allowedOrigins.includes(origin) ||
+          config.nodeEnv === 'development' ||
+          config.nodeEnv === 'test' ||
+          /^https:\/\/digital-spending-tracker.*\.vercel\.app$/.test(origin)
+        ) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));

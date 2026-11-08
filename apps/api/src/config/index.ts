@@ -72,7 +72,7 @@ export const config: ApiConfig = {
     process.env.DATABASE_URL || 'postgresql://moneytracker:moneytracker_dev_password@localhost:5432/moneytracker_dev?schema=public',
     dbPoolConfig,
   ),
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:4173,http://127.0.0.1:5173').split(',').map((o) => o.trim()),
+  allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:4173,http://127.0.0.1:5173,https://digital-spending-tracker.vercel.app').split(',').map((o) => o.trim()),
   dbPool: dbPoolConfig,
   tombstoneRetentionDays: parseInt(process.env.TOMBSTONE_RETENTION_DAYS || '90', 10),
   shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS || '10000', 10),
