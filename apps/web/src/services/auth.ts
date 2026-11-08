@@ -186,6 +186,8 @@ export async function signInWithGoogle(): Promise<void> {
       throw new Error('Unable to connect to the sign-in service. Please check your internet connection and try again.');
     } else if (err.code === 'auth/account-exists-with-different-credential') {
       throw new Error('An account already exists with this email using a different sign-in method.');
+    } else if (err.code === 'auth/internal-error') {
+      throw new Error('An authentication error occurred. Please ensure popups and third-party cookies are allowed, or sign in with email and password.');
     } else {
       throw new Error(toUserFriendlyError(err, 'Google sign-in was unsuccessful. Please try again.'));
     }

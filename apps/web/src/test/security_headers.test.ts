@@ -21,7 +21,7 @@ describe('Security Headers Configuration (SEC-4)', () => {
     expect(headerMap.get('Permissions-Policy')).toContain('camera=()');
     expect(headerMap.get('Permissions-Policy')).toContain('microphone=()');
     expect(headerMap.get('Permissions-Policy')).toContain('geolocation=()');
-    expect(headerMap.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+    expect(headerMap.get('Cross-Origin-Opener-Policy')).toBe('same-origin-allow-popups');
   });
 
   it('public/_headers specifies required security headers for static deployments', () => {
@@ -30,6 +30,6 @@ describe('Security Headers Configuration (SEC-4)', () => {
     expect(rawHeaders).toContain('X-Frame-Options: DENY');
     expect(rawHeaders).toContain('Referrer-Policy: strict-origin-when-cross-origin');
     expect(rawHeaders).toContain('camera=(), microphone=(), geolocation=()');
-    expect(rawHeaders).toContain('Cross-Origin-Opener-Policy: same-origin');
+    expect(rawHeaders).toContain('Cross-Origin-Opener-Policy: same-origin-allow-popups');
   });
 });

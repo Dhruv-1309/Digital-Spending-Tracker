@@ -33,6 +33,7 @@ const FIREBASE_AUTH_CODE_MAP: Record<string, string> = {
   'auth/operation-not-allowed': 'Google sign-in is currently unavailable. Please sign in using your email and password.',
   'auth/invalid-api-key': 'The sign-in service is temporarily undergoing maintenance. Please try again later.',
   'auth/account-exists-with-different-credential': 'An account already exists with this email using a different sign-in method.',
+  'auth/internal-error': 'An authentication error occurred. Please ensure popups and third-party cookies are allowed, or sign in with email and password.',
   'auth/id-token-expired': 'Your session has expired. Please sign in again.',
   'auth/user-disabled': 'This account has been disabled. Please contact support for help.',
 };
