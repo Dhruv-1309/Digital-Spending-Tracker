@@ -97,7 +97,7 @@ export async function signUpWithEmail(
   try {
     const apiBase =
       (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
-      'http://localhost:3000/api/v1';
+      'http://localhost:4000/api/v1';
     const baseUrl = apiBase.replace(/\/api\/v1\/?$/, '');
     const registerUrl = `${baseUrl}/auth/register`;
 
