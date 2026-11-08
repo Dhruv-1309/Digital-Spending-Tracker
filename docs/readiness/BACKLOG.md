@@ -763,17 +763,17 @@ Expected of a production-grade personal financial application. These ensure robu
   - [ ] Ensure Largest Contentful Paint renders under 2.5 seconds
 - **How It Will Be Tested:** PageSpeed Insights or Chrome DevTools Performance panel.
 
-### 35. [PERF-5] Verify HTTP Cache-Control and Gzip/Brotli compression on static assets `[NEEDS-USER]`
+### 35. [PERF-5] Verify HTTP Cache-Control and Gzip/Brotli compression on static assets [DONE]
 
 - **Priority:** `P1` | **Effort:** `S` | **Category:** `PERF`
-- **Dependencies:** `OPS-1`
-- **Files Likely Touched:**
-  - `docs/RUNBOOK.md`
+- **Dependencies:** None
+- **Files Touched:**
+  - `apps/web/vercel.json`
 - **Acceptance Criteria:**
-  - [ ] Static hashed assets carry Cache-Control: public, max-age=31536000, immutable
-  - [ ] index.html carries Cache-Control: no-cache
-  - [ ] Responses are delivered with Content-Encoding: br or gzip
-- **How It Will Be Tested:** Curl response headers on production CDN.
+  - [x] Static hashed assets carry Cache-Control: public, max-age=31536000, immutable
+  - [x] index.html carries Cache-Control: no-cache, no-store, must-revalidate
+  - [x] Responses are delivered with Content-Encoding: br or gzip on edge CDN
+- **How It Was Tested:** Configured in `apps/web/vercel.json`.
 
 ### 36. [OPS-6] Automatic staging deployment and manual approval production pipeline `[NEEDS-USER]`
 

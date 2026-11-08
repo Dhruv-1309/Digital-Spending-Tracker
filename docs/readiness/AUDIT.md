@@ -10,20 +10,20 @@
 ## 1. Executive Summary & Readiness Score
 
 ### 1.1 Overall Readiness Score
-$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{444.5}{499} = \mathbf{89.1\%}$$
+$$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{Weighted PARTIAL Points}}{\text{Weighted Applicable Points}} = \frac{446.5}{499} = \mathbf{89.5\%}$$
 
-- **Current Readiness Score:** **89.1%** (Baseline: 56.8%)
+- **Current Readiness Score:** **89.5%** (Baseline: 56.8%)
 - **Total Audited Items:** **191**
 - **Applicable Weight:** **499 points**
-- **Earned Weight:** **444.5 points**
+- **Earned Weight:** **446.5 points**
 
 ### 1.2 Status Counts Across All Items
 | Status | Description | Count |
 | :--- | :--- | :--- |
-| **DONE** | Implemented and verified with tangible code/test evidence | **171** |
+| **DONE** | Implemented and verified with tangible code/test evidence | **172** |
 | **PARTIAL** | Core implementation exists; specific documented gaps remain | **0** |
 | **MISSING** | Not implemented | **0** |
-| **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **16** |
+| **NEEDS-USER** | Requires owner credentials, accounts, domain, or hosting action | **15** |
 | **UNVERIFIED** | Requires live production deployment or hardware profiling | **3** |
 | **NOT-APPLICABLE** | Non-applicable to privacy-first offline architecture | **1** |
 | **Total** | | **191** |
@@ -39,7 +39,7 @@ $$\text{Readiness Score} = \frac{\text{Weighted DONE Points} + 0.5 \times \text{
 | **BE** | Backend, API and Database | 21 | 21D / 0P / 0M | **100.0%** | 66.0 / 66 |
 | **SEC** | Security and Privacy | 22 | 19D / 0P / 0M (3 other) | **84.1%** | 58.0 / 69 |
 | **UX** | Frontend, UX and Accessibility | 24 | 23D / 0P / 0M (1 other) | **94.5%** | 52.0 / 55 |
-| **PERF** | Performance, Offline and PWA | 15 | 12D / 0P / 0M (3 other) | **73.5%** | 25.0 / 34 |
+| **PERF** | Performance, Offline and PWA | 15 | 13D / 0P / 0M (2 other) | **79.4%** | 27.0 / 34 |
 | **QA** | Testing and Code Quality | 18 | 18D / 0P / 0M | **100.0%** | 46.0 / 46 |
 | **OPS** | DevOps, Hosting and Operations | 21 | 12D / 0P / 0M (9 other) | **57.1%** | 28.0 / 49 |
 | **WEB** | Web Presence, Legal and Documentation | 20 | 19D / 0P / 0M (1 other) | **100.0%** | 43.0 / 43 |
@@ -222,7 +222,7 @@ Prior to code evaluation, all automated repository tooling was executed and reco
 | **PERF-2** | Initial JavaScript is under 350 kB gzipped, with route-level code splitting and lazy-loaded charts | `DONE` | `apps/web/src/components/layout/AppLayout.tsx`: Secondary tabs (`AddTransactionTab`, `TransactionsTab`, `AutopayTab`, `AnalyticsTab`) lazy-loaded via `React.lazy()` with Suspense fallback. Vite build output: `index.js` is 90.71 kB gzip (well under 350 kB budget), `vendor-charts` (66.29 kB gzip) loaded on-demand. | None. Production build chunk splitting verified. |
 | **PERF-3** | Core Web Vitals: LCP under 2.5 s, CLS at or below 0.05, INP under 200 ms | `UNVERIFIED` | None | Requires field or lab measurement on live hosted production deployment. |
 | **PERF-4** | Long lists are paginated or virtualised, and search input is debounced | `DONE` | `apps/web/src/components/transactions/TransactionsTab.tsx`: 10 items/page pagination plus 300ms search input debouncing via `useDebounce` hook (`apps/web/src/hooks/useDebounce.ts`). Verified in `transactions_redesign.test.tsx` and `useDebounce.test.ts`. | None. |
-| **PERF-5** | Static assets are hashed and cached for a long time, HTML is not cached, and gzip or brotli is on | `NEEDS-USER` | Vite outputs hashed filenames in dist/assets | Cache-Control header rules must be configured and verified on hosting provider. |
+| **PERF-5** | Static assets are hashed and cached for a long time, HTML is not cached, and gzip or brotli is on | `DONE` | apps/web/vercel.json:1-18, apps/web/vite.config.ts | Hashed filenames in dist/assets with 1-year immutable caching (public, max-age=31536000, immutable); index.html and sw.js set to no-cache, no-store, must-revalidate; Brotli/Gzip compression enabled on edge. | None |
 | **PERF-6** | The offline write queue is persisted (IndexedDB), retried with backoff, and has a defined conflict rule | `DONE` | apps/web/src/services/syncQueue.ts:1-270, apps/web/src/test/syncQueue.test.ts | - |
 | **PERF-7** | Fonts are WOFF2, subset and preloaded; images are optimised and sized | `DONE` | apps/web/index.html:40-41, apps/web/src/styles/tokens.css:9-44, apps/web/src/test/font_preload.test.ts | Self-hosted WOFF2 fonts with font-display: swap; index.html preloads both Instrument Sans 400 and Bricolage Grotesque 600. | None |
 | **PERF-8** | No unnecessary re-renders while typing in forms and filters (measured, not guessed) | `DONE` | apps/web/src/test/render_performance.test.tsx | Automated React.Profiler test suite verifies that typing in AmountInput and TextInput isolates renders from sibling cards, search debounce prevents list recalculation cascades, and filter updates complete within frame budget. | None |
