@@ -5,7 +5,8 @@ import rawHeaders from '../../public/_headers?raw';
 describe('Security Headers Configuration (SEC-4)', () => {
   it('vercel.json specifies required security headers with strict CSP and frame-ancestors', () => {
     expect(vercelConfig.headers).toBeDefined();
-    const routeHeaders = vercelConfig.headers[0].headers;
+    const globalRule = vercelConfig.headers.find((h: any) => h.source === '/(.*)') || vercelConfig.headers[0];
+    const routeHeaders = globalRule.headers;
     const headerMap = new Map(routeHeaders.map((h: { key: string; value: string }) => [h.key, h.value]));
 
     expect(headerMap.has('Content-Security-Policy')).toBe(true);
