@@ -1,0 +1,95 @@
+name: CI / Verification Suite
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+      - 'feature/**'
+      - v3-fullstack
+  pull_request:
+    branches:
+      - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm --workspace=@moneytracker/api run prisma:generate
+
+      - name: ESLint Check
+        run: npm run lint
+
+      - name: TypeScript Project References Check
+        run: npx tsc -b
+
+  test-suite:
+    name: Monorepo Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm --workspace=@moneytracker/api run prisma:generate
+
+      - name: Run Test Suites across Workspaces
+        run: npm test
+
+      - name: Accessibility Automated Gate (axe-core) (QA-10)
+        run: npm run test:a11y
+
+      - name: Enforce Code Coverage Thresholds (QA-11)
+        run: npm run test:coverage
+
+  build-and-audit:
+    name: Build & Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm --workspace=@moneytracker/api run prisma:generate
+
+      - name: Build All Workspaces
+        run: npm run build
+
+      - name: Dependency Security Audit
+        run: npm audit --audit-level=critical

@@ -1,0 +1,36 @@
+# Render Blueprint for MoneyTracker (Full-Stack Deployment)
+# Deploys managed PostgreSQL and containerized Express API
+services:
+  - type: web
+    name: moneytracker-api
+    runtime: docker
+    dockerfilePath: apps/api/Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: moneytracker-db
+          property: connectionString
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+
+databases:
+  - name: moneytracker-db
+    databaseName: moneytracker
+    user: moneytracker
+    plan: free
+    region: oregon

@@ -1,0 +1,163 @@
+@import './styles/print.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus ring: 2 px --accent with a 2 px --surface gap, on :focus-visible only */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Display font utilities */
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Tabular numbers for amounts, dates, and tables */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Prefers-reduced-motion rules (SPEC Section 4 rule 9) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transform: none !important;
+    transition-duration: 120ms !important;
+  }
+}
+
+@layer utilities {
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+  .animation-delay-6000 {
+    animation-delay: 6s;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 240ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--line) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Route Cross-Fade Transition (SPEC Section 4, 5 & 6) */
+@keyframes routeCrossFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.route-fade-content {
+  animation: routeCrossFade 160ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+/* Section Entrance Choreography (SPEC Section 4 rule 5) */
+@keyframes sectionEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-section-entrance {
+  animation: sectionEntrance var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* Anomaly Banner Entrance (SPEC Section 4) */
+@keyframes bannerEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-banner-entrance {
+  animation: bannerEntrance var(--dur-base) var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-fade-content,
+  .animate-section-entrance,
+  .animate-banner-entrance,
+  .animate-shimmer {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    background-image: none !important;
+  }
+}
+
+/* Row hover actions (SPEC Section 4 & 5):
+   fade in on hover with @media (hover: hover), always visible on touch */
+@media (hover: hover) {
+  .row-action-btn {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-standard);
+  }
+  .group:hover .row-action-btn,
+  .group:focus-within .row-action-btn {
+    opacity: 1;
+  }
+}
+@media (hover: none) {
+  .row-action-btn {
+    opacity: 1;
+  }
+}
+

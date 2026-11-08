@@ -1,0 +1,47 @@
+{
+  "name": "moneytracker-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace=apps/web run dev",
+    "dev:api": "npm --workspace=apps/api run dev",
+    "build": "npm run --workspaces --if-present build",
+    "build:analyze": "npm --workspace=@moneytracker/web run build:analyze",
+    "test": "npm run --workspaces --if-present test",
+    "test:a11y": "npm --workspace=@moneytracker/web run test:a11y",
+    "test:coverage": "npm --workspace=@moneytracker/shared run test -- --coverage && npm --workspace=@moneytracker/api run test -- --coverage",
+    "test:load": "tsx scripts/load-test.ts",
+    "test:e2e": "playwright test",
+    "audit:knip": "knip --include files,dependencies",
+    "lint": "npm run --workspaces --if-present lint",
+    "precommit": "npm run lint && npx tsc -b && npm test && npm run build",
+    "migrate:firestore": "tsx scripts/migrate-firestore-to-postgres.ts",
+    "verify:parity": "tsx scripts/verify-parity.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@vitest/coverage-v8": "^5.0.5",
+    "jsdom": "^30.1.3",
+    "knip": "^6.44.2"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.7",
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "1.14.7"
+    },
+    "@google-cloud/firestore": {
+      "@grpc/grpc-js": "1.14.7"
+    },
+    "google-gax": {
+      "@grpc/grpc-js": "1.14.7"
+    },
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "deepmerge-ts": "8.0.2",
+    "uuid": "^11.1.1"
+  }
+}

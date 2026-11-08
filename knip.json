@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/knip@5/overview/configuration.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.ts", "scripts/**/*.js"]
+    },
+    "packages/shared": {
+      "project": ["src/**/*.ts", "test/**/*.test.ts"]
+    },
+    "apps/api": {
+      "project": ["src/**/*.ts", "test/**/*.test.ts"]
+    },
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx}"]
+    }
+  },
+  "ignore": [
+    "config.example.js",
+    "config.public.js",
+    "script.js",
+    "scripts/capture-*.mjs"
+  ],
+  "ignoreDependencies": [
+    "pino-http",
+    "pino-pretty",
+    "react-router-dom",
+    "jsdom"
+  ]
+}

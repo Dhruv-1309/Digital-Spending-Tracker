@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /landing
+Allow: /about
+Allow: /accessibility
+Allow: /terms
+Allow: /privacy
+Allow: /api/docs
+Disallow: /audit
+Disallow: /design
+
+Sitemap: https://moneytracker.app/sitemap.xml

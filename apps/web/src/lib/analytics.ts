@@ -1,0 +1,17 @@
+export {
+  extractUniqueYears,
+  getAnalyticsDateRange,
+  filterAnalyticsTransactions,
+  calculateAnalyticsSummary,
+  calculateDailyExpenses,
+  CATEGORY_COLORS,
+  calculateExpensesByCategory,
+  performTimeSeriesAnalysis,
+  calculateSMAForecast,
+  calculateMoneyRunway,
+  getExpensesByDayOfWeek,
+  type TimeSeriesResult,
+  type SMAForecastResult,
+  type MoneyRunwayResult,
+  type DayOfWeekHeatmapResult,
+} from '@moneytracker/shared';
