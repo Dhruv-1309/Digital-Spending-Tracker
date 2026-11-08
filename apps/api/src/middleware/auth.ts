@@ -35,9 +35,15 @@ export function authMiddleware(options: { checkRevoked?: boolean } = {}) {
 
     const token = authHeader.substring(7).trim();
 
+    let verified;
     try {
-      const verified = await verifyFirebaseIdToken(token, options.checkRevoked);
+      verified = await verifyFirebaseIdToken(token, options.checkRevoked);
+    } catch (_err) {
+      next(new AppError(401, 'UNAUTHORIZED', 'Your session has expired. Please sign in again.'));
+      return;
+    }
 
+    try {
       // Find user row or auto-create if unknown (BE-1.2)
       let user = await userRepository.findByFirebaseUid(verified.uid);
 
@@ -60,8 +66,8 @@ export function authMiddleware(options: { checkRevoked?: boolean } = {}) {
       };
 
       next();
-    } catch (err) {
-      next(new AppError(401, 'UNAUTHORIZED', 'Your session has expired. Please sign in again.'));
+    } catch (dbErr) {
+      next(dbErr);
     }
   };
 }

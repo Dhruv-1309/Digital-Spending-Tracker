@@ -18,9 +18,9 @@ services:
           name: moneytracker-db
           property: connectionString
       - key: ALLOWED_ORIGINS
-        sync: false
+        value: https://digital-spending-tracker.vercel.app,http://localhost:5173
       - key: FIREBASE_PROJECT_ID
-        sync: false
+        value: money-spending-tracker
       - key: FIREBASE_CLIENT_EMAIL
         sync: false
       - key: FIREBASE_PRIVATE_KEY

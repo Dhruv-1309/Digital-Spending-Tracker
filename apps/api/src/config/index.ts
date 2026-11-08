@@ -77,7 +77,7 @@ export const config: ApiConfig = {
   tombstoneRetentionDays: parseInt(process.env.TOMBSTONE_RETENTION_DAYS || '90', 10),
   shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS || '10000', 10),
   firebase: {
-    projectId: process.env.FIREBASE_PROJECT_ID || 'digital-spending-tracker',
+    projectId: process.env.FIREBASE_PROJECT_ID || 'money-spending-tracker',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   },
