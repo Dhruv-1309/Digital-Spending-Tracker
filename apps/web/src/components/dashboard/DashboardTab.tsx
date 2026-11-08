@@ -357,13 +357,27 @@ export function DashboardTab() {
         <p className="text-sm text-ink-2 mb-6">
           {loadError || 'An error occurred while loading your spending data.'}
         </p>
-        <Button
-          variant="primary"
-          onClick={() => (refreshData ? refreshData() : window.location.reload())}
-          icon={<RefreshCwIcon size={16} />}
-        >
-          Retry
-        </Button>
+        <div className="flex items-center justify-center gap-3">
+          {(loadError.toLowerCase().includes("sign in") || loadError.toLowerCase().includes("session")) && (
+            <Button
+              variant="primary"
+              onClick={async () => {
+                const { getFirebaseAuth } = await import("../../services/firebase.js");
+                await getFirebaseAuth().signOut();
+                window.location.reload();
+              }}
+            >
+              Sign In Again
+            </Button>
+          )}
+          <Button
+            variant={(loadError.toLowerCase().includes("sign in") || loadError.toLowerCase().includes("session")) ? "secondary" : "primary"}
+            onClick={() => (refreshData ? refreshData() : window.location.reload())}
+            icon={<RefreshCwIcon size={16} />}
+          >
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }

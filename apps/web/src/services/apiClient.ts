@@ -26,14 +26,14 @@ export class ApiError extends Error {
   }
 }
 
-async function getAuthHeader(): Promise<Record<string, string>> {
+async function getAuthHeader(forceRefresh = false): Promise<Record<string, string>> {
   const auth = getFirebaseAuth();
   const currentUser = auth.currentUser;
   if (!currentUser) {
     return {};
   }
   try {
-    const token = await currentUser.getIdToken();
+    const token = await currentUser.getIdToken(forceRefresh);
     return { Authorization: `Bearer ${token}` };
   } catch (err: unknown) {
     logger.warn('Failed to retrieve Firebase ID token for request authorization header', err, { action: 'getAuthHeader' });
@@ -98,9 +98,10 @@ export async function apiRequest<T = any>(
   const sleep = options.sleepFn || defaultSleep;
 
   let attempt = 0;
+  let forceTokenRefresh = false;
 
   while (true) {
-    const authHeader = await getAuthHeader();
+    const authHeader = await getAuthHeader(forceTokenRefresh);
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...authHeader,
@@ -163,6 +164,13 @@ export async function apiRequest<T = any>(
         await sleep(backoff);
         continue;
       }
+    }
+
+    // 2.5 Auto-refresh Firebase ID token and retry once on 401 Unauthorized
+    if (response.status === 401 && !forceTokenRefresh) {
+      forceTokenRefresh = true;
+      logger.warn('Received 401 from API. Forcing token refresh and retrying once...', undefined, { path, method });
+      continue;
     }
 
     // 3. Handle non-2xx responses
