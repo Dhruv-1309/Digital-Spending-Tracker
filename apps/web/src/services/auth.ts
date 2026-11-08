@@ -2,6 +2,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   EmailAuthProvider,
   reauthenticateWithCredential,
@@ -164,9 +166,24 @@ export async function reloadCurrentUser(): Promise<UserProfile | null> {
   return mapFirebaseUser(auth.currentUser);
 }
 
+export async function handleRedirectResult(): Promise<UserProfile | null> {
+  const auth = getFirebaseAuth();
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      return mapFirebaseUser(result.user);
+    }
+    return null;
+  } catch (error: unknown) {
+    logger.warn('Failed to retrieve redirect sign-in result', error, { action: 'handleRedirectResult' });
+    return null;
+  }
+}
+
 export async function signInWithGoogle(): Promise<void> {
   const auth = getFirebaseAuth();
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
 
   try {
     await signInWithPopup(auth, provider);
@@ -174,9 +191,25 @@ export async function signInWithGoogle(): Promise<void> {
     const err = error as { code?: string; message?: string };
     if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
       return;
-    } else if (err.code === 'auth/popup-blocked') {
-      throw new Error('The sign-in popup was blocked by your browser. Please allow popups for this site and try again.');
-    } else if (err.code === 'auth/unauthorized-domain') {
+    }
+
+    // When popup is blocked by browser or fails due to third-party cookie partitioning (auth/internal-error),
+    // automatically fall back to redirect sign-in which does not rely on popups or cross-origin window messaging.
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/internal-error') {
+      logger.warn('Google sign-in popup failed, attempting fallback to redirect', { code: err.code });
+      try {
+        await signInWithRedirect(auth, provider);
+        return;
+      } catch (redirectErr: unknown) {
+        const rErr = redirectErr as { code?: string; message?: string };
+        if (rErr.code === 'auth/unauthorized-domain') {
+          throw new Error('Google sign-in is not authorized for this domain yet. Please sign in using your email and password.');
+        }
+        throw new Error(toUserFriendlyError(rErr, 'Google sign-in was unsuccessful. Please try again.'));
+      }
+    }
+
+    if (err.code === 'auth/unauthorized-domain') {
       throw new Error('Google sign-in is not authorized for this domain yet. Please sign in using your email and password.');
     } else if (err.code === 'auth/operation-not-allowed') {
       throw new Error('Google sign-in is currently unavailable. Please sign in using your email and password.');
@@ -186,8 +219,6 @@ export async function signInWithGoogle(): Promise<void> {
       throw new Error('Unable to connect to the sign-in service. Please check your internet connection and try again.');
     } else if (err.code === 'auth/account-exists-with-different-credential') {
       throw new Error('An account already exists with this email using a different sign-in method.');
-    } else if (err.code === 'auth/internal-error') {
-      throw new Error('An authentication error occurred. Please ensure popups and third-party cookies are allowed, or sign in with email and password.');
     } else {
       throw new Error(toUserFriendlyError(err, 'Google sign-in was unsuccessful. Please try again.'));
     }

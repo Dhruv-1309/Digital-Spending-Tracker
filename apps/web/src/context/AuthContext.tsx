@@ -4,6 +4,7 @@ import { AuthContext } from './authContextDef';
 import { logger } from '../lib/logger';
 import {
   onAuthStateChange,
+  handleRedirectResult,
   signInWithEmail as apiSignInWithEmail,
   signUpWithEmail as apiSignUpWithEmail,
   signInWithGoogle as apiSignInWithGoogle,
@@ -34,6 +35,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
+
+    // Process Google redirect result if returning from a redirect authentication flow
+    handleRedirectResult()
+      .then((profile) => {
+        if (profile) {
+          setUser(profile);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        logger.warn('Failed to handle redirect result on mount', err, { action: 'handleRedirectResult' });
+      });
 
     const unsubscribe = onAuthStateChange((profile) => {
       setUser((current) => {
