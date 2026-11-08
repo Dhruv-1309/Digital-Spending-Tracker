@@ -20,15 +20,17 @@ export function initFirebaseAuth(): void {
     });
     firebaseInitialized = true;
     logger.info('Firebase Admin initialized with service account');
-  } else if (config.nodeEnv === 'development' || config.nodeEnv === 'test') {
-    // Development / test fallback without service account credentials
+  } else {
+    // Fallback without service account credentials:
+    // Firebase Admin can still verify ID tokens against Google's public certificates.
     try {
       admin.initializeApp({
         projectId: config.firebase.projectId,
       });
       firebaseInitialized = true;
+      logger.info('Firebase Admin initialized without service account (public token verification)');
     } catch (err: unknown) {
-      logger.warn({ err }, 'Firebase Admin dev fallback initialization skipped or already initialized');
+      logger.warn({ err }, 'Firebase Admin fallback initialization skipped or already initialized');
     }
   }
 }
@@ -75,6 +77,10 @@ export async function verifyFirebaseIdToken(
 
 export async function deleteFirebaseUser(uid: string): Promise<void> {
   if (config.nodeEnv === 'test' && uid.startsWith('test-')) {
+    return;
+  }
+  if (!config.firebase.clientEmail || !config.firebase.privateKey) {
+    logger.warn({ uid }, 'Skipping Firebase Auth user deletion (no service account private key configured)');
     return;
   }
   initFirebaseAuth();
