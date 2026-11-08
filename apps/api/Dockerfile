@@ -34,6 +34,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
+ENV PATH="/app/apps/api/node_modules/.bin:/app/node_modules/.bin:$PATH"
 
 # Install openssl (required for Prisma) and wget (for healthcheck)
 RUN apk add --no-cache openssl wget
@@ -48,6 +49,7 @@ COPY apps/web/package*.json ./apps/web/
 
 # Copy dependencies and compiled outputs from builder
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
@@ -65,4 +67,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/healthz || exit 1
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+CMD ["sh", "-c", "npm run prisma:migrate && node dist/server.js"]
