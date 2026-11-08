@@ -8,7 +8,7 @@
   "scripts": {
     "dev:web": "npm --workspace=apps/web run dev",
     "dev:api": "npm --workspace=apps/api run dev",
-    "build": "npm run --workspaces --if-present build",
+    "build": "npm --workspace=@moneytracker/shared run build && npm run --workspaces --if-present build",
     "build:analyze": "npm --workspace=@moneytracker/web run build:analyze",
     "test": "npm run --workspaces --if-present test",
     "test:a11y": "npm --workspace=@moneytracker/web run test:a11y",

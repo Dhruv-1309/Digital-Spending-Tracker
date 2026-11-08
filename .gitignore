@@ -71,3 +71,5 @@ pnpm-debug.log*
 
 # Misc
 ANOMALY_DETECTION_README.md
+.vercel
+.env*
